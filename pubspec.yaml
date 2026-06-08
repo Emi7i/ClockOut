@@ -1,0 +1,48 @@
+name: clock_app
+description: Work clock-in / clock-out app.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_bloc: ^8.1.5
+  bloc: ^8.1.4
+
+  # Notifications
+  awesome_notifications: ^0.11.0
+
+  # Data layer
+  sqflite: ^2.3.3
+  path: ^1.9.0
+
+  # (Add these when wiring the real data layer)
+  # sqflite: ^2.3.3
+  # shared_preferences: ^2.2.3
+  # get_it: ^7.6.7        # service locator for DI
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4
+  sqflite_common_ffi: ^2.3.3
+
+flutter:
+  uses-material-design: true
+
+  fonts:
+    - family: Caveat
+      fonts:
+        - asset: assets/fonts/Caveat-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Caveat-SemiBold.ttf
+          weight: 600
+
+  # Add your font files to assets/fonts/ and run `flutter pub get`
