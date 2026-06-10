@@ -25,7 +25,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ── Notifications ──────────────────────────────────────
-  await NotificationService.initialize();
+  final notificationService = NotificationServiceImpl();
+  await notificationService.initialize();
 
   // ── Repositories ───────────────────────────────────────
   final clockRepo    = ClockRepositoryImpl();
@@ -45,6 +46,7 @@ void main() async {
       clockRepo:  clockRepo,
       logRepo:    logRepo,
       settingsRepo: settingsRepo,
+      notificationService: notificationService,
     ),
   );
 }
@@ -56,6 +58,7 @@ class ClockApp extends StatelessWidget {
   final ClockRepository clockRepo;
   final LogRepository   logRepo;
   final UserSettingsRepository settingsRepo;
+  final NotificationService notificationService;
 
   const ClockApp({
     super.key,
@@ -65,6 +68,7 @@ class ClockApp extends StatelessWidget {
     required this.clockRepo,
     required this.logRepo,
     required this.settingsRepo,
+    required this.notificationService,
   });
 
   @override
@@ -76,6 +80,7 @@ class ClockApp extends StatelessWidget {
             clockIn:    clockIn,
             clockOut:   clockOut,
             repository: clockRepo,
+            notificationService: notificationService,
           )..add(const ClockStarted()),
         ),
         BlocProvider(

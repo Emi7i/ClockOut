@@ -1,11 +1,21 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 
-class NotificationService {
+abstract class NotificationService {
+  Future<void> initialize();
+  Future<void> scheduleShiftEndNotification({
+    required DateTime scheduledDate,
+    required bool withAlarm,
+  });
+  Future<void> cancelAllShiftNotifications();
+}
+
+class NotificationServiceImpl implements NotificationService {
   static const String channelKey = 'shift_end_channel';
   static const String alarmChannelKey = 'shift_end_alarm_channel';
 
-  static Future<void> initialize() async {
+  @override
+  Future<void> initialize() async {
     await AwesomeNotifications().initialize(
       null, // Use default icon
       [
@@ -40,7 +50,8 @@ class NotificationService {
     });
   }
 
-  static Future<void> scheduleShiftEndNotification({
+  @override
+  Future<void> scheduleShiftEndNotification({
     required DateTime scheduledDate,
     required bool withAlarm,
   }) async {
@@ -54,7 +65,7 @@ class NotificationService {
         id: 1,
         channelKey: selectedChannel,
         title: 'Shift Over!',
-        body: 'Your 8-hour shift has ended. Time to clock out!',
+        body: 'Your shift has ended. Time to clock out!',
         notificationLayout: NotificationLayout.Default,
         category: withAlarm ? NotificationCategory.Alarm : NotificationCategory.Reminder,
         wakeUpScreen: true,
@@ -65,7 +76,8 @@ class NotificationService {
     );
   }
 
-  static Future<void> cancelAllShiftNotifications() async {
+  @override
+  Future<void> cancelAllShiftNotifications() async {
     await AwesomeNotifications().cancel(1);
   }
 }

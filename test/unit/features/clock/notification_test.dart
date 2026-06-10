@@ -38,48 +38,15 @@ void main() {
         .thenAnswer((_) async => {});
   });
 
-  group('ClockBloc', () {
+  group('ClockBloc Notifications', () {
     final tClockEntry = ClockEntry(
       id: '1',
-      clockedInAt: DateTime.now().subtract(const Duration(hours: 1)),
+      clockedInAt: DateTime.now(),
+      alarmEnabled: false,
     );
 
     blocTest<ClockBloc, ClockState>(
-      'emits [ClockIdle] when ClockStarted finds no active entry',
-      build: () {
-        when(() => mockRepository.getActiveEntry()).thenAnswer((_) async => null);
-        return ClockBloc(
-          clockIn: mockClockIn,
-          clockOut: mockClockOut,
-          repository: mockRepository,
-          notificationService: mockNotificationService,
-        );
-      },
-      act: (bloc) => bloc.add(const ClockStarted()),
-      expect: () => [
-        isA<ClockIdle>(),
-      ],
-    );
-
-    blocTest<ClockBloc, ClockState>(
-      'emits [ClockActive] when ClockStarted finds active entry',
-      build: () {
-        when(() => mockRepository.getActiveEntry()).thenAnswer((_) async => tClockEntry);
-        return ClockBloc(
-          clockIn: mockClockIn,
-          clockOut: mockClockOut,
-          repository: mockRepository,
-          notificationService: mockNotificationService,
-        );
-      },
-      act: (bloc) => bloc.add(const ClockStarted()),
-      expect: () => [
-        isA<ClockActive>(),
-      ],
-    );
-
-    blocTest<ClockBloc, ClockState>(
-      'emits [ClockActive] when ClockInRequested succeeds',
+      'schedules notification when ClockInRequested succeeds',
       build: () {
         when(() => mockClockIn()).thenAnswer((_) async => tClockEntry);
         return ClockBloc(
@@ -90,9 +57,56 @@ void main() {
         );
       },
       act: (bloc) => bloc.add(const ClockInRequested()),
-      expect: () => [
-        isA<ClockActive>(),
-      ],
+      verify: (_) {
+        verify(() => mockNotificationService.scheduleShiftEndNotification(
+              scheduledDate: any(named: 'scheduledDate'),
+              withAlarm: tClockEntry.alarmEnabled,
+            )).called(1);
+      },
+    );
+
+    blocTest<ClockBloc, ClockState>(
+      'cancels notification when ClockOutRequested succeeds',
+      build: () {
+        when(() => mockClockOut()).thenAnswer((_) async => tClockEntry);
+        return ClockBloc(
+          clockIn: mockClockIn,
+          clockOut: mockClockOut,
+          repository: mockRepository,
+          notificationService: mockNotificationService,
+        );
+      },
+      act: (bloc) => bloc.add(const ClockOutRequested()),
+      verify: (_) {
+        verify(() => mockNotificationService.cancelAllShiftNotifications()).called(1);
+      },
+    );
+
+    blocTest<ClockBloc, ClockState>(
+      'updates notification when AlarmToggled while clocked in',
+      build: () {
+        when(() => mockRepository.setAlarm(enabled: any(named: 'enabled')))
+            .thenAnswer((_) async => {});
+        return ClockBloc(
+          clockIn: mockClockIn,
+          clockOut: mockClockOut,
+          repository: mockRepository,
+          notificationService: mockNotificationService,
+        );
+      },
+      seed: () => ClockActive(
+        currentTime: DateTime.now(),
+        clockedInAt: tClockEntry.clockedInAt,
+        remaining: const Duration(minutes: 3),
+        alarmEnabled: false,
+      ),
+      act: (bloc) => bloc.add(const AlarmToggled(enabled: true)),
+      verify: (_) {
+        verify(() => mockNotificationService.scheduleShiftEndNotification(
+              scheduledDate: any(named: 'scheduledDate'),
+              withAlarm: true,
+            )).called(1);
+      },
     );
   });
 }

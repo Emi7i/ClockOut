@@ -18,8 +18,11 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   final ClockInUseCase  _clockIn;
   final ClockOutUseCase _clockOut;
   final ClockRepository _repository;
+  final NotificationService _notificationService;
 
-  /// Length of a full work shift – adjust here or make configurable.
+  /// Length of a full work shift – set to 30 sec for testing.
+  // static const Duration _shiftDuration = Duration(seconds: 30);
+
   static const Duration _shiftDuration = Duration(hours: 8);
 
   Timer? _ticker;
@@ -28,9 +31,11 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     required ClockInUseCase clockIn,
     required ClockOutUseCase clockOut,
     required ClockRepository repository,
+    required NotificationService notificationService,
   })  : _clockIn    = clockIn,
         _clockOut   = clockOut,
         _repository = repository,
+        _notificationService = notificationService,
         super(const ClockLoading()) {
     on<ClockStarted>    (_onStarted);
     on<ClockInRequested>(_onClockIn);
@@ -54,7 +59,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
         // Re-schedule notification if active session exists
         final endOfShift = active.clockedInAt.add(_shiftDuration);
         if (endOfShift.isAfter(DateTime.now())) {
-          NotificationService.scheduleShiftEndNotification(
+          _notificationService.scheduleShiftEndNotification(
             scheduledDate: endOfShift,
             withAlarm: active.alarmEnabled,
           );
@@ -76,7 +81,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       emit(state);
 
       // Schedule notification for the end of the shift
-      NotificationService.scheduleShiftEndNotification(
+      _notificationService.scheduleShiftEndNotification(
         scheduledDate: entry.clockedInAt.add(_shiftDuration),
         withAlarm: entry.alarmEnabled,
       );
@@ -95,7 +100,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       emit(ClockIdle(currentTime: DateTime.now()));
 
       // Cancel the scheduled notification
-      NotificationService.cancelAllShiftNotifications();
+      _notificationService.cancelAllShiftNotifications();
     } catch (e) {
       emit(ClockError(e.toString()));
     }
@@ -110,7 +115,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       emit(_buildActiveState(active.clockedInAt, event.enabled));
 
       // Update the scheduled notification to include/remove alarm sound
-      NotificationService.scheduleShiftEndNotification(
+      _notificationService.scheduleShiftEndNotification(
         scheduledDate: active.clockedInAt.add(_shiftDuration),
         withAlarm: event.enabled,
       );

@@ -1,5 +1,12 @@
 package com.itsbeeroclock.clock_out
 
-import io.flutter.embedding.android.FlutterActivity
+import android.content.Context
+import androidx.multidex.MultiDex
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+class MainActivity : FlutterFragmentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(newBase)
+        MultiDex.install(this)
+    }
+}
