@@ -21,10 +21,8 @@ dependencies:
   sqflite: ^2.3.3
   path: ^1.9.0
 
-  # (Add these when wiring the real data layer)
-  # sqflite: ^2.3.3
-  # shared_preferences: ^2.2.3
-  # get_it: ^7.6.7        # service locator for DI
+  # Alarms
+  alarm: ^5.4.1
 
 dev_dependencies:
   flutter_test:
