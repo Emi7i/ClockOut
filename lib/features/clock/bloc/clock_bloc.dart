@@ -34,7 +34,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   final NotificationService     _notificationService;
   final AlarmService            _alarmService;
 
-  static const Duration _shiftDuration = Duration(hours: 8);
+  static const Duration _shiftDuration = Duration(minutes: 1);
 
   static const int _shiftAlarmId  = 1;
   static const int _repeatAlarmId = 2;

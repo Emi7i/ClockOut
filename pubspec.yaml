@@ -43,4 +43,5 @@ flutter:
         - asset: assets/fonts/Caveat-SemiBold.ttf
           weight: 600
 
-  # Add your font files to assets/fonts/ and run `flutter pub get`
+  assets:
+    - assets/alarm.mp3
