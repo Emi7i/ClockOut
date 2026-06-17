@@ -30,6 +30,7 @@ final class ClockActive extends ClockState {
   final Duration remaining;     // time until end-of-shift
   final bool alarmEnabled;
   final Duration? nextAlarmIn;  // null when alarm is off
+  final bool isRinging;         // true when an alarm is currently firing
 
   const ClockActive({
     required this.currentTime,
@@ -37,6 +38,7 @@ final class ClockActive extends ClockState {
     required this.remaining,
     this.alarmEnabled  = false,
     this.nextAlarmIn,
+    this.isRinging = false,
   });
 }
 

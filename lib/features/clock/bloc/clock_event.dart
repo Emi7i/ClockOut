@@ -29,6 +29,11 @@ final class AlarmToggled extends ClockEvent {
   const AlarmToggled({required this.enabled});
 }
 
+/// User wants to silence the ringing alarm without clocking out.
+final class AlarmStopRequested extends ClockEvent {
+  const AlarmStopRequested();
+}
+
 /// Periodic tick emitted every second while clocked in.
 final class ClockTicked extends ClockEvent {
   const ClockTicked();

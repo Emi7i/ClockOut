@@ -39,14 +39,32 @@ class OvalActionButton extends StatelessWidget {
       child: SizedBox(
         width:  width,
         height: height,
-        child: CustomPaint(
-          painter: _OvalButtonPainter(
-            strokeColor:  strokeColor,
-            hatchOpacity: hatchOpacity,
-          ),
-          child: Center(
-            child: Text(label, style: AppTextStyles.ovalButton),
-          ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // ── Hand-drawn border image ─────────────────────
+            Image.asset(
+              'assets/ui/timer_border.png',
+              width:  width,
+              height: height,
+              fit:    BoxFit.contain,
+            ),
+
+            // ── Crosshatch fill ─────────────────────────────
+            // Clipped to a slightly smaller oval to stay inside the image border
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: CustomPaint(
+                size: Size(width, height),
+                painter: _OvalButtonPainter(
+                  strokeColor:  strokeColor,
+                  hatchOpacity: hatchOpacity,
+                ),
+              ),
+            ),
+
+            Text(label, style: AppTextStyles.ovalButton),
+          ],
         ),
       ),
     );
@@ -93,13 +111,7 @@ class _OvalButtonPainter extends CustomPainter {
 
     canvas.restore();
 
-    // ── Oval border ───────────────────────────────────────
-    final borderPaint = Paint()
-      ..color       = strokeColor
-      ..style       = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    canvas.drawOval(rect, borderPaint);
+    // ── Border removed (now using Image.asset) ───────────
   }
 
   @override

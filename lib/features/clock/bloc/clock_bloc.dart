@@ -41,6 +41,8 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
 
   Timer?            _ticker;
   StreamSubscription<AlarmSettings>? _alarmRingSubscription;
+  DateTime?         _nextAlarmAt;
+  bool              _isRinging = false;
 
   ClockBloc({
     required ClockInUseCase clockIn,
@@ -60,6 +62,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     on<ClockInRequested>  (_onClockIn);
     on<ClockOutRequested> (_onClockOut);
     on<AlarmToggled>      (_onAlarmToggled);
+    on<AlarmStopRequested>(_onAlarmStop);
     on<ClockTicked>       (_onTicked);
 
     _listenToAlarmRings();
@@ -85,6 +88,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   /// Exposed as a static entry point so notification_service.dart can call it.
   void _onAlarmFired(int alarmId) {
     if (state case ClockActive active when active.alarmEnabled) {
+      _isRinging = true;
       _scheduleRepeatAlarm();
     }
   }
@@ -101,13 +105,15 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
         emit(ClockIdle(currentTime: DateTime.now()));
       } else {
         _startTicker();
-        emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
 
+        final settings = await _settingsRepository.getSettings();
         final endOfShift = active.clockedInAt.add(_shiftDuration);
         if (endOfShift.isAfter(DateTime.now())) {
           // Shift hasn't ended yet — (re)schedule both notification & alarm.
           _notificationService.scheduleShiftEndNotification(
             scheduledDate: endOfShift,
+            delayMinutes:  settings.alarmDelayMinutes,
+            alarmEnabled:  active.alarmEnabled,
           );
           if (active.alarmEnabled) {
             await _scheduleShiftAlarm(endOfShift);
@@ -117,6 +123,8 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
           // immediately so the user isn't silently left clocked in.
           await _scheduleRepeatAlarm(immediately: true);
         }
+
+        emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
       }
     } catch (e) {
       emit(ClockError(e.toString()));
@@ -128,17 +136,27 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       Emitter<ClockState> emit,
       ) async {
     try {
+      // Preserve the alarm toggle from the current idle state
+      final bool initialAlarmEnabled = state is ClockIdle ? (state as ClockIdle).alarmEnabled : false;
+
       final entry = await _clockIn();
       _startTicker();
-      emit(_buildActiveState(entry.clockedInAt, entry.alarmEnabled));
 
+      final settings = await _settingsRepository.getSettings();
       final endOfShift = entry.clockedInAt.add(_shiftDuration);
+      
+      // Always schedule notification, but alarmEnabled controls the sound/hardware alarm
       _notificationService.scheduleShiftEndNotification(
         scheduledDate: endOfShift,
+        delayMinutes:  settings.alarmDelayMinutes,
+        alarmEnabled:  initialAlarmEnabled,
       );
-      if (entry.alarmEnabled) {
+
+      if (initialAlarmEnabled) {
         await _scheduleShiftAlarm(endOfShift);
       }
+
+      emit(_buildActiveState(entry.clockedInAt, initialAlarmEnabled));
     } catch (e) {
       emit(ClockError(e.toString()));
     }
@@ -151,11 +169,27 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     try {
       _ticker?.cancel();
       await _cancelAllAlarms();
+      _nextAlarmAt = null;
+      _isRinging = false;
       await _clockOut();
       _notificationService.cancelAllShiftNotifications();
       emit(ClockIdle(currentTime: DateTime.now()));
     } catch (e) {
       emit(ClockError(e.toString()));
+    }
+  }
+
+  Future<void> _onAlarmStop(
+    AlarmStopRequested _,
+    Emitter<ClockState> emit,
+  ) async {
+    // Stop whatever is ringing now.
+    await _alarmService.stop(_shiftAlarmId);
+    await _alarmService.stop(_repeatAlarmId);
+    _isRinging = false;
+    
+    if (state case ClockActive active) {
+      emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
     }
   }
 
@@ -166,27 +200,30 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     await _repository.setAlarm(enabled: event.enabled);
 
     if (state case ClockActive active) {
-      emit(_buildActiveState(active.clockedInAt, event.enabled));
-
+      final settings = await _settingsRepository.getSettings();
       final endOfShift = active.clockedInAt.add(_shiftDuration);
 
       // Always reschedule the notification (it reflects alarm toggle too).
       _notificationService.scheduleShiftEndNotification(
         scheduledDate: endOfShift,
+        delayMinutes:  settings.alarmDelayMinutes,
+        alarmEnabled:  event.enabled,
       );
 
       if (event.enabled) {
-        // Alarm turned ON.
+        // Sound turned ON.
         if (endOfShift.isAfter(DateTime.now())) {
           await _scheduleShiftAlarm(endOfShift);
-        } else {
-          // Shift already over — start repeat cycle immediately.
-          await _scheduleRepeatAlarm(immediately: true);
+        } else if (_nextAlarmAt != null) {
+          // If we already have a repeat scheduled, set the hardware alarm for it
+          await _scheduleRepeatAlarm(at: _nextAlarmAt);
         }
       } else {
-        // Alarm turned OFF — cancel any pending alarms.
+        // Sound turned OFF — cancel hardware alarms but KEEP countdown/repeats.
         await _cancelAllAlarms();
       }
+      
+      emit(_buildActiveState(active.clockedInAt, event.enabled));
     } else if (state case ClockIdle idle) {
       emit(ClockIdle(
         currentTime:  idle.currentTime,
@@ -205,6 +242,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
 
   /// Schedules the first alarm that fires at the end of the shift.
   Future<void> _scheduleShiftAlarm(DateTime dateTime) async {
+    _nextAlarmAt = dateTime;
     await _alarmService.setAlarm(
       id:       _shiftAlarmId,
       dateTime: dateTime,
@@ -215,22 +253,35 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
 
   /// Schedules the repeating alarm (delay taken from UserSettings)
   /// from now (or immediately with a 1-second offset if [immediately] is true).
-  Future<void> _scheduleRepeatAlarm({bool immediately = false}) async {
+  /// If [at] is provided, schedules it at that exact time.
+  Future<void> _scheduleRepeatAlarm({bool immediately = false, DateTime? at}) async {
     // Cancel the previous repeat before scheduling a new one.
     await _alarmService.stop(_repeatAlarmId);
 
     final settings = await _settingsRepository.getSettings();
     final interval = Duration(minutes: settings.alarmDelayMinutes);
 
-    final DateTime fireAt = immediately
+    final DateTime fireAt = at ?? (immediately
         ? DateTime.now().add(const Duration(seconds: 1))
-        : DateTime.now().add(interval);
+        : DateTime.now().add(interval));
 
-    await _alarmService.setAlarm(
-      id:       _repeatAlarmId,
-      dateTime: fireAt,
-      title:    'Still not clocked out!',
-      body:     'Your shift ended a while ago. Please clock out.',
+    _nextAlarmAt = fireAt;
+
+    // Only set the hardware alarm if the toggle is ON
+    if (state case ClockActive active when active.alarmEnabled) {
+      await _alarmService.setAlarm(
+        id:       _repeatAlarmId,
+        dateTime: fireAt,
+        title:    'Still not clocked out!',
+        body:     'Your shift ended a while ago. Please clock out.',
+      );
+    }
+
+    // ALWAYS schedule notification repeat, payload carries the sound preference
+    await _notificationService.scheduleRepeatNotification(
+      scheduledDate: fireAt,
+      delayMinutes:  settings.alarmDelayMinutes,
+      alarmEnabled:  state is ClockActive ? (state as ClockActive).alarmEnabled : true,
     );
   }
 
@@ -246,13 +297,22 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     final elapsed  = now.difference(clockedInAt);
     final remaining = _shiftDuration - elapsed;
 
+    Duration? nextAlarmIn;
+    if (alarmEnabled && _nextAlarmAt != null) {
+      nextAlarmIn = _nextAlarmAt!.difference(now);
+      if (nextAlarmIn.isNegative) nextAlarmIn = Duration.zero;
+    }
+
     return ClockActive(
       currentTime:  now,
       clockedInAt:  clockedInAt,
       remaining:    remaining.isNegative ? Duration.zero : remaining,
       alarmEnabled: alarmEnabled,
+      nextAlarmIn:  nextAlarmIn,
+      isRinging:    _isRinging,
     );
   }
+
 
   void _startTicker() {
     _ticker?.cancel();

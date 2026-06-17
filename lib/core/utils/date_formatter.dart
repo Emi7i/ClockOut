@@ -27,10 +27,10 @@ abstract final class DateFormatter {
     return '$min min';
   }
 
-  /// e.g. "15 min 30 s"
+  /// e.g. "15min 30sec"
   static String countdown(Duration d) {
     final min = d.inMinutes.remainder(60);
     final sec = d.inSeconds.remainder(60);
-    return '$min min $sec s';
+    return '${min}min ${sec}sec';
   }
 }

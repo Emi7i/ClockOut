@@ -3,6 +3,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:clock_app/domain/entities/clock_entry.dart';
+import 'package:clock_app/domain/entities/user_settings.dart';
 import 'package:clock_app/domain/repositories/clock_repository.dart';
 import 'package:clock_app/domain/repositories/user_settings_repository.dart';
 import 'package:clock_app/domain/use_cases/clock_in_use_case.dart';
@@ -42,8 +43,20 @@ void main() {
     mockAlarmService = MockAlarmService();
 
     // Default mock behaviors
+    when(() => mockSettingsRepository.getSettings()).thenAnswer((_) async => const UserSettings(
+          accentColorHex: 0xFF4CAF50,
+          is12HourFormat: false,
+          alarmDelayMinutes: 30,
+        ));
     when(() => mockNotificationService.scheduleShiftEndNotification(
           scheduledDate: any(named: 'scheduledDate'),
+          delayMinutes:  any(named: 'delayMinutes'),
+          alarmEnabled:  any(named: 'alarmEnabled'),
+        )).thenAnswer((_) async => {});
+    when(() => mockNotificationService.scheduleRepeatNotification(
+          scheduledDate: any(named: 'scheduledDate'),
+          delayMinutes:  any(named: 'delayMinutes'),
+          alarmEnabled:  any(named: 'alarmEnabled'),
         )).thenAnswer((_) async => {});
     when(() => mockNotificationService.cancelAllShiftNotifications())
         .thenAnswer((_) async => {});
@@ -103,9 +116,14 @@ void main() {
     );
 
     blocTest<ClockBloc, ClockState>(
-      'emits [ClockActive] when ClockInRequested succeeds',
+      'emits [ClockActive] with nextAlarmIn when ClockInRequested succeeds and alarm is enabled',
       build: () {
-        when(() => mockClockIn()).thenAnswer((_) async => tClockEntry);
+        final entry = ClockEntry(
+          id: '1',
+          clockedInAt: DateTime.now(),
+          alarmEnabled: true,
+        );
+        when(() => mockClockIn()).thenAnswer((_) async => entry);
         return ClockBloc(
           clockIn: mockClockIn,
           clockOut: mockClockOut,
@@ -115,9 +133,12 @@ void main() {
           alarmService: mockAlarmService,
         );
       },
+      seed: () => ClockIdle(currentTime: DateTime.now(), alarmEnabled: true),
       act: (bloc) => bloc.add(const ClockInRequested()),
       expect: () => [
-        isA<ClockActive>(),
+        isA<ClockActive>()
+            .having((s) => s.alarmEnabled, 'alarmEnabled', true)
+            .having((s) => s.nextAlarmIn, 'nextAlarmIn', isNotNull),
       ],
     );
   });

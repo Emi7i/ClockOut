@@ -45,6 +45,13 @@ void main() {
     // Default mock behaviors
     when(() => mockNotificationService.scheduleShiftEndNotification(
           scheduledDate: any(named: 'scheduledDate'),
+          delayMinutes:  any(named: 'delayMinutes'),
+          alarmEnabled:  any(named: 'alarmEnabled'),
+        )).thenAnswer((_) async => {});
+    when(() => mockNotificationService.scheduleRepeatNotification(
+          scheduledDate: any(named: 'scheduledDate'),
+          delayMinutes:  any(named: 'delayMinutes'),
+          alarmEnabled:  any(named: 'alarmEnabled'),
         )).thenAnswer((_) async => {});
     when(() => mockNotificationService.cancelAllShiftNotifications())
         .thenAnswer((_) async => {});
@@ -89,6 +96,8 @@ void main() {
       verify: (_) {
         verify(() => mockNotificationService.scheduleShiftEndNotification(
               scheduledDate: any(named: 'scheduledDate'),
+              delayMinutes:  any(named: 'delayMinutes'),
+              alarmEnabled:  any(named: 'alarmEnabled'),
             )).called(1);
       },
     );
@@ -136,6 +145,8 @@ void main() {
       verify: (_) {
         verify(() => mockNotificationService.scheduleShiftEndNotification(
               scheduledDate: any(named: 'scheduledDate'),
+              delayMinutes:  any(named: 'delayMinutes'),
+              alarmEnabled:  any(named: 'alarmEnabled'),
             )).called(1);
       },
     );

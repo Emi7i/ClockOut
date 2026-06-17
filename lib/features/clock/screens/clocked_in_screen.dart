@@ -47,30 +47,45 @@ class ClockedInScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // ── Dashed remaining ring ─────────────
-                      RemainingRing(remaining: active.remaining),
+                      if (active.remaining > Duration.zero) ...[
+                        // ── During shift: Ring + Small button ──
+                        RemainingRing(remaining: active.remaining),
 
-                      const SizedBox(height: AppDimensions.spaceLg),
+                        const SizedBox(height: AppDimensions.spaceLg),
 
-                      // ── Alarm toggle ──────────────────────
-                      AlarmToggle(
-                        isOn:      active.alarmEnabled,
-                        onChanged: (v) => context
-                            .read<ClockBloc>()
-                            .add(AlarmToggled(enabled: v)),
-                        subLabel: active.alarmEnabled && active.nextAlarmIn != null
-                            ? 'next alarm in:\n${DateFormatter.countdown(active.nextAlarmIn!)}'
-                            : null,
-                      ),
+                        AlarmToggle(
+                          isOn:      active.alarmEnabled,
+                          onChanged: (v) => context
+                              .read<ClockBloc>()
+                              .add(AlarmToggled(enabled: v)),
+                        ),
 
-                      const SizedBox(height: AppDimensions.spaceMd),
+                        const SizedBox(height: AppDimensions.spaceMd),
 
-                      // ── Clock Out button ──────────────────
-                      ClockOutButton(
-                        onPressed: () => context
-                            .read<ClockBloc>()
-                            .add(const ClockOutRequested()),
-                      ),
+                        ClockOutButton(
+                          onPressed: () => _confirmClockOut(context),
+                        ),
+                      ] else ...[
+                        // ── After shift: Big button + Alarm countdown ──
+                        OvalActionButton(
+                          label:     active.isRinging ? 'Stop the Alarm' : 'Clock out',
+                          onPressed: () => active.isRinging
+                              ? context.read<ClockBloc>().add(const AlarmStopRequested())
+                              : _confirmClockOut(context),
+                        ),
+
+                        const SizedBox(height: AppDimensions.spaceLg),
+
+                        AlarmToggle(
+                          isOn:      active.alarmEnabled,
+                          onChanged: (v) => context
+                              .read<ClockBloc>()
+                              .add(AlarmToggled(enabled: v)),
+                          subLabel: active.alarmEnabled && active.nextAlarmIn != null
+                              ? 'next alarm in: ${DateFormatter.countdown(active.nextAlarmIn!)}'
+                              : null,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -85,6 +100,36 @@ class ClockedInScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  void _confirmClockOut(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        ),
+        title: const Text('Clock out', style: AppTextStyles.screenTitle),
+        content: const Text(
+          'Are you sure you want to clock out?',
+          style: AppTextStyles.bodyLarge,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: AppTextStyles.bodyMedium),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<ClockBloc>().add(const ClockOutRequested());
+            },
+            child: const Text('Clock out', style: AppTextStyles.destructiveButton),
+          ),
+        ],
+      ),
     );
   }
 }
