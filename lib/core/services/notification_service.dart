@@ -1,5 +1,7 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
+import 'package:alarm/alarm.dart';
+import '../../data/repositories/clock_repository_impl.dart';
 
 abstract class NotificationService {
   Future<void> initialize();
@@ -27,9 +29,6 @@ class NotificationController {
   static const int _baseNotificationId   = 1;
   static const int _repeatNotificationId = 2;
 
-  static bool _shiftActive = false;
-  static void setShiftActive(bool active) => _shiftActive = active;
-
   @pragma('vm:entry-point')
   static Future<void> onActionReceivedMethod(ReceivedAction action) async {
     final bool isDismissed =
@@ -40,19 +39,24 @@ class NotificationController {
         action.id == _baseNotificationId ||
             action.id == _repeatNotificationId;
 
-    // Check payload for repeat logic
-    final bool repeatSoundEnabled = action.payload?['alarmEnabled'] == 'true';
-    final int  delayMinutes       = int.tryParse(action.payload?['delayMinutes'] ?? '30') ?? 30;
+    if (isShiftNotification && isDismissed) {
+      final clockRepo = ClockRepositoryImpl();
+      final active = await clockRepo.getActiveEntry();
 
-    // ALWAYS reschedule if shift is active, regardless of sound toggle
-    if (isShiftNotification && isDismissed && _shiftActive) {
-      await _scheduleNextRepeat(delayMinutes, repeatSoundEnabled);
+      // ONLY reschedule if shift is still active in the database
+      if (active != null) {
+        final bool repeatSoundEnabled = action.payload?['alarmEnabled'] == 'true';
+        final int  delayMinutes       = int.tryParse(action.payload?['delayMinutes'] ?? '30') ?? 30;
+        
+        await _scheduleNextRepeat(delayMinutes, repeatSoundEnabled);
+      }
     }
   }
 
   static Future<void> _scheduleNextRepeat(int delayMinutes, bool soundEnabled) async {
     final DateTime next = DateTime.now().add(Duration(minutes: delayMinutes));
 
+    // 1. Reschedule AwesomeNotification
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
         id:         _repeatNotificationId,
@@ -76,8 +80,36 @@ class NotificationController {
           actionType: ActionType.DismissAction,
         ),
       ],
-      schedule: NotificationCalendar.fromDate(date: next),
+      schedule: NotificationCalendar.fromDate(
+        date: next,
+        preciseAlarm: true,
+      ),
     );
+
+    // 2. Reschedule Hardware Alarm if enabled
+    if (soundEnabled) {
+      await Alarm.init();
+      await Alarm.set(
+        alarmSettings: AlarmSettings(
+          id: _repeatNotificationId,
+          dateTime: next,
+          assetAudioPath: 'assets/alarm.mp3',
+          loopAudio: true,
+          vibrate: true,
+          androidFullScreenIntent: true,
+          volumeSettings: VolumeSettings.fade(
+            volume: 0.8,
+            fadeDuration: const Duration(seconds: 5),
+            volumeEnforced: true,
+          ),
+          notificationSettings: NotificationSettings(
+            title: 'Still not clocked out!',
+            body: 'Your shift ended a while ago. Please clock out.',
+            stopButton: 'Dismiss',
+          ),
+        ),
+      );
+    }
   }
 }
 
@@ -97,6 +129,8 @@ class NotificationServiceImpl implements NotificationService {
           importance:         NotificationImportance.Max,
           criticalAlerts:     true,
           playSound:          true,
+          onlyAlertOnce:      false,
+          enableVibration:    true,
         ),
       ],
       debug: true,
@@ -108,8 +142,8 @@ class NotificationServiceImpl implements NotificationService {
       }
     });
     
-    // Check and request exact alarm permission
-    final List<NotificationPermission> permissions = await AwesomeNotifications().checkPermissionList(
+    // Check and request exact alarm, critical alert, and DND override permissions
+    await AwesomeNotifications().requestPermissionToSendNotifications(
       channelKey: alarmChannelKey,
       permissions: [
         NotificationPermission.PreciseAlarms,
@@ -117,17 +151,6 @@ class NotificationServiceImpl implements NotificationService {
         NotificationPermission.OverrideDnD,
       ],
     );
-
-    if (permissions.isEmpty || !permissions.contains(NotificationPermission.PreciseAlarms)) {
-      await AwesomeNotifications().requestPermissionToSendNotifications(
-        channelKey: alarmChannelKey,
-        permissions: [
-          NotificationPermission.PreciseAlarms,
-          NotificationPermission.CriticalAlert,
-          NotificationPermission.OverrideDnD,
-        ],
-      );
-    }
 
     await AwesomeNotifications().setListeners(
       onActionReceivedMethod: NotificationController.onActionReceivedMethod,
@@ -141,8 +164,8 @@ class NotificationServiceImpl implements NotificationService {
     required bool     alarmEnabled,
   }) async {
     await cancelAllShiftNotifications();
-    NotificationController.setShiftActive(true);
 
+    // 1. Schedule main shift-end notification
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
         id:         NotificationController._baseNotificationId,
@@ -164,7 +187,19 @@ class NotificationServiceImpl implements NotificationService {
           actionType: ActionType.DismissAction,
         ),
       ],
-      schedule: NotificationCalendar.fromDate(date: scheduledDate),
+      schedule: NotificationCalendar.fromDate(
+        date: scheduledDate,
+        preciseAlarm: true,
+      ),
+    );
+
+    // 2. Automatically schedule the FIRST repeat notification too.
+    // This ensures that even if the app is killed and the user doesn't dismiss
+    // the first notification, a follow-up will still happen.
+    await scheduleRepeatNotification(
+      scheduledDate: scheduledDate.add(Duration(minutes: delayMinutes)),
+      delayMinutes:  delayMinutes,
+      alarmEnabled:  alarmEnabled,
     );
   }
 
@@ -174,7 +209,6 @@ class NotificationServiceImpl implements NotificationService {
     required int      delayMinutes,
     required bool     alarmEnabled,
   }) async {
-    // We use the same repeat ID to replace any existing one
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
         id:         NotificationController._repeatNotificationId,
@@ -196,13 +230,15 @@ class NotificationServiceImpl implements NotificationService {
           actionType: ActionType.DismissAction,
         ),
       ],
-      schedule: NotificationCalendar.fromDate(date: scheduledDate),
+      schedule: NotificationCalendar.fromDate(
+        date: scheduledDate,
+        preciseAlarm: true,
+      ),
     );
   }
 
   @override
   Future<void> cancelAllShiftNotifications() async {
-    NotificationController.setShiftActive(false);
     await AwesomeNotifications().cancel(NotificationController._baseNotificationId);
     await AwesomeNotifications().cancel(NotificationController._repeatNotificationId);
   }
