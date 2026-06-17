@@ -136,21 +136,10 @@ class NotificationServiceImpl implements NotificationService {
       debug: true,
     );
 
-    await AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
-      if (!isAllowed) {
-        AwesomeNotifications().requestPermissionToSendNotifications();
-      }
-    });
-    
-    // Check and request exact alarm, critical alert, and DND override permissions
-    await AwesomeNotifications().requestPermissionToSendNotifications(
-      channelKey: alarmChannelKey,
-      permissions: [
-        NotificationPermission.PreciseAlarms,
-        NotificationPermission.CriticalAlert,
-        NotificationPermission.OverrideDnD,
-      ],
-    );
+    final bool isAllowed = await AwesomeNotifications().isNotificationAllowed();
+    if (!isAllowed) {
+      await AwesomeNotifications().requestPermissionToSendNotifications();
+    }
 
     await AwesomeNotifications().setListeners(
       onActionReceivedMethod: NotificationController.onActionReceivedMethod,

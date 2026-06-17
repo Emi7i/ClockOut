@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import '../../../common_widgets/common_widgets.dart';
 import '../../../core/constants/constants.dart';
+import '../../../core/services/notification_service.dart';
 import '../bloc/settings_bloc.dart';
 import '../widgets/settings_row.dart';
 import '../widgets/delete_logs_button.dart';
@@ -89,6 +91,20 @@ class SettingsScreen extends StatelessWidget {
                               )
                             : null,
                       ),
+
+                      const SizedBox(height: AppDimensions.spaceLg),
+
+                      // ── Fix Notifications ────────────────
+                      SettingsRow(
+                        icon:    Icons.notification_important_outlined,
+                        label:   'Fix delayed alerts',
+                        accentColor: accentColor,
+                        onTap:   () => _requestAdvancedPermissions(context),
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
+                          color: accentColor.withOpacity(0.5),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -123,6 +139,17 @@ class SettingsScreen extends StatelessWidget {
   }
 
   // ── Helpers ───────────────────────────────────────────────
+
+  void _requestAdvancedPermissions(BuildContext context) async {
+    await AwesomeNotifications().requestPermissionToSendNotifications(
+      channelKey: NotificationServiceImpl.alarmChannelKey,
+      permissions: [
+        NotificationPermission.PreciseAlarms,
+        NotificationPermission.CriticalAlert,
+        NotificationPermission.OverrideDnD,
+      ],
+    );
+  }
 
   void _showColorPicker(BuildContext context, SettingsState state) {
     if (state is! SettingsLoaded) return;
