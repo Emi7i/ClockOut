@@ -79,7 +79,7 @@ class AlarmToggle extends StatelessWidget {
         // ── Optional sub-label (e.g. "next alarm in: 15 min 30 s") ──
         if (subLabel != null) ...[
           const SizedBox(height: AppDimensions.spaceXs),
-          Text(subLabel!, style: AppTextStyles.alarmSubtext),
+          Text(subLabel!, style: AppTextStyles.bodyMedium),
         ],
       ],
     );

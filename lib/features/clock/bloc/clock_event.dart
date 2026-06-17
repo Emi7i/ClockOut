@@ -40,6 +40,11 @@ final class AlarmStopRequested extends ClockEvent {
   const AlarmStopRequested();
 }
 
+/// Internal event fired when an alarm/notification triggers.
+final class AlertFired extends ClockEvent {
+  const AlertFired();
+}
+
 /// Periodic tick emitted every second while clocked in.
 final class ClockTicked extends ClockEvent {
   const ClockTicked();

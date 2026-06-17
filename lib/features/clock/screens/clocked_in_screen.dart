@@ -115,7 +115,7 @@ class ClockedInScreen extends StatelessWidget {
                           onChanged: (v) => context
                               .read<ClockBloc>()
                               .add(AlarmToggled(enabled: v)),
-                          subLabel: active.alarmEnabled && active.nextAlarmIn != null
+                          subLabel: active.nextAlarmIn != null
                               ? 'next alarm in: ${DateFormatter.countdown(active.nextAlarmIn!)}'
                               : null,
                         ),

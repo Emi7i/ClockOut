@@ -8,13 +8,13 @@ import 'package:flutter/material.dart';
 abstract final class AppColors {
   // ── Backgrounds ───────────────────────────────────────────
   /// Main screen background (near-black)
-  static const Color background = Color(0xFF1C1C1E);
+  static const Color background = Color(0xFF1E1E1E);
 
   /// Bottom navigation bar background
-  static const Color navBar = Color(0xFF2A2A2C);
+  static const Color navBar = Color(0xFF343A40);
 
   /// Surface used for cards, list containers
-  static const Color surface = Color(0xFF252527);
+  static const Color surface = Color(0xFF343A40);
 
   // ── Accent ────────────────────────────────────────────────
   /// Primary neon yellow-green accent

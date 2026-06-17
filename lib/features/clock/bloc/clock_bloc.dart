@@ -64,6 +64,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     on<ClockOutRequested> (_onClockOut);
     on<AlarmToggled>      (_onAlarmToggled);
     on<AlarmStopRequested>(_onAlarmStop);
+    on<AlertFired>        (_onAlertFired);
     on<ClockTicked>       (_onTicked);
 
     _listenToAlarmRings();
@@ -77,20 +78,23 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     _alarmRingSubscription = _alarmService.ringStream.listen((alarmSettings) {
       if (alarmSettings.id == _shiftAlarmId ||
           alarmSettings.id == _repeatAlarmId) {
-        _onAlarmFired(alarmSettings.id);
+        add(const AlertFired());
       }
     });
   }
 
-  /// Called when either alarm fires (foreground) OR when the user
-  /// dismisses the alarm notification (via NotificationController callback
-  /// in notification_service.dart for background/killed scenarios).
-  ///
-  /// Exposed as a static entry point so notification_service.dart can call it.
-  void _onAlarmFired(int alarmId) {
-    if (state case ClockActive active when active.alarmEnabled) {
-      _isRinging = true;
-      _scheduleRepeatAlarm();
+  Future<void> _onAlertFired(
+      AlertFired _,
+      Emitter<ClockState> emit,
+      ) async {
+    if (state case ClockActive active) {
+      if (active.alarmEnabled) {
+        _isRinging = true;
+      }
+      // ALWAYS schedule the next repeat, regardless of sound setting
+      await _scheduleRepeatAlarm();
+      
+      emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
     }
   }
 
@@ -109,7 +113,10 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
 
         final settings = await _settingsRepository.getSettings();
         final endOfShift = active.clockedInAt.add(_shiftDuration);
+        
         if (endOfShift.isAfter(DateTime.now())) {
+          _nextAlarmAt = endOfShift; // Track for countdown and continuous background logic
+          
           // Shift hasn't ended yet — (re)schedule both notification & alarm.
           _notificationService.scheduleShiftEndNotification(
             scheduledDate: endOfShift,
@@ -119,9 +126,8 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
           if (active.alarmEnabled) {
             await _scheduleShiftAlarm(endOfShift);
           }
-        } else if (active.alarmEnabled) {
-          // Shift already ended while app was closed — fire a repeat
-          // immediately so the user isn't silently left clocked in.
+        } else {
+          // Shift already ended — fire a repeat immediately to catch up
           await _scheduleRepeatAlarm(immediately: true);
         }
 
@@ -145,6 +151,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
 
       final settings = await _settingsRepository.getSettings();
       final endOfShift = entry.clockedInAt.add(_shiftDuration);
+      _nextAlarmAt = endOfShift; // Track for countdown and continuous background logic
       
       // Always schedule notification, but alarmEnabled controls the sound/hardware alarm
       _notificationService.scheduleShiftEndNotification(
@@ -182,18 +189,20 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       // Cancel existing ones first just in case
       await _cancelAllAlarms();
       
+      _nextAlarmAt = endOfShift; // Track for countdown and continuous background logic
+
       _notificationService.scheduleShiftEndNotification(
         scheduledDate: endOfShift,
         delayMinutes:  settings.alarmDelayMinutes,
         alarmEnabled:  activeState.alarmEnabled,
       );
 
-      if (activeState.alarmEnabled) {
-        if (endOfShift.isAfter(DateTime.now())) {
-           await _scheduleShiftAlarm(endOfShift);
-        } else {
-           await _scheduleRepeatAlarm(immediately: true);
+      if (endOfShift.isAfter(DateTime.now())) {
+        if (activeState.alarmEnabled) {
+          await _scheduleShiftAlarm(endOfShift);
         }
+      } else {
+        await _scheduleRepeatAlarm(immediately: true);
       }
 
       // 3. Emit new state
@@ -274,6 +283,12 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   }
 
   void _onTicked(ClockTicked _, Emitter<ClockState> emit) {
+    if (_nextAlarmAt != null && DateTime.now().isAfter(_nextAlarmAt!)) {
+      // Prevent double firing before the alert gets processed and reschedules
+      _nextAlarmAt = null;
+      add(const AlertFired());
+    }
+
     if (state case ClockActive active) {
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
     }
@@ -339,7 +354,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     final remaining = _shiftDuration - elapsed;
 
     Duration? nextAlarmIn;
-    if (alarmEnabled && _nextAlarmAt != null) {
+    if (_nextAlarmAt != null) {
       nextAlarmIn = _nextAlarmAt!.difference(now);
       if (nextAlarmIn.isNegative) nextAlarmIn = Duration.zero;
     }
