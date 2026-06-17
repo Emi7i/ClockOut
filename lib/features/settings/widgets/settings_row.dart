@@ -11,6 +11,7 @@ class SettingsRow extends StatelessWidget {
   final IconData  icon;
   final String    label;
   final VoidCallback onTap;
+  final Color?    accentColor;
 
   /// Optional widget on the far right (e.g. "12h" / "+15" label).
   final Widget?   trailing;
@@ -20,11 +21,15 @@ class SettingsRow extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.accentColor,
     this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
+    final color = accentColor ?? AppColors.accent;
+    final colorDim = color.withOpacity(0.16);
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -35,16 +40,14 @@ class SettingsRow extends StatelessWidget {
             width:  AppDimensions.settingIconBoxSize,
             height: AppDimensions.settingIconBoxSize,
             decoration: BoxDecoration(
-              color:        AppColors.accentDim,
+              color:        colorDim,
               borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
               border: Border.all(
                 color: AppColors.borderDashed,
                 width: 1,
-                // Dart's Border doesn't support dashes natively;
-                // swap this for a CustomPaint dashed border if needed.
               ),
             ),
-            child: Icon(icon, color: AppColors.accent, size: 18),
+            child: Icon(icon, color: color, size: 18),
           ),
 
           const SizedBox(width: AppDimensions.spaceMd),
