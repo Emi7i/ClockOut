@@ -48,6 +48,40 @@ class ClockedInScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (active.remaining > Duration.zero) ...[
+                        // ── Clocked In Time (Editable) ───────────
+                        GestureDetector(
+                          onTap: () async {
+                            final TimeOfDay? newTime = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.fromDateTime(active.clockedInAt),
+                            );
+
+                            if (newTime != null && context.mounted) {
+                              final now = DateTime.now();
+                              // Combine today's date with the selected time
+                              var newDateTime = DateTime(
+                                now.year,
+                                now.month,
+                                now.day,
+                                newTime.hour,
+                                newTime.minute,
+                              );
+                              
+                              // If the selected time is in the future, assume it was yesterday
+                              if (newDateTime.isAfter(now)) {
+                                newDateTime = newDateTime.subtract(const Duration(days: 1));
+                              }
+
+                              context.read<ClockBloc>().add(ClockInTimeEdited(newDateTime));
+                            }
+                          },
+                          child: Text(
+                            'Clocked in time: ${DateFormatter.clockTime(active.clockedInAt)}',
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                        ),
+                        const SizedBox(height: AppDimensions.spaceMd),
+
                         // ── During shift: Ring + Small button ──
                         RemainingRing(remaining: active.remaining),
 

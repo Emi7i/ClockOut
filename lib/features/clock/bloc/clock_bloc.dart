@@ -60,6 +60,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
         super(const ClockLoading()) {
     on<ClockStarted>      (_onStarted);
     on<ClockInRequested>  (_onClockIn);
+    on<ClockInTimeEdited> (_onClockInTimeEdited);
     on<ClockOutRequested> (_onClockOut);
     on<AlarmToggled>      (_onAlarmToggled);
     on<AlarmStopRequested>(_onAlarmStop);
@@ -157,6 +158,46 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       }
 
       emit(_buildActiveState(entry.clockedInAt, initialAlarmEnabled));
+    } catch (e) {
+      emit(ClockError(e.toString()));
+    }
+  }
+
+  Future<void> _onClockInTimeEdited(
+      ClockInTimeEdited event,
+      Emitter<ClockState> emit,
+      ) async {
+    if (state is! ClockActive) return;
+    
+    try {
+      final activeState = state as ClockActive;
+      
+      // 1. Update the database
+      await _repository.updateActiveClockInTime(event.newTime);
+      
+      // 2. Reschedule alarms and notifications based on the new time
+      final settings = await _settingsRepository.getSettings();
+      final endOfShift = event.newTime.add(_shiftDuration);
+      
+      // Cancel existing ones first just in case
+      await _cancelAllAlarms();
+      
+      _notificationService.scheduleShiftEndNotification(
+        scheduledDate: endOfShift,
+        delayMinutes:  settings.alarmDelayMinutes,
+        alarmEnabled:  activeState.alarmEnabled,
+      );
+
+      if (activeState.alarmEnabled) {
+        if (endOfShift.isAfter(DateTime.now())) {
+           await _scheduleShiftAlarm(endOfShift);
+        } else {
+           await _scheduleRepeatAlarm(immediately: true);
+        }
+      }
+
+      // 3. Emit new state
+      emit(_buildActiveState(event.newTime, activeState.alarmEnabled));
     } catch (e) {
       emit(ClockError(e.toString()));
     }

@@ -21,11 +21,11 @@ class ClockOutButton extends StatelessWidget {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: AppColors.borderDashed, width: 1.5),
+        side: const BorderSide(color: AppColors.borderDashed, width: 2.0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
       ),
       child: Text(label, style: AppTextStyles.outlineButton),
     );

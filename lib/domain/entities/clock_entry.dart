@@ -24,12 +24,13 @@ class ClockEntry {
   }
 
   ClockEntry copyWith({
+    DateTime? clockedInAt,
     DateTime? clockedOutAt,
     bool? alarmEnabled,
   }) {
     return ClockEntry(
       id: id,
-      clockedInAt: clockedInAt,
+      clockedInAt: clockedInAt ?? this.clockedInAt,
       clockedOutAt: clockedOutAt ?? this.clockedOutAt,
       alarmEnabled: alarmEnabled ?? this.alarmEnabled,
     );

@@ -4,34 +4,34 @@
 /// ─────────────────────────────────────────────────────────────
 abstract final class AppDimensions {
   // ── Screen padding ────────────────────────────────────────
-  static const double screenPaddingH = 16.0;
-  static const double screenPaddingV = 14.0;
+  static const double screenPaddingH = 20.0;
+  static const double screenPaddingV = 18.0;
 
   // ── Border radius ─────────────────────────────────────────
-  static const double radiusSm  = 6.0;
-  static const double radiusMd  = 10.0;
-  static const double radiusLg  = 14.0;
-  static const double radiusXl  = 28.0; // phone card outer corners
+  static const double radiusSm  = 8.0;
+  static const double radiusMd  = 14.0;
+  static const double radiusLg  = 18.0;
+  static const double radiusXl  = 36.0; // phone card outer corners
 
   // ── Oval action button ────────────────────────────────────
-  static const double ovalWidth  = 180.0;
-  static const double ovalHeight = 108.0;
+  static const double ovalWidth  = 240.0;
+  static const double ovalHeight = 144.0;
 
   // ── Bottom nav ────────────────────────────────────────────
-  static const double navHeight  = 68.0;
-  static const double waveHeight = 22.0; // height of the wave crest area
+  static const double navHeight  = 84.0;
+  static const double waveHeight = 28.0; // height of the wave crest area
 
   // ── Donut chart ───────────────────────────────────────────
-  static const double donutSize        = 120.0;
-  static const double donutStrokeWidth = 10.0;
+  static const double donutSize        = 160.0;
+  static const double donutStrokeWidth = 14.0;
 
   // ── Settings icon box ─────────────────────────────────────
-  static const double settingIconBoxSize = 36.0;
+  static const double settingIconBoxSize = 48.0;
 
   // ── Misc spacing ──────────────────────────────────────────
-  static const double spaceXs = 4.0;
-  static const double spaceSm = 8.0;
-  static const double spaceMd = 16.0;
-  static const double spaceLg = 24.0;
-  static const double spaceXl = 32.0;
+  static const double spaceXs = 6.0;
+  static const double spaceSm = 12.0;
+  static const double spaceMd = 24.0;
+  static const double spaceLg = 36.0;
+  static const double spaceXl = 48.0;
 }

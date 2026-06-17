@@ -13,7 +13,7 @@ abstract final class AppTextStyles {
   // ── Display ───────────────────────────────────────────────
   static const TextStyle timeDisplay = TextStyle(
     fontFamily: _font,
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
     letterSpacing: 1.2,
@@ -21,7 +21,7 @@ abstract final class AppTextStyles {
 
   static const TextStyle screenTitle = TextStyle(
     fontFamily: _font,
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
@@ -29,7 +29,7 @@ abstract final class AppTextStyles {
   // ── Oval button label ─────────────────────────────────────
   static const TextStyle ovalButton = TextStyle(
     fontFamily: _font,
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
@@ -37,104 +37,104 @@ abstract final class AppTextStyles {
   // ── Remaining countdown ───────────────────────────────────
   static const TextStyle remainingLarge = TextStyle(
     fontFamily: _font,
-    fontSize: 22,
+    fontSize: 30,
     fontWeight: FontWeight.w600,
     color: AppColors.accent,
   );
 
   static const TextStyle remainingSmall = TextStyle(
     fontFamily: _font,
-    fontSize: 16,
+    fontSize: 22,
     color: AppColors.accent,
   );
 
   // ── Body ──────────────────────────────────────────────────
   static const TextStyle bodyLarge = TextStyle(
     fontFamily: _font,
-    fontSize: 20,
+    fontSize: 26,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle bodyMedium = TextStyle(
     fontFamily: _font,
-    fontSize: 17,
+    fontSize: 22,
     color: AppColors.textSecondary,
   );
 
   static const TextStyle bodySmall = TextStyle(
     fontFamily: _font,
-    fontSize: 14,
+    fontSize: 18,
     color: AppColors.textMuted,
   );
 
   // ── Labels ────────────────────────────────────────────────
   static const TextStyle label = TextStyle(
     fontFamily: _font,
-    fontSize: 18,
+    fontSize: 24,
     color: AppColors.textSecondary,
   );
 
   static const TextStyle alarmSubtext = TextStyle(
     fontFamily: _font,
-    fontSize: 14,
+    fontSize: 18,
     color: AppColors.textMuted,
   );
 
   // ── Log list ──────────────────────────────────────────────
   static const TextStyle logNeutral = TextStyle(
     fontFamily: _font,
-    fontSize: 15,
+    fontSize: 20,
     color: AppColors.textSecondary,
   );
 
   static const TextStyle logPositive = TextStyle(
     fontFamily: _font,
-    fontSize: 15,
+    fontSize: 20,
     color: AppColors.positive,
   );
 
   static const TextStyle logNegative = TextStyle(
     fontFamily: _font,
-    fontSize: 15,
+    fontSize: 20,
     color: AppColors.negative,
   );
 
   // ── Settings ──────────────────────────────────────────────
   static const TextStyle settingLabel = TextStyle(
     fontFamily: _font,
-    fontSize: 17,
+    fontSize: 22,
     color: AppColors.textSecondary,
   );
 
   // ── Donut chart ───────────────────────────────────────────
   static const TextStyle donutPrimary = TextStyle(
     fontFamily: _font,
-    fontSize: 16,
+    fontSize: 22,
     color: AppColors.textSecondary,
   );
 
   static const TextStyle donutSecondary = TextStyle(
     fontFamily: _font,
-    fontSize: 12,
+    fontSize: 16,
     color: AppColors.textMuted,
   );
 
   // ── Buttons ───────────────────────────────────────────────
   static const TextStyle outlineButton = TextStyle(
     fontFamily: _font,
-    fontSize: 17,
+    fontSize: 22,
     color: AppColors.textSecondary,
   );
 
   static const TextStyle destructiveButton = TextStyle(
     fontFamily: _font,
-    fontSize: 17,
+    fontSize: 22,
     color: AppColors.negative,
   );
 
   static const TextStyle chipButton = TextStyle(
     fontFamily: _font,
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: FontWeight.w600,
     color: AppColors.background,
   );

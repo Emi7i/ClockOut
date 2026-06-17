@@ -82,4 +82,15 @@ class ClockRepositoryImpl implements ClockRepository {
     // This implementation depends on where you want to store the "enabled" flag.
     // In ClockBloc it was just a local state, but for persistence it should be in settings.
   }
+
+  @override
+  Future<void> updateActiveClockInTime(DateTime newTime) async {
+    final active = await getActiveEntry();
+    if (active == null) throw Exception('No active session to update');
+
+    final updated = active.copyWith(
+      clockedInAt: newTime,
+    );
+    await _dbManager.updateLog(ClockEntryMapper.toDto(updated));
+  }
 }

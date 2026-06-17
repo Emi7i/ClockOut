@@ -29,6 +29,12 @@ final class AlarmToggled extends ClockEvent {
   const AlarmToggled({required this.enabled});
 }
 
+/// User edited their clock-in time manually.
+final class ClockInTimeEdited extends ClockEvent {
+  final DateTime newTime;
+  const ClockInTimeEdited(this.newTime);
+}
+
 /// User wants to silence the ringing alarm without clocking out.
 final class AlarmStopRequested extends ClockEvent {
   const AlarmStopRequested();

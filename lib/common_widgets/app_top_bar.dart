@@ -39,7 +39,7 @@ class AppTopBar extends StatelessWidget {
             child: const Icon(
               Icons.settings,          // ← swap icon here
               color: AppColors.accent,
-              size: 22,
+              size: 28,
               semanticLabel: 'Settings',
             ),
           ),
@@ -55,7 +55,7 @@ class AppTopBar extends StatelessWidget {
           if (trailing != null)
             trailing!
           else
-            const SizedBox(width: 22), // mirror gear width for centering
+            const SizedBox(width: 28), // mirror gear width for centering
         ],
       ),
     );

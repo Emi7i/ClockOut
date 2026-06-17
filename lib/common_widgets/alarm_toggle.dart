@@ -38,15 +38,15 @@ class AlarmToggle extends StatelessWidget {
               onTap: () => onChanged(!isOn),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width:  42,
-                height: 24,
+                width:  56,
+                height: 32,
                 decoration: BoxDecoration(
                   // filled when on, transparent when off
                   color: isOn ? AppColors.toggleOn : AppColors.toggleOff,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: AppColors.accent,
-                    width: 1.5,
+                    width: 2.0,
                   ),
                 ),
                 child: AnimatedAlign(
@@ -55,10 +55,10 @@ class AlarmToggle extends StatelessWidget {
                       ? Alignment.centerRight
                       : Alignment.centerLeft,
                   child: Padding(
-                    padding: const EdgeInsets.all(2),
+                    padding: const EdgeInsets.all(3),
                     child: Container(
-                      width:  18,
-                      height: 18,
+                      width:  24,
+                      height: 24,
                       decoration: BoxDecoration(
                         // knob colour: dark on accent, accent on dark
                         color: isOn

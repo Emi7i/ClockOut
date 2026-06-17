@@ -81,11 +81,11 @@ class AppNavBar extends StatelessWidget {
       onTap: () => onItemTapped(index),
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 28),
         child: Icon(
           items[index].icon,
           color: isSelected ? AppColors.accent : AppColors.textMuted,
-          size: 26,
+          size: 32,
           semanticLabel: items[index].semanticLabel,
         ),
       ),

@@ -19,12 +19,13 @@ abstract final class DateFormatter {
     return '$day. $month.';
   }
 
-  /// e.g. "2 h 55 min"
+  /// e.g. "2 h 55 min" or "45 min 30 sec"
   static String duration(Duration d) {
     final h   = d.inHours;
     final min = d.inMinutes.remainder(60);
+    final sec = d.inSeconds.remainder(60);
     if (h > 0) return '$h h $min min';
-    return '$min min';
+    return '$min min $sec sec';
   }
 
   /// e.g. "15min 30sec"

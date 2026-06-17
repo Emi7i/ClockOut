@@ -24,4 +24,7 @@ abstract interface class ClockRepository {
 
   /// Toggles the alarm for the active session.
   Future<void> setAlarm({required bool enabled});
+
+  /// Updates the clock-in time for the currently active session.
+  Future<void> updateActiveClockInTime(DateTime newTime);
 }
