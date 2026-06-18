@@ -33,103 +33,111 @@ class ClockedInScreen extends StatelessWidget {
 
         return Scaffold(
           backgroundColor: AppColors.background,
-          body: SafeArea(
-            child: Column(
-              children: [
-                // ── Top bar ────────────────────────────────
-                AppTopBar(
-                  timeLabel:     DateFormatter.clockTime(active.currentTime),
-                  onSettingsTap: onSettingsTap,
-                ),
-
-                // ── Main content ───────────────────────────
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (active.remaining > Duration.zero) ...[
-                        // ── Clocked In Time (Editable) ───────────
-                        GestureDetector(
-                          onTap: () async {
-                            final TimeOfDay? newTime = await showTimePicker(
-                              context: context,
-                              initialTime: TimeOfDay.fromDateTime(active.clockedInAt),
-                            );
-
-                            if (newTime != null && context.mounted) {
-                              final now = DateTime.now();
-                              // Combine today's date with the selected time
-                              var newDateTime = DateTime(
-                                now.year,
-                                now.month,
-                                now.day,
-                                newTime.hour,
-                                newTime.minute,
-                              );
-                              
-                              // If the selected time is in the future, assume it was yesterday
-                              if (newDateTime.isAfter(now)) {
-                                newDateTime = newDateTime.subtract(const Duration(days: 1));
-                              }
-
-                              context.read<ClockBloc>().add(ClockInTimeEdited(newDateTime));
-                            }
-                          },
-                          child: Text(
-                            'Clocked in time: ${DateFormatter.clockTime(active.clockedInAt)}',
-                            style: AppTextStyles.bodyMedium,
-                          ),
-                        ),
-                        const SizedBox(height: AppDimensions.spaceMd),
-
-                        // ── During shift: Ring + Small button ──
-                        RemainingRing(remaining: active.remaining),
-
-                        const SizedBox(height: AppDimensions.spaceLg),
-
-                        AlarmToggle(
-                          isOn:      active.alarmEnabled,
-                          onChanged: (v) => context
-                              .read<ClockBloc>()
-                              .add(AlarmToggled(enabled: v)),
-                        ),
-
-                        const SizedBox(height: AppDimensions.spaceMd),
-
-                        ClockOutButton(
-                          onPressed: () => _confirmClockOut(context),
-                        ),
-                      ] else ...[
-                        // ── After shift: Big button + Alarm countdown ──
-                        OvalActionButton(
-                          label:     active.isRinging ? 'Stop the Alarm' : 'Clock out',
-                          onPressed: () => active.isRinging
-                              ? context.read<ClockBloc>().add(const AlarmStopRequested())
-                              : _confirmClockOut(context),
-                        ),
-
-                        const SizedBox(height: AppDimensions.spaceLg),
-
-                        AlarmToggle(
-                          isOn:      active.alarmEnabled,
-                          onChanged: (v) => context
-                              .read<ClockBloc>()
-                              .add(AlarmToggled(enabled: v)),
-                          subLabel: active.nextAlarmIn != null
-                              ? 'next alarm in: ${DateFormatter.countdown(active.nextAlarmIn!)}'
-                              : null,
-                        ),
-                      ],
-                    ],
+          body: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            if (active.isRinging) {
+              context.read<ClockBloc>().add(const AlarmStopRequested());
+            }
+          },
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // ── Top bar ────────────────────────────────
+                  AppTopBar(
+                    timeLabel:     DateFormatter.clockTime(active.currentTime),
+                    onSettingsTap: onSettingsTap,
                   ),
-                ),
 
-                // ── Bottom nav ─────────────────────────────
-                AppNavBar(
-                  selectedIndex: navIndex,
-                  onItemTapped:  onNavTap,
-                ),
-              ],
+                  // ── Main content ───────────────────────────
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (active.remaining > Duration.zero) ...[
+                          // ── Clocked In Time (Editable) ───────────
+                          GestureDetector(
+                            onTap: () async {
+                              final TimeOfDay? newTime = await showTimePicker(
+                                context: context,
+                                initialTime: TimeOfDay.fromDateTime(active.clockedInAt),
+                              );
+
+                              if (newTime != null && context.mounted) {
+                                final now = DateTime.now();
+                                // Combine today's date with the selected time
+                                var newDateTime = DateTime(
+                                  now.year,
+                                  now.month,
+                                  now.day,
+                                  newTime.hour,
+                                  newTime.minute,
+                                );
+
+                                // If the selected time is in the future, assume it was yesterday
+                                if (newDateTime.isAfter(now)) {
+                                  newDateTime = newDateTime.subtract(const Duration(days: 1));
+                                }
+
+                                context.read<ClockBloc>().add(ClockInTimeEdited(newDateTime));
+                              }
+                            },
+                            child: Text(
+                              'Clocked in time: ${DateFormatter.clockTime(active.clockedInAt)}',
+                              style: AppTextStyles.bodyMedium,
+                            ),
+                          ),
+                          const SizedBox(height: AppDimensions.spaceMd),
+
+                          // ── During shift: Ring + Small button ──
+                          RemainingRing(remaining: active.remaining),
+
+                          const SizedBox(height: AppDimensions.spaceLg),
+
+                          AlarmToggle(
+                            isOn:      active.alarmEnabled,
+                            onChanged: (v) => context
+                                .read<ClockBloc>()
+                                .add(AlarmToggled(enabled: v)),
+                          ),
+
+                          const SizedBox(height: AppDimensions.spaceMd),
+
+                          ClockOutButton(
+                            onPressed: () => _confirmClockOut(context),
+                          ),
+                        ] else ...[
+                          // ── After shift: Big button + Alarm countdown ──
+                          OvalActionButton(
+                            label:     active.isRinging ? 'Stop the Alarm' : 'Clock out',
+                            onPressed: () => active.isRinging
+                                ? context.read<ClockBloc>().add(const AlarmStopRequested())
+                                : _confirmClockOut(context),
+                          ),
+
+                          const SizedBox(height: AppDimensions.spaceLg),
+
+                          AlarmToggle(
+                            isOn:      active.alarmEnabled,
+                            onChanged: (v) => context
+                                .read<ClockBloc>()
+                                .add(AlarmToggled(enabled: v)),
+                            subLabel: active.nextAlarmIn != null
+                                ? 'next alarm in: ${DateFormatter.countdown(active.nextAlarmIn!)}'
+                                : null,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  // ── Bottom nav ─────────────────────────────
+                  AppNavBar(
+                    selectedIndex: navIndex,
+                    onItemTapped:  onNavTap,
+                  ),
+                ],
+              ),
             ),
           ),
         );

@@ -70,8 +70,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     _alarmRingSubscription = _alarmService.ringStream.listen((alarmSettings) {
       final id = alarmSettings.id;
       if (id == NotificationService.shiftAlarmId ||
-          id == NotificationService.repeatAlarmId ||
-          id == NotificationService.repeatAlarmIdAlt) {
+          id == NotificationService.repeatAlarmId) {
         _currentlyRingingAlarmId = id; // store before dispatching
         add(AlertFired(id != NotificationService.shiftAlarmId));
       }
@@ -82,7 +81,6 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     _notificationActionSubscription = _notificationService.actionStream.listen((action) {
       // Notification was dismissed — clear ringing state only, don't reschedule.
       // Rescheduling already happened in _onAlertFired when the alarm first fired.
-      add(const AlarmAutoDismissed());
     });
   }
 
@@ -110,27 +108,17 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
             alarmEnabled:  active.alarmEnabled,
           );
         } else {
-          // Cancel everything except the currently ringing alarm so it plays through.
-          await _notificationService.cancelAllShiftNotificationsExcept(
-            _currentlyRingingAlarmId ?? _nextRepeatAlarmId,
-          );
-          // Swap id AFTER cancelling so cancelAllShiftNotificationsExcept
-          // receives the ringing id, not the one we're about to schedule.
-          _nextRepeatAlarmId = _otherRepeatAlarmId;
-
-          // Calculate next repeat: first future endOfShift + N * delayMinutes
+          await _notificationService.cancelAllShiftNotifications(); // nothing ringing, safe
           final delay = Duration(minutes: settings.alarmDelayMinutes);
           DateTime nextRepeat = endOfShift.add(delay);
           while (nextRepeat.isBefore(DateTime.now())) {
             nextRepeat = nextRepeat.add(delay);
           }
           _nextAlarmAt = nextRepeat;
-
           await _notificationService.scheduleRepeatNotification(
             scheduledDate: nextRepeat,
-            delayMinutes:  settings.alarmDelayMinutes,
-            alarmEnabled:  active.alarmEnabled,
-            id:            _nextRepeatAlarmId,
+            delayMinutes: settings.alarmDelayMinutes,
+            alarmEnabled: active.alarmEnabled,
           );
         }
 
@@ -202,8 +190,6 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       await _notificationService.cancelAllShiftNotifications();
 
       _nextAlarmAt             = null;
-      _nextRepeatAlarmId       = NotificationService.repeatAlarmId;
-      _currentlyRingingAlarmId = null;
       _isRinging               = false;
       await _clockOut();
 
@@ -216,20 +202,20 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   // User tapped Stop on screen — sound already stopped by AlarmService,
   // next repeat is already scheduled, just clear ringing state.
   Future<void> _onAlarmStop(AlarmStopRequested event, Emitter<ClockState> emit) async {
-    await _alarmService.stop(_currentlyRingingAlarmId ?? NotificationService.shiftAlarmId);
-    _isRinging               = false;
-    _currentlyRingingAlarmId = null;
+    await _notificationService.cancelAllShiftNotifications();
+    _isRinging = false;
     if (state case ClockActive active) {
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
+      add(const ClockStarted()); // alarm stopped, reschedule next
     }
   }
 
   // Notification dismissed (tap or auto) — same as stop, don't touch schedule.
   Future<void> _onAlarmAutoDismissed(AlarmAutoDismissed event, Emitter<ClockState> emit) async {
-    _isRinging               = false;
-    _currentlyRingingAlarmId = null;
+    _isRinging = false;
     if (state case ClockActive active) {
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
+      add(const ClockStarted()); // alarm is stopped, safe to reschedule
     }
   }
 
@@ -259,7 +245,6 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
             scheduledDate: _nextAlarmAt!,
             delayMinutes:  settings.alarmDelayMinutes,
             alarmEnabled:  event.enabled,
-            id:            _nextRepeatAlarmId,
           );
         }
       }
@@ -272,23 +257,13 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     }
   }
 
-  Future<void> _onAlertFired(
-      AlertFired event,
-      Emitter<ClockState> emit,
-      ) async {
+  Future<void> _onAlertFired(AlertFired event, Emitter<ClockState> emit) async {
     if (state case ClockActive active) {
       if (active.alarmEnabled) {
         _isRinging = true;
-      } else {
-        // No sound — auto dismiss after 2 seconds
-        Future.delayed(const Duration(seconds: 2), () {
-          add(const AlarmAutoDismissed());
-        });
       }
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
-
-      // Schedule the next repeat immediately so it's queued before user dismisses.
-      add(const ClockStarted());
+      // no ClockStarted here — we reschedule after dismiss, not after fire
     }
   }
 
@@ -299,11 +274,6 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   }
 
   // ── Helpers ───────────────────────────────────────────────
-
-  int get _otherRepeatAlarmId =>
-      _nextRepeatAlarmId == NotificationService.repeatAlarmId
-          ? NotificationService.repeatAlarmIdAlt
-          : NotificationService.repeatAlarmId;
 
   ClockActive _buildActiveState(DateTime clockedInAt, bool alarmEnabled) {
     final now       = DateTime.now();

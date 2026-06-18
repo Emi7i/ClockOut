@@ -96,7 +96,6 @@ class NotificationServiceImpl implements NotificationService {
       scheduledDate: scheduledDate.add(Duration(minutes: delayMinutes)),
       delayMinutes:  delayMinutes,
       alarmEnabled:  alarmEnabled,
-      id: NotificationService.repeatAlarmId,
     );
   }
 
@@ -105,12 +104,11 @@ class NotificationServiceImpl implements NotificationService {
     required DateTime scheduledDate,
     required int      delayMinutes,
     required bool     alarmEnabled,
-    int? id,
   }) async {
     // 1. Schedule the notification
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
-        id:         id ?? NotificationService.repeatAlarmId,
+        id:         NotificationService.repeatAlarmId,
         channelKey: NotificationService.alarmChannelKey,
         title:      'Overtime completed!',
         body:       '+ 30 minutes. You can get a beer now.',
@@ -138,12 +136,11 @@ class NotificationServiceImpl implements NotificationService {
     );
 
     developer.log('Scheduling repeat alarm at: $scheduledDate (now: ${DateTime.now()})');
-    developer.log('Scheduling repeat alarm id: $id');
 
     // 2. Schedule hardware alarm if enabled
     if (alarmEnabled) {
       await _alarmService.setAlarm(
-        id: id ?? NotificationService.repeatAlarmId,
+        id: NotificationService.repeatAlarmId,
         dateTime: scheduledDate,
         title: 'alarm!',
         body: 'Your shift ended a while ago. Please clock out.',
@@ -155,26 +152,8 @@ class NotificationServiceImpl implements NotificationService {
   Future<void> cancelAllShiftNotifications() async {
     await AwesomeNotifications().cancel(NotificationService.shiftAlarmId);
     await AwesomeNotifications().cancel(NotificationService.repeatAlarmId);
-    await AwesomeNotifications().cancel(NotificationService.repeatAlarmIdAlt);
     await _alarmService.stop(NotificationService.shiftAlarmId);  // cancel sound
     await _alarmService.stop(NotificationService.repeatAlarmId); // cancel sound
-    await _alarmService.stop(NotificationService.repeatAlarmIdAlt); // cancel sound
-  }
-
-  @override
-  Future<void> cancelAllShiftNotificationsExcept(int id) async {
-    if (id != NotificationService.shiftAlarmId) {
-      await AwesomeNotifications().cancel(NotificationService.shiftAlarmId);
-      await _alarmService.stop(NotificationService.shiftAlarmId);
-    }
-    if (id != NotificationService.repeatAlarmId) {
-      await AwesomeNotifications().cancel(NotificationService.repeatAlarmId);
-      await _alarmService.stop(NotificationService.repeatAlarmId);
-    }
-    if (id != NotificationService.repeatAlarmIdAlt) {
-      await AwesomeNotifications().cancel(NotificationService.repeatAlarmIdAlt);
-      await _alarmService.stop(NotificationService.repeatAlarmIdAlt);
-    }
   }
 }
 
