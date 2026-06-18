@@ -4,6 +4,7 @@ abstract interface class NotificationService {
   static const String alarmChannelKey = 'shift_end_alarm_channel';
   static const int shiftAlarmId  = 1;
   static const int repeatAlarmId = 2;
+  static const int repeatAlarmIdAlt = 3;
 
   Stream<ReceivedAction> get actionStream;
 
@@ -17,6 +18,7 @@ abstract interface class NotificationService {
     required DateTime scheduledDate,
     required int      delayMinutes,
     required bool     alarmEnabled,
+    int? id,
   });
   Future<void> cancelAllShiftNotifications();
 }

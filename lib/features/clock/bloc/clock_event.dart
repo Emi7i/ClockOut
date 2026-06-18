@@ -35,9 +35,14 @@ final class ClockInTimeEdited extends ClockEvent {
   const ClockInTimeEdited(this.newTime);
 }
 
-/// User wants to silence the ringing alarm without clocking out.
+/// User explicitly tapped "Stop the Alarm" button
 final class AlarmStopRequested extends ClockEvent {
   const AlarmStopRequested();
+}
+
+/// App was in foreground when alarm fired — auto dismiss after 2 seconds
+final class AlarmAutoDismissed extends ClockEvent {
+  const AlarmAutoDismissed();
 }
 
 /// Internal event fired when an alarm/notification triggers.

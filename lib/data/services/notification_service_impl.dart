@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:alarm/alarm.dart';
 import '../../core/constants/constants.dart';
@@ -30,7 +31,6 @@ class NotificationServiceImpl implements NotificationService {
           playSound:          true,
           onlyAlertOnce:      false,
           enableVibration:    true,
-          defaultRingtoneType: DefaultRingtoneType.Notification,
         ),
       ],
       debug: true,
@@ -60,8 +60,8 @@ class NotificationServiceImpl implements NotificationService {
         category:   NotificationCategory.Alarm,
         criticalAlert: true,
         wakeUpScreen: true,
-        fullScreenIntent: alarmEnabled,
-        autoDismissible: false,
+        fullScreenIntent: true,
+        autoDismissible: true, // dismiss notif if user taps on it
         payload: {
           'alarmEnabled': alarmEnabled.toString(),
           'delayMinutes': delayMinutes.toString(),
@@ -82,11 +82,12 @@ class NotificationServiceImpl implements NotificationService {
 
     // 2. Schedule the hardware alarm if enabled
     if (alarmEnabled) {
+      developer.log('Scheduling normal alarm at: $scheduledDate (now: ${DateTime.now()})');
       await _alarmService.setAlarm(
         id: NotificationService.shiftAlarmId,
         dateTime: scheduledDate,
         title: 'Shift Over!',
-        body: 'Your shift has ended. Time to clock out!',
+        body: 'You earned a good rest!',
       );
     }
 
@@ -95,6 +96,7 @@ class NotificationServiceImpl implements NotificationService {
       scheduledDate: scheduledDate.add(Duration(minutes: delayMinutes)),
       delayMinutes:  delayMinutes,
       alarmEnabled:  alarmEnabled,
+      id: NotificationService.repeatAlarmId,
     );
   }
 
@@ -103,19 +105,20 @@ class NotificationServiceImpl implements NotificationService {
     required DateTime scheduledDate,
     required int      delayMinutes,
     required bool     alarmEnabled,
+    int? id,
   }) async {
     // 1. Schedule the notification
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
-        id:         NotificationService.repeatAlarmId,
+        id:         id ?? NotificationService.repeatAlarmId,
         channelKey: NotificationService.alarmChannelKey,
-        title:      'Still not clocked out!',
-        body:       'Your shift ended a while ago. Please clock out.',
+        title:      'Overtime completed!',
+        body:       '+ 30 minutes. You can get a beer now.',
         category:   NotificationCategory.Alarm,
         criticalAlert: true,
         wakeUpScreen: true,
-        fullScreenIntent: alarmEnabled,
-        autoDismissible: false,
+        fullScreenIntent: true,
+        autoDismissible: true, // dismiss notif if user taps on it
         payload: {
           'alarmEnabled': alarmEnabled.toString(),
           'delayMinutes': delayMinutes.toString(),
@@ -134,12 +137,15 @@ class NotificationServiceImpl implements NotificationService {
       ),
     );
 
+    developer.log('Scheduling repeat alarm at: $scheduledDate (now: ${DateTime.now()})');
+    developer.log('Scheduling repeat alarm id: $id');
+
     // 2. Schedule hardware alarm if enabled
     if (alarmEnabled) {
       await _alarmService.setAlarm(
-        id: NotificationService.repeatAlarmId,
+        id: id ?? NotificationService.repeatAlarmId,
         dateTime: scheduledDate,
-        title: 'Still not clocked out!',
+        title: 'alarm!',
         body: 'Your shift ended a while ago. Please clock out.',
       );
     }
@@ -149,8 +155,10 @@ class NotificationServiceImpl implements NotificationService {
   Future<void> cancelAllShiftNotifications() async {
     await AwesomeNotifications().cancel(NotificationService.shiftAlarmId);
     await AwesomeNotifications().cancel(NotificationService.repeatAlarmId);
+    await AwesomeNotifications().cancel(NotificationService.repeatAlarmIdAlt);
     await _alarmService.stop(NotificationService.shiftAlarmId);  // cancel sound
     await _alarmService.stop(NotificationService.repeatAlarmId); // cancel sound
+    await _alarmService.stop(NotificationService.repeatAlarmIdAlt); // cancel sound
   }
 }
 

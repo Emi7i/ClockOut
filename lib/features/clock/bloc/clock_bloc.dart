@@ -34,6 +34,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   StreamSubscription? _notificationActionSubscription;
   DateTime?         _nextAlarmAt;
   bool              _isRinging = false;
+  int               _nextRepeatAlarmId = NotificationService.repeatAlarmId;
 
   ClockBloc({
     required ClockInUseCase clockIn,
@@ -57,6 +58,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     on<AlarmStopRequested>(_onAlarmStop);
     on<AlertFired>        (_onAlertFired);
     on<ClockTicked>       (_onTicked);
+    on<AlarmAutoDismissed>(_onAlarmAutoDismissed);
 
     _listenToAlarmRings();
     _listenToNotificationActions();
@@ -103,6 +105,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
           );
         } else {
           // Shift already ended, schedule the next repeat.
+          _nextRepeatAlarmId = _otherRepeatAlarmId;
           // Calculate next repeat: endOfShift + N * delayMinutes
           final delay = Duration(minutes: settings.alarmDelayMinutes);
           DateTime nextRepeat = endOfShift.add(delay);
@@ -115,6 +118,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
             scheduledDate: nextRepeat,
             delayMinutes:  settings.alarmDelayMinutes,
             alarmEnabled:  active.alarmEnabled,
+            id:            _nextRepeatAlarmId,
           );
         }
 
@@ -183,11 +187,10 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   ) async {
     try {
       _ticker?.cancel();
-      await _alarmService.stop(NotificationService.shiftAlarmId);
-      await _alarmService.stop(NotificationService.repeatAlarmId);
       await _notificationService.cancelAllShiftNotifications();
       
       _nextAlarmAt = null;
+      _nextRepeatAlarmId = NotificationService.repeatAlarmId;
       _isRinging = false;
       await _clockOut();
       
@@ -197,19 +200,25 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     }
   }
 
-  Future<void> _onAlarmStop(
-    AlarmStopRequested event,
-    Emitter<ClockState> emit,
-  ) async {
-    await _alarmService.stop(NotificationService.shiftAlarmId);
-    await _alarmService.stop(NotificationService.repeatAlarmId);
+  // User tapped stop — silence everything, keep next repeat scheduled
+  Future<void> _onAlarmStop(AlarmStopRequested event, Emitter<ClockState> emit) async {
+    await _notificationService.cancelAllShiftNotifications();
     _isRinging = false;
-    
+
     if (state case ClockActive active) {
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
-      
-      // Reschedule the next repeating notification
-      add(const ClockStarted());
+      // no ClockStarted — next repeat already scheduled
+    }
+  }
+
+  // Auto dismiss — just kill the notification, don't touch schedule
+  Future<void> _onAlarmAutoDismissed(AlarmAutoDismissed event, Emitter<ClockState> emit) async {
+    await _notificationService.cancelAllShiftNotifications();
+    _isRinging = false;
+
+    if (state case ClockActive active) {
+      emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
+      // no ClockStarted — next repeat already scheduled
     }
   }
 
@@ -237,6 +246,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
             scheduledDate: _nextAlarmAt!,
             delayMinutes:  settings.alarmDelayMinutes,
             alarmEnabled:  event.enabled,
+            id:            _nextRepeatAlarmId,
           );
         }
       }
@@ -256,6 +266,11 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     if (state case ClockActive active) {
       if (active.alarmEnabled) {
         _isRinging = true;
+      }else {
+        // No sound, just vibration — auto dismiss after 2 seconds
+        Future.delayed(const Duration(seconds: 2), () {
+          add(const AlarmAutoDismissed()); // Dismiss the notif
+        });
       }
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
 
@@ -271,6 +286,12 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   }
 
   // ── Helpers ───────────────────────────────────────────────
+
+  // Helper to get the next id
+  int get _otherRepeatAlarmId =>
+      _nextRepeatAlarmId == NotificationService.repeatAlarmId
+          ? NotificationService.repeatAlarmIdAlt
+          : NotificationService.repeatAlarmId;
 
   ClockActive _buildActiveState(DateTime clockedInAt, bool alarmEnabled) {
     final now      = DateTime.now();
