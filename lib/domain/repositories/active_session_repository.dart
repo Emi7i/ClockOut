@@ -6,6 +6,10 @@ import '../entities/active_session.dart';
 ///  Features depend only on this abstraction, never on the impl.
 /// ─────────────────────────────────────────────────────────────
 abstract interface class ActiveSessionRepository {
+  /// Static factory to build the implementation.
+  /// Must be initialized in main() and background entry points.
+  static late ActiveSessionRepository Function() build;
+
   /// Returns the active session, or null if not clocked in.
   Future<ActiveSession?> getActiveSession();
 

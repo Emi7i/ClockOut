@@ -142,7 +142,7 @@ class SettingsScreen extends StatelessWidget {
 
   void _requestAdvancedPermissions(BuildContext context) async {
     await AwesomeNotifications().requestPermissionToSendNotifications(
-      channelKey: NotificationServiceImpl.alarmChannelKey,
+      channelKey: NotificationService.alarmChannelKey,
       permissions: [
         NotificationPermission.PreciseAlarms,
         NotificationPermission.CriticalAlert,

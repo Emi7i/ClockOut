@@ -8,6 +8,7 @@ import 'data/datasources/database_manager.dart';
 import 'data/repositories/active_session_repository_impl.dart';
 import 'data/repositories/log_repository_impl.dart';
 import 'data/repositories/user_settings_repository_impl.dart';
+import 'data/services/notification_service_impl.dart';
 import 'domain/repositories/active_session_repository.dart';
 import 'domain/repositories/log_repository.dart';
 import 'domain/repositories/user_settings_repository.dart';
@@ -28,24 +29,27 @@ import 'core/services/alarm_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // ── Setup Builders ────────────────────────────────────
+  _setupBuilders();
+
   // ── Database Manager ───────────────────────────────────
-  final dbManager = DatabaseManager();
+  // (Optional: can also be part of builders if needed)
 
   // ── Notifications ──────────────────────────────────────
   final notificationService = NotificationServiceImpl();
   await notificationService.initialize();
 
-  // Register the background-capable action handler so that dismissing
-  // an alarm while the app is killed still triggers the 30-min reschedule.
+  // Register the background-capable action handler
   await AwesomeNotifications().setListeners(
-    onActionReceivedMethod: NotificationController.onActionReceivedMethod,
+    onActionReceivedMethod: onNotificationActionReceived,
   );
 
   // ── Alarm Service ──────────────────────────────────────
   final alarmService = AlarmServiceImpl();
   await alarmService.init();
 
-  // ── Repositories ───────────────────────────────────────
+  // ── Repositories (Legacy instantiation for ClockApp, though builders could be used) ───
+  final dbManager = DatabaseManager();
   final activeSessionRepo = ActiveSessionRepositoryImpl(dbManager);
   final logRepo           = LogRepositoryImpl(dbManager);
   final settingsRepo      = UserSettingsRepositoryImpl(dbManager);
@@ -67,6 +71,25 @@ void main() async {
       alarmService:       alarmService,
     ),
   );
+}
+
+/// Sets up the domain-layer builders with data-layer implementations.
+void _setupBuilders() {
+  final dbManager = DatabaseManager();
+  
+  ActiveSessionRepository.build = () => ActiveSessionRepositoryImpl(dbManager);
+  LogRepository.build           = () => LogRepositoryImpl(dbManager);
+  UserSettingsRepository.build  = () => UserSettingsRepositoryImpl(dbManager);
+}
+
+/// Background entry point for AwesomeNotifications
+@pragma('vm:entry-point')
+Future<void> onNotificationActionReceived(ReceivedAction receivedAction) async {
+  // 1. Setup builders in the new isolate
+  _setupBuilders();
+  
+  // 2. Delegate to the controller in the data layer
+  await NotificationController.onActionReceivedMethod(receivedAction);
 }
 
 class ClockApp extends StatelessWidget {
@@ -127,7 +150,7 @@ class ClockApp extends StatelessWidget {
             primary:   AppColors.accent,
             surface:   AppColors.surface,
           ),
-          fontFamily:  'Caveat',          // ← matches AppTextStyles._font
+          fontFamily:  'Caveat',
           useMaterial3: true,
         ),
         home: const AppShell(),

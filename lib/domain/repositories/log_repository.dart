@@ -4,6 +4,8 @@ import '../entities/log_entry.dart';
 ///  LOG REPOSITORY  –  Abstract Contract
 /// ─────────────────────────────────────────────────────────────
 abstract interface class LogRepository {
+  static late LogRepository Function() build;
+
   /// Returns all historical log entries.
   Future<List<LogEntry>> getLogs();
 
