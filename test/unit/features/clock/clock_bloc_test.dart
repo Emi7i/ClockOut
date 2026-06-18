@@ -60,6 +60,8 @@ void main() {
         )).thenAnswer((_) async => {});
     when(() => mockNotificationService.cancelAllShiftNotifications())
         .thenAnswer((_) async => {});
+    when(() => mockNotificationService.actionStream)
+        .thenAnswer((_) => const Stream.empty());
     
     when(() => mockAlarmService.ringStream).thenAnswer((_) => const Stream.empty());
     when(() => mockAlarmService.setAlarm(

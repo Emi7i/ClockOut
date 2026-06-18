@@ -35,18 +35,18 @@ void main() async {
   // ── Database Manager ───────────────────────────────────
   // (Optional: can also be part of builders if needed)
 
+  // ── Alarm Service ──────────────────────────────────────
+  final alarmService = AlarmServiceImpl();
+  await alarmService.init();
+
   // ── Notifications ──────────────────────────────────────
-  final notificationService = NotificationServiceImpl();
+  final notificationService = NotificationServiceImpl(alarmService: alarmService);
   await notificationService.initialize();
 
   // Register the background-capable action handler
   await AwesomeNotifications().setListeners(
     onActionReceivedMethod: onNotificationActionReceived,
   );
-
-  // ── Alarm Service ──────────────────────────────────────
-  final alarmService = AlarmServiceImpl();
-  await alarmService.init();
 
   // ── Repositories (Legacy instantiation for ClockApp, though builders could be used) ───
   final dbManager = DatabaseManager();
@@ -126,7 +126,7 @@ class ClockApp extends StatelessWidget {
             settingsRepository: settingsRepo,
             notificationService: notificationService,
             alarmService:       alarmService,
-          )..add(const ClockStarted()),
+          ),
         ),
         BlocProvider(
           create: (_) => LogsBloc(

@@ -26,9 +26,31 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   int  _navIndex      = 0;
   bool _showSettings  = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Initial sync on app start
+    context.read<ClockBloc>().add(const ClockStarted());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Sync state whenever app comes back to foreground
+      context.read<ClockBloc>().add(const ClockStarted());
+    }
+  }
 
   void _onNavTap(int index) => setState(() {
         _navIndex     = index;

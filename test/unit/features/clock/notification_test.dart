@@ -55,6 +55,8 @@ void main() {
         )).thenAnswer((_) async => {});
     when(() => mockNotificationService.cancelAllShiftNotifications())
         .thenAnswer((_) async => {});
+    when(() => mockNotificationService.actionStream)
+        .thenAnswer((_) => const Stream.empty());
     
     when(() => mockAlarmService.ringStream).thenAnswer((_) => const Stream.empty());
     when(() => mockAlarmService.setAlarm(
@@ -123,7 +125,7 @@ void main() {
     blocTest<ClockBloc, ClockState>(
       'updates notification when AlarmToggled while clocked in',
       build: () {
-        when(() => mockRepository.setAlarm(enabled: any(named: 'enabled')))
+        when(() => mockRepository.setAlarmSound(enabled: any(named: 'enabled')))
             .thenAnswer((_) async => {});
         return ClockBloc(
           clockIn: mockClockIn,

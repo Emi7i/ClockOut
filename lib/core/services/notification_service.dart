@@ -2,6 +2,10 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 
 abstract interface class NotificationService {
   static const String alarmChannelKey = 'shift_end_alarm_channel';
+  static const int shiftAlarmId  = 1;
+  static const int repeatAlarmId = 2;
+
+  Stream<ReceivedAction> get actionStream;
 
   Future<void> initialize();
   Future<void> scheduleShiftEndNotification({

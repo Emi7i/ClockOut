@@ -21,7 +21,6 @@ class ActiveSessionRepositoryImpl implements ActiveSessionRepository {
   Future<ActiveSession> clockIn() async {
     final session = ActiveSession(
       clockedInAt: DateTime.now(),
-      alarmEnabled: false,
     );
     await _dbManager.setActiveSession(ActiveSessionMapper.toDto(session));
     return session;
@@ -54,7 +53,13 @@ class ActiveSessionRepositoryImpl implements ActiveSessionRepository {
   }
 
   @override
-  Future<void> setAlarm({required bool enabled}) async {
+  Future<void> updateActiveSession(ActiveSession session) async {
+    await _dbManager.setActiveSession(ActiveSessionMapper.toDto(session));
+  }
+
+  @override
+  Future<void> setAlarmSound({required bool enabled}) async {
+
     final activeSession = await getActiveSession();
     if (activeSession != null) {
       final updated = activeSession.copyWith(alarmEnabled: enabled);

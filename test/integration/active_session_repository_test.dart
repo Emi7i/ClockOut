@@ -48,9 +48,19 @@ void main() {
       expect(logs.length, 1);
     });
 
-    test('setAlarm should update the active session', () async {
+    test('updateActiveSession should replace the active session', () async {
+      final session = await repository.clockIn();
+      final updated = session.copyWith(nextAlarmIn: 15);
+      
+      await repository.updateActiveSession(updated);
+      
+      final active = await repository.getActiveSession();
+      expect(active?.nextAlarmIn, 15);
+    });
+
+    test('setAlarmSound should update the active session', () async {
       await repository.clockIn();
-      await repository.setAlarm(enabled: true);
+      await repository.setAlarmSound(enabled: true);
       
       final active = await repository.getActiveSession();
       expect(active?.alarmEnabled, true);

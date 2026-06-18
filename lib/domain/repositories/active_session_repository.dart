@@ -19,8 +19,11 @@ abstract interface class ActiveSessionRepository {
   /// Ends the active session.
   Future<ActiveSession> clockOut();
 
+  /// Updates the entire active session state.
+  Future<void> updateActiveSession(ActiveSession session);
+
   /// Toggles the alarm for the active session.
-  Future<void> setAlarm({required bool enabled});
+  Future<void> setAlarmSound({required bool enabled});
 
   /// Updates the clock-in time for the currently active session.
   Future<void> updateActiveClockInTime(DateTime newTime);
