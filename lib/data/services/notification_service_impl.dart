@@ -160,6 +160,22 @@ class NotificationServiceImpl implements NotificationService {
     await _alarmService.stop(NotificationService.repeatAlarmId); // cancel sound
     await _alarmService.stop(NotificationService.repeatAlarmIdAlt); // cancel sound
   }
+
+  @override
+  Future<void> cancelAllShiftNotificationsExcept(int id) async {
+    if (id != NotificationService.shiftAlarmId) {
+      await AwesomeNotifications().cancel(NotificationService.shiftAlarmId);
+      await _alarmService.stop(NotificationService.shiftAlarmId);
+    }
+    if (id != NotificationService.repeatAlarmId) {
+      await AwesomeNotifications().cancel(NotificationService.repeatAlarmId);
+      await _alarmService.stop(NotificationService.repeatAlarmId);
+    }
+    if (id != NotificationService.repeatAlarmIdAlt) {
+      await AwesomeNotifications().cancel(NotificationService.repeatAlarmIdAlt);
+      await _alarmService.stop(NotificationService.repeatAlarmIdAlt);
+    }
+  }
 }
 
 /// Controller for background notification actions.

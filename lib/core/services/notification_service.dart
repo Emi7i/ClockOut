@@ -21,6 +21,7 @@ abstract interface class NotificationService {
     int? id,
   });
   Future<void> cancelAllShiftNotifications();
+  Future<void> cancelAllShiftNotificationsExcept(int id);
 }
 
 /// Called from main.dart as a TOP-LEVEL function (required by awesome_notifications
