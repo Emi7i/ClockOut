@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'local/database_helper.dart';
 import '../dtos/log_dto.dart';
 import '../dtos/user_settings_dto.dart';
+import '../dtos/active_session_dto.dart';
 
 /// ─────────────────────────────────────────────────────────────
 ///  DATABASE MANAGER
@@ -68,8 +69,29 @@ class DatabaseManager {
       DatabaseHelper.tableSettings,
       settings.toMap(),
       where: '${DatabaseHelper.colSettingsId} = ?',
-      whereArgs: [1], // Assuming only one row of settings exists
+      whereArgs: [settings.id ?? 1],
     );
+  }
+
+  // --- Active Session Helper Methods ---
+
+  Future<ActiveSessionDto?> getActiveSession() async {
+    final db = await database;
+    final results = await db.query(DatabaseHelper.tableActiveSession, limit: 1);
+    return results.isNotEmpty ? ActiveSessionDto.fromMap(results.first) : null;
+  }
+
+  Future<void> setActiveSession(ActiveSessionDto session) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(DatabaseHelper.tableActiveSession);
+      await txn.insert(DatabaseHelper.tableActiveSession, session.toMap());
+    });
+  }
+
+  Future<void> clearActiveSession() async {
+    final db = await database;
+    await db.delete(DatabaseHelper.tableActiveSession);
   }
 
   /// Closes the database via the helper.

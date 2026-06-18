@@ -1,37 +1,35 @@
 /// ─────────────────────────────────────────────────────────────
-///  CLOCK ENTRY  –  Domain Entity
-///  Represents a single clock-in / clock-out session.
+///  ACTIVE SESSION  –  Domain Entity
+///  Represents a single active clock-in session.
 ///  Plain Dart: no framework dependencies.
 /// ─────────────────────────────────────────────────────────────
-class ClockEntry {
-  final String   id;
+class ActiveSession {
   final DateTime clockedInAt;
-  final DateTime? clockedOutAt;
-  final bool     alarmEnabled;
+  final int? nextAlarmIn;
+  final Duration accumulatedBonusTime;
+  final bool alarmEnabled;
 
-  const ClockEntry({
-    required this.id,
+  const ActiveSession({
     required this.clockedInAt,
-    this.clockedOutAt,
+    this.nextAlarmIn,
+    this.accumulatedBonusTime = Duration.zero,
     this.alarmEnabled = false,
   });
 
-  bool get isClockedIn => clockedOutAt == null;
-
   Duration get elapsed {
-    final end = clockedOutAt ?? DateTime.now();
-    return end.difference(clockedInAt);
+    return DateTime.now().difference(clockedInAt);
   }
 
-  ClockEntry copyWith({
+  ActiveSession copyWith({
     DateTime? clockedInAt,
-    DateTime? clockedOutAt,
+    int? nextAlarmIn,
+    Duration? accumulatedBonusTime,
     bool? alarmEnabled,
   }) {
-    return ClockEntry(
-      id: id,
+    return ActiveSession(
       clockedInAt: clockedInAt ?? this.clockedInAt,
-      clockedOutAt: clockedOutAt ?? this.clockedOutAt,
+      nextAlarmIn: nextAlarmIn ?? this.nextAlarmIn,
+      accumulatedBonusTime: accumulatedBonusTime ?? this.accumulatedBonusTime,
       alarmEnabled: alarmEnabled ?? this.alarmEnabled,
     );
   }

@@ -15,6 +15,7 @@ class DatabaseHelper {
   // Table Names
   static const String tableLogs = 'Logs';
   static const String tableSettings = 'UserSettings';
+  static const String tableActiveSession = 'ActiveSession';
 
   // Column Names - Logs
   static const String colLogId = 'log_id';
@@ -30,6 +31,12 @@ class DatabaseHelper {
   static const String colAccentColor = 'accent_color';
   static const String colClockFormat = 'clock_format';
   static const String colTimeDelay = 'time_delay';
+
+  // Column Names - ActiveSession
+  static const String colSessionClockedInTime = 'clocked_in_time';
+  static const String colNextAlarmIn = 'next_alarm_in';
+  static const String colAccumulatedBonusTime = 'accumulated_bonus_time';
+  static const String colAlarmOn = 'alarm_on';
 
   factory DatabaseHelper() => _instance;
 
@@ -77,10 +84,10 @@ class DatabaseHelper {
       CREATE TABLE $tableLogs (
         $colLogId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
         $colDateAdded TEXT NOT NULL,
-        $colBonusTime TEXT DEFAULT ('0') NOT NULL,
+        $colBonusTime INTEGER DEFAULT (0) NOT NULL,
         $colUserEdited NUMERIC DEFAULT (0) NOT NULL,
         $colClockedInTime TEXT,
-        $colClockedOutTime INTEGER,
+        $colClockedOutTime TEXT,
         $colOnlineWork INTEGER DEFAULT (0)
       )
     ''');
@@ -95,7 +102,17 @@ class DatabaseHelper {
       )
     ''');
 
-    // 3. Seed initial settings
+    // 3. Create ActiveSession Table
+    await db.execute('''
+      CREATE TABLE $tableActiveSession (
+        $colSessionClockedInTime TEXT NOT NULL,
+        $colNextAlarmIn INTEGER,
+        $colAccumulatedBonusTime INTEGER DEFAULT (0),
+        $colAlarmOn INTEGER DEFAULT (0)
+      )
+    ''');
+
+    // 4. Seed initial settings
     await db.insert(tableSettings, {
       colAccentColor: '0xFF4CAF50', // Default green
       colClockFormat: '24h',

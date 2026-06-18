@@ -5,7 +5,7 @@ import 'package:clock_app/domain/entities/user_settings.dart';
 
 void main() {
   group('SettingsMapper', () {
-    test('toDomain should map correctly', () {
+    test('toEntity should map correctly', () {
       const dto = UserSettingsDto(
         id: 1,
         accentColor: '0xFFC8F000',
@@ -13,22 +13,23 @@ void main() {
         timeDelay: 15,
       );
 
-      final entity = SettingsMapper.toDomain(dto);
+      final entity = SettingsMapper.toEntity(dto);
 
       expect(entity.accentColorHex, 0xFFC8F000);
       expect(entity.is12HourFormat, true);
       expect(entity.alarmDelayMinutes, 15);
     });
 
-    test('fromDomain should map correctly', () {
+    test('toDto should map correctly', () {
       const entity = UserSettings(
         accentColorHex: 0xFFC8F000,
         is12HourFormat: false,
         alarmDelayMinutes: 30,
       );
 
-      final dto = SettingsMapper.fromDomain(entity);
+      final dto = SettingsMapper.toDto(entity, id: 1);
 
+      expect(dto.id, 1);
       expect(dto.accentColor, '0xFFC8F000');
       expect(dto.clockFormat, '24h');
       expect(dto.timeDelay, 30);

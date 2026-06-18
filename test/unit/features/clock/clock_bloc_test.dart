@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:clock_app/domain/entities/clock_entry.dart';
+import 'package:clock_app/domain/entities/active_session.dart';
 import 'package:clock_app/domain/entities/user_settings.dart';
-import 'package:clock_app/domain/repositories/clock_repository.dart';
+import 'package:clock_app/domain/repositories/active_session_repository.dart';
 import 'package:clock_app/domain/repositories/user_settings_repository.dart';
 import 'package:clock_app/domain/use_cases/clock_in_use_case.dart';
 import 'package:clock_app/domain/use_cases/clock_out_use_case.dart';
@@ -13,7 +13,7 @@ import 'package:clock_app/core/services/notification_service.dart';
 import 'package:clock_app/core/services/alarm_service.dart';
 import 'package:alarm/model/alarm_settings.dart';
 
-class MockClockRepository extends Mock implements ClockRepository {}
+class MockActiveSessionRepository extends Mock implements ActiveSessionRepository {}
 class MockUserSettingsRepository extends Mock implements UserSettingsRepository {}
 class MockClockInUseCase extends Mock implements ClockInUseCase {}
 class MockClockOutUseCase extends Mock implements ClockOutUseCase {}
@@ -22,7 +22,7 @@ class MockAlarmService extends Mock implements AlarmService {}
 class FakeAlarmSettings extends Fake implements AlarmSettings {}
 
 void main() {
-  late MockClockRepository mockRepository;
+  late MockActiveSessionRepository mockRepository;
   late MockUserSettingsRepository mockSettingsRepository;
   late MockClockInUseCase mockClockIn;
   late MockClockOutUseCase mockClockOut;
@@ -35,7 +35,7 @@ void main() {
   });
 
   setUp(() {
-    mockRepository = MockClockRepository();
+    mockRepository = MockActiveSessionRepository();
     mockSettingsRepository = MockUserSettingsRepository();
     mockClockIn = MockClockInUseCase();
     mockClockOut = MockClockOutUseCase();
@@ -72,15 +72,14 @@ void main() {
   });
 
   group('ClockBloc', () {
-    final tClockEntry = ClockEntry(
-      id: '1',
+    final tActiveSession = ActiveSession(
       clockedInAt: DateTime.now().subtract(const Duration(hours: 1)),
     );
 
     blocTest<ClockBloc, ClockState>(
-      'emits [ClockIdle] when ClockStarted finds no active entry',
+      'emits [ClockIdle] when ClockStarted finds no active session',
       build: () {
-        when(() => mockRepository.getActiveEntry()).thenAnswer((_) async => null);
+        when(() => mockRepository.getActiveSession()).thenAnswer((_) async => null);
         return ClockBloc(
           clockIn: mockClockIn,
           clockOut: mockClockOut,
@@ -97,9 +96,9 @@ void main() {
     );
 
     blocTest<ClockBloc, ClockState>(
-      'emits [ClockActive] when ClockStarted finds active entry',
+      'emits [ClockActive] when ClockStarted finds active session',
       build: () {
-        when(() => mockRepository.getActiveEntry()).thenAnswer((_) async => tClockEntry);
+        when(() => mockRepository.getActiveSession()).thenAnswer((_) async => tActiveSession);
         return ClockBloc(
           clockIn: mockClockIn,
           clockOut: mockClockOut,
@@ -118,12 +117,11 @@ void main() {
     blocTest<ClockBloc, ClockState>(
       'emits [ClockActive] with nextAlarmIn when ClockInRequested succeeds and alarm is enabled',
       build: () {
-        final entry = ClockEntry(
-          id: '1',
+        final session = ActiveSession(
           clockedInAt: DateTime.now(),
           alarmEnabled: true,
         );
-        when(() => mockClockIn()).thenAnswer((_) async => entry);
+        when(() => mockClockIn()).thenAnswer((_) async => session);
         return ClockBloc(
           clockIn: mockClockIn,
           clockOut: mockClockOut,

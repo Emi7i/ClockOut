@@ -1,7 +1,8 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:alarm/alarm.dart';
-import '../../data/repositories/clock_repository_impl.dart';
+import '../../data/datasources/database_manager.dart';
+import '../../data/repositories/active_session_repository_impl.dart';
 
 abstract class NotificationService {
   Future<void> initialize();
@@ -35,13 +36,13 @@ class NotificationController {
         action.actionType == ActionType.DismissAction ||
             action.actionType == ActionType.SilentBackgroundAction;
 
-    final bool isShiftNotification =
-        action.id == _baseNotificationId ||
-            action.id == _repeatNotificationId;
+    if (isDismissed) {
+      await Alarm.stop(action.id ?? 1);  // silence the hardware alarm
 
-    if (isShiftNotification && isDismissed) {
-      final clockRepo = ClockRepositoryImpl();
-      final active = await clockRepo.getActiveEntry();
+      // Initialize database and repository for background isolate
+      final dbManager = DatabaseManager();
+      final activeSessionRepo = ActiveSessionRepositoryImpl(dbManager);
+      final active = await activeSessionRepo.getActiveSession();
 
       // ONLY reschedule if shift is still active in the database
       if (active != null) {
@@ -131,6 +132,7 @@ class NotificationServiceImpl implements NotificationService {
           playSound:          true,
           onlyAlertOnce:      false,
           enableVibration:    true,
+          defaultRingtoneType: DefaultRingtoneType.Notification, // Standard sound for toggle-off state
         ),
       ],
       debug: true,
@@ -161,8 +163,10 @@ class NotificationServiceImpl implements NotificationService {
         channelKey: alarmChannelKey,
         title:      'Shift Over!',
         body:       'Your shift has ended. Time to clock out!',
-        category:   alarmEnabled ? NotificationCategory.Alarm : NotificationCategory.Status,
+        category:   NotificationCategory.Alarm,
+        criticalAlert: true,
         wakeUpScreen: true,
+        fullScreenIntent: alarmEnabled,
         autoDismissible: false,
         payload: {
           'alarmEnabled': alarmEnabled.toString(),
@@ -183,8 +187,6 @@ class NotificationServiceImpl implements NotificationService {
     );
 
     // 2. Automatically schedule the FIRST repeat notification too.
-    // This ensures that even if the app is killed and the user doesn't dismiss
-    // the first notification, a follow-up will still happen.
     await scheduleRepeatNotification(
       scheduledDate: scheduledDate.add(Duration(minutes: delayMinutes)),
       delayMinutes:  delayMinutes,
@@ -204,8 +206,10 @@ class NotificationServiceImpl implements NotificationService {
         channelKey: alarmChannelKey,
         title:      'Still not clocked out!',
         body:       'Your shift ended a while ago. Please clock out.',
-        category:   alarmEnabled ? NotificationCategory.Alarm : NotificationCategory.Status,
+        category:   NotificationCategory.Alarm,
+        criticalAlert: true,
         wakeUpScreen: true,
+        fullScreenIntent: alarmEnabled,
         autoDismissible: false,
         payload: {
           'alarmEnabled': alarmEnabled.toString(),

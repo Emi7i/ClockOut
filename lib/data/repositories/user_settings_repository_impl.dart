@@ -6,25 +6,26 @@ import '../mappers/settings_mapper.dart';
 class UserSettingsRepositoryImpl implements UserSettingsRepository {
   final DatabaseManager _dbManager;
 
-  UserSettingsRepositoryImpl({DatabaseManager? dbManager}) 
-      : _dbManager = dbManager ?? DatabaseManager();
+  UserSettingsRepositoryImpl(this._dbManager);
 
   @override
   Future<UserSettings> getSettings() async {
     final dto = await _dbManager.getSettings();
     if (dto == null) {
-      // Return defaults if somehow not seeded
+      // Should not happen due to seeding, but providing fallback
       return const UserSettings(
-        accentColorHex:    0xFF4CAF50,
-        is12HourFormat:    false,
+        accentColorHex: 0xFF4CAF50,
+        is12HourFormat: false,
         alarmDelayMinutes: 30,
       );
     }
-    return SettingsMapper.toDomain(dto);
+    return SettingsMapper.toEntity(dto);
   }
 
   @override
   Future<void> updateSettings(UserSettings settings) async {
-    await _dbManager.updateSettings(SettingsMapper.fromDomain(settings));
+    final currentDto = await _dbManager.getSettings();
+    final dto = SettingsMapper.toDto(settings, id: currentDto?.id ?? 1);
+    await _dbManager.updateSettings(dto);
   }
 }

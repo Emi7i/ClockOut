@@ -2,29 +2,22 @@ import '../../domain/entities/log_entry.dart';
 import '../../domain/repositories/log_repository.dart';
 import '../datasources/database_manager.dart';
 import '../mappers/log_mapper.dart';
+import '../datasources/local/database_helper.dart';
 
 class LogRepositoryImpl implements LogRepository {
   final DatabaseManager _dbManager;
 
-  LogRepositoryImpl({DatabaseManager? dbManager}) 
-      : _dbManager = dbManager ?? DatabaseManager();
+  LogRepositoryImpl(this._dbManager);
 
   @override
   Future<List<LogEntry>> getLogs() async {
     final dtos = await _dbManager.getAllLogs();
-    return dtos
-        .where((d) => d.clockedOutTime != null) // Only completed sessions
-        .map(LogMapper.fromDto)
-        .toList();
+    return dtos.map(LogMapper.toEntity).toList();
   }
 
   @override
   Future<void> deleteAllLogs() async {
-    final logs = await _dbManager.getAllLogs();
-    for (final log in logs) {
-      if (log.id != null) {
-        await _dbManager.deleteLog(log.id!);
-      }
-    }
+    final db = await _dbManager.database;
+    await db.delete(DatabaseHelper.tableLogs);
   }
 }

@@ -2,22 +2,27 @@ import '../../domain/entities/log_entry.dart';
 import '../dtos/log_dto.dart';
 
 class LogMapper {
-  static LogEntry fromDto(LogDto dto) {
-    // Logic for status/offset would go here. 
-    // For now, mapping basic fields.
+  static LogEntry toEntity(LogDto dto) {
     return LogEntry(
-      date:   DateTime.parse(dto.dateAdded),
-      status: LogStatus.onTime, // Default for now
-      offset: Duration.zero,    // Default for now
+      id:             dto.id,
+      date:           DateTime.parse(dto.dateAdded),
+      bonusTime:      Duration(minutes: dto.bonusTime),
+      userEdited:     dto.userEdited == 1,
+      clockedInTime:  dto.clockedInTime != null ? DateTime.parse(dto.clockedInTime!) : null,
+      clockedOutTime: dto.clockedOutTime != null ? DateTime.parse(dto.clockedOutTime!) : null,
+      onlineWork:     dto.onlineWork == 1,
     );
   }
 
   static LogDto toDto(LogEntry entity) {
     return LogDto(
-      dateAdded:  entity.date.toIso8601String(),
-      bonusTime:  '0',
-      userEdited: 0,
-      onlineWork: 0,
+      id:             entity.id,
+      dateAdded:      entity.date.toIso8601String(),
+      bonusTime:      entity.bonusTime.inMinutes,
+      userEdited:     entity.userEdited ? 1 : 0,
+      clockedInTime:  entity.clockedInTime?.toIso8601String(),
+      clockedOutTime: entity.clockedOutTime?.toIso8601String(),
+      onlineWork:     entity.onlineWork ? 1 : 0,
     );
   }
 }

@@ -1,26 +1,19 @@
-import '../entities/clock_entry.dart';
-import '../entities/log_entry.dart';
+import '../entities/active_session.dart';
 
 /// ─────────────────────────────────────────────────────────────
-///  CLOCK REPOSITORY  –  Abstract Contract (Domain Layer)
+///  ACTIVE SESSION REPOSITORY  –  Abstract Contract (Domain Layer)
 ///  The data layer must implement this interface.
 ///  Features depend only on this abstraction, never on the impl.
 /// ─────────────────────────────────────────────────────────────
-abstract interface class ClockRepository {
+abstract interface class ActiveSessionRepository {
   /// Returns the active session, or null if not clocked in.
-  Future<ClockEntry?> getActiveEntry();
+  Future<ActiveSession?> getActiveSession();
 
   /// Starts a new clock-in session.
-  Future<ClockEntry> clockIn();
+  Future<ActiveSession> clockIn();
 
   /// Ends the active session.
-  Future<ClockEntry> clockOut();
-
-  /// Returns all historical log entries, newest first.
-  Future<List<LogEntry>> getLogs();
-
-  /// Deletes every stored log permanently.
-  Future<void> deleteAllLogs();
+  Future<ActiveSession> clockOut();
 
   /// Toggles the alarm for the active session.
   Future<void> setAlarm({required bool enabled});

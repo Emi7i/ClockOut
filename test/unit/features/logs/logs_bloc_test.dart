@@ -21,9 +21,13 @@ void main() {
   group('LogsBloc', () {
     final tLogs = [
       LogEntry(
+        id: 1,
         date: DateTime.now(),
-        status: LogStatus.onTime,
-        offset: Duration.zero,
+        bonusTime: Duration.zero,
+        userEdited: false,
+        clockedInTime: DateTime.now().subtract(const Duration(hours: 8)),
+        clockedOutTime: DateTime.now(),
+        onlineWork: false,
       ),
     ];
 

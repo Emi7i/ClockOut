@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'app_shell.dart';
 import 'core/constants/constants.dart';
-import 'data/repositories/clock_repository_impl.dart';
+import 'data/datasources/database_manager.dart';
+import 'data/repositories/active_session_repository_impl.dart';
 import 'data/repositories/log_repository_impl.dart';
 import 'data/repositories/user_settings_repository_impl.dart';
-import 'domain/repositories/clock_repository.dart';
+import 'domain/repositories/active_session_repository.dart';
 import 'domain/repositories/log_repository.dart';
 import 'domain/repositories/user_settings_repository.dart';
 import 'domain/use_cases/clock_in_use_case.dart';
@@ -27,6 +28,9 @@ import 'core/services/alarm_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // ── Database Manager ───────────────────────────────────
+  final dbManager = DatabaseManager();
+
   // ── Notifications ──────────────────────────────────────
   final notificationService = NotificationServiceImpl();
   await notificationService.initialize();
@@ -42,45 +46,45 @@ void main() async {
   await alarmService.init();
 
   // ── Repositories ───────────────────────────────────────
-  final clockRepo    = ClockRepositoryImpl();
-  final logRepo      = LogRepositoryImpl();
-  final settingsRepo = UserSettingsRepositoryImpl();
+  final activeSessionRepo = ActiveSessionRepositoryImpl(dbManager);
+  final logRepo           = LogRepositoryImpl(dbManager);
+  final settingsRepo      = UserSettingsRepositoryImpl(dbManager);
 
   // ── Use cases ──────────────────────────────────────────
-  final clockIn  = ClockInUseCase(clockRepo);
-  final clockOut = ClockOutUseCase(clockRepo);
+  final clockIn  = ClockInUseCase(activeSessionRepo);
+  final clockOut = ClockOutUseCase(activeSessionRepo);
   final getLogs  = GetLogsUseCase(logRepo);
 
   runApp(
     ClockApp(
-      clockIn:    clockIn,
-      clockOut:   clockOut,
-      getLogs:    getLogs,
-      clockRepo:  clockRepo,
-      logRepo:    logRepo,
-      settingsRepo: settingsRepo,
+      clockIn:            clockIn,
+      clockOut:           clockOut,
+      getLogs:            getLogs,
+      activeSessionRepo:  activeSessionRepo,
+      logRepo:            logRepo,
+      settingsRepo:       settingsRepo,
       notificationService: notificationService,
-      alarmService: alarmService,
+      alarmService:       alarmService,
     ),
   );
 }
 
 class ClockApp extends StatelessWidget {
-  final ClockInUseCase  clockIn;
-  final ClockOutUseCase clockOut;
-  final GetLogsUseCase  getLogs;
-  final ClockRepository clockRepo;
-  final LogRepository   logRepo;
-  final UserSettingsRepository settingsRepo;
-  final NotificationService notificationService;
-  final AlarmService        alarmService;
+  final ClockInUseCase          clockIn;
+  final ClockOutUseCase         clockOut;
+  final GetLogsUseCase          getLogs;
+  final ActiveSessionRepository activeSessionRepo;
+  final LogRepository           logRepo;
+  final UserSettingsRepository  settingsRepo;
+  final NotificationService     notificationService;
+  final AlarmService            alarmService;
 
   const ClockApp({
     super.key,
     required this.clockIn,
     required this.clockOut,
     required this.getLogs,
-    required this.clockRepo,
+    required this.activeSessionRepo,
     required this.logRepo,
     required this.settingsRepo,
     required this.notificationService,
@@ -93,12 +97,12 @@ class ClockApp extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (_) => ClockBloc(
-            clockIn:    clockIn,
-            clockOut:   clockOut,
-            repository: clockRepo,
+            clockIn:            clockIn,
+            clockOut:           clockOut,
+            repository:         activeSessionRepo,
             settingsRepository: settingsRepo,
             notificationService: notificationService,
-            alarmService: alarmService,
+            alarmService:       alarmService,
           )..add(const ClockStarted()),
         ),
         BlocProvider(
