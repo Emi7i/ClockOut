@@ -102,18 +102,21 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
 
         if (endOfShift.isAfter(DateTime.now())) {
           _nextAlarmAt = endOfShift;
+          developer.log('DEBUG: Scheduling shift end notification for $endOfShift');
           await _notificationService.scheduleShiftEndNotification(
             scheduledDate: endOfShift,
             delayMinutes:  settings.alarmDelayMinutes,
             alarmEnabled:  active.alarmEnabled,
           );
         } else {
+          developer.log('DEBUG: Cancelling all notifs');
           await _notificationService.cancelAllShiftNotifications(); // nothing ringing, safe
           final delay = Duration(minutes: settings.alarmDelayMinutes);
           DateTime nextRepeat = endOfShift.add(delay);
           while (nextRepeat.isBefore(DateTime.now())) {
             nextRepeat = nextRepeat.add(delay);
           }
+          developer.log('DEBUG: Schedulign repeating notification at $nextRepeat');
           _nextAlarmAt = nextRepeat;
           await _notificationService.scheduleRepeatNotification(
             scheduledDate: nextRepeat,
@@ -202,7 +205,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   // User tapped Stop on screen — sound already stopped by AlarmService,
   // next repeat is already scheduled, just clear ringing state.
   Future<void> _onAlarmStop(AlarmStopRequested event, Emitter<ClockState> emit) async {
-    await _notificationService.cancelAllShiftNotifications();
+    // await _notificationService.cancelAllShiftNotifications(); - do not cancel notifs, the auto cancel (i think)
     _isRinging = false;
     if (state case ClockActive active) {
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
@@ -212,6 +215,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
 
   // Notification dismissed (tap or auto) — same as stop, don't touch schedule.
   Future<void> _onAlarmAutoDismissed(AlarmAutoDismissed event, Emitter<ClockState> emit) async {
+    developer.log('DEBUG: Notif auto dismissed');
     _isRinging = false;
     if (state case ClockActive active) {
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
@@ -223,6 +227,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       AlarmToggled event,
       Emitter<ClockState> emit,
       ) async {
+    developer.log('DEBUG: Toggle pressed');
     await _repository.setAlarmSound(enabled: event.enabled);
 
     if (state case ClockActive active) {
@@ -230,6 +235,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       final endOfShift = active.clockedInAt.add(_shiftDuration);
 
       if (endOfShift.isAfter(DateTime.now())) {
+        developer.log('DEBUG: Cancel all alarms, schedule end notif at $endOfShift');
         await _notificationService.cancelAllShiftNotifications();
         await _notificationService.scheduleShiftEndNotification(
           scheduledDate: endOfShift,
@@ -237,20 +243,19 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
           alarmEnabled:  event.enabled,
         );
       } else {
-        if (_nextAlarmAt != null) {
-          // Cancel the pending repeat (not ringing — it would have been handled
-          // by _onAlertFired already) and reschedule with new alarmEnabled.
-          await _alarmService.stop(_nextRepeatAlarmId);
+          developer.log('DEBUG: Cancel all alarms, schedule repeating notif at $_nextAlarmAt');
+          await _notificationService.cancelAllShiftNotifications();
           await _notificationService.scheduleRepeatNotification(
             scheduledDate: _nextAlarmAt!,
             delayMinutes:  settings.alarmDelayMinutes,
             alarmEnabled:  event.enabled,
           );
-        }
       }
       emit(_buildActiveState(active.clockedInAt, event.enabled));
     } else if (state case ClockIdle idle) {
       emit(ClockIdle(
+
+
         currentTime:  idle.currentTime,
         alarmEnabled: event.enabled,
       ));
