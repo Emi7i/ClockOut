@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:typed_data';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:alarm/alarm.dart';
 import '../../core/constants/constants.dart';
@@ -22,15 +23,19 @@ class NotificationServiceImpl implements NotificationService {
       null,
       [
         NotificationChannel(
-          channelKey:         NotificationService.alarmChannelKey,
-          channelName:        'Shift End Alarms',
+          channelKey:       NotificationService.alarmChannelKey,
+          channelName:      'Shift End Alarms',
           channelDescription: 'Alarm that repeats until you clock out',
-          defaultColor:       AppColors.accent,
-          importance:         NotificationImportance.Max,
-          criticalAlerts:     true,
-          playSound:          true,
-          onlyAlertOnce:      false,
-          enableVibration:    true,
+          defaultColor:     AppColors.accent,
+          importance:       NotificationImportance.Max,
+          criticalAlerts:   true,
+          playSound:        true,
+          onlyAlertOnce:    false,
+          enableVibration:  true,
+          vibrationPattern: Int64List.fromList([
+            0, 800, 400, 800, 400, 800, 400, 800, 400, 800, 400, 800, 400, 800,
+            // ~10.5 seconds: 7× (800ms on + 400ms off)
+          ]),
         ),
       ],
       debug: true,
@@ -90,13 +95,6 @@ class NotificationServiceImpl implements NotificationService {
         body: 'You earned a good rest!',
       );
     }
-
-    // 3. Schedule the first repeat
-    await scheduleRepeatNotification(
-      scheduledDate: scheduledDate.add(Duration(minutes: delayMinutes)),
-      delayMinutes:  delayMinutes,
-      alarmEnabled:  alarmEnabled,
-    );
   }
 
   @override

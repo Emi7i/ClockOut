@@ -31,6 +31,7 @@ final class ClockActive extends ClockState {
   final bool alarmEnabled;
   final Duration? nextAlarmIn;  // null when alarm is off
   final bool isRinging;         // true when an alarm is currently firing
+  final bool isSilentlyRinging; // true when phone is vibrating
 
   const ClockActive({
     required this.currentTime,
@@ -39,6 +40,7 @@ final class ClockActive extends ClockState {
     this.alarmEnabled  = false,
     this.nextAlarmIn,
     this.isRinging = false,
+    this.isSilentlyRinging = false,
   });
 }
 

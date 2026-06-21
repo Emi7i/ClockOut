@@ -35,8 +35,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   StreamSubscription? _notificationActionSubscription;
   DateTime?           _nextAlarmAt;
   bool                _isRinging = false;
-  int                 _nextRepeatAlarmId = NotificationService.repeatAlarmId;
-  int?                _currentlyRingingAlarmId;
+  bool                _isSilentlyRinging = false;
 
   ClockBloc({
     required ClockInUseCase clockIn,
@@ -71,7 +70,6 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       final id = alarmSettings.id;
       if (id == NotificationService.shiftAlarmId ||
           id == NotificationService.repeatAlarmId) {
-        _currentlyRingingAlarmId = id; // store before dispatching
         add(AlertFired(id != NotificationService.shiftAlarmId));
       }
     });
@@ -141,6 +139,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       final session = await _clockIn();
       _startTicker();
 
+      developer.log('DEBUG: Clocked in!');
       final settings = await _settingsRepository.getSettings();
       final endOfShift = session.clockedInAt.add(_shiftDuration);
       _nextAlarmAt = endOfShift;
@@ -194,8 +193,10 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
 
       _nextAlarmAt             = null;
       _isRinging               = false;
+      _isSilentlyRinging       = false;
       await _clockOut();
 
+      developer.log('DEBUG: Clocked out!');
       emit(ClockIdle(currentTime: DateTime.now()));
     } catch (e) {
       emit(ClockError(e.toString()));
@@ -207,9 +208,9 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   Future<void> _onAlarmStop(AlarmStopRequested event, Emitter<ClockState> emit) async {
     // await _notificationService.cancelAllShiftNotifications(); - do not cancel notifs, the auto cancel (i think)
     _isRinging = false;
+    _isSilentlyRinging = false;
     if (state case ClockActive active) {
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
-      add(const ClockStarted()); // alarm stopped, reschedule next
     }
   }
 
@@ -217,9 +218,9 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   Future<void> _onAlarmAutoDismissed(AlarmAutoDismissed event, Emitter<ClockState> emit) async {
     developer.log('DEBUG: Notif auto dismissed');
     _isRinging = false;
+    _isSilentlyRinging = false;
     if (state case ClockActive active) {
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
-      add(const ClockStarted()); // alarm is stopped, safe to reschedule
     }
   }
 
@@ -266,9 +267,11 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     if (state case ClockActive active) {
       if (active.alarmEnabled) {
         _isRinging = true;
+      } else {
+        _isSilentlyRinging = true;
       }
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
-      // no ClockStarted here — we reschedule after dismiss, not after fire
+      add(const ClockStarted()); // schedule next
     }
   }
 
@@ -298,6 +301,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       alarmEnabled: alarmEnabled,
       nextAlarmIn:  nextAlarmIn,
       isRinging:    _isRinging,
+      isSilentlyRinging:  _isSilentlyRinging,
     );
   }
 
