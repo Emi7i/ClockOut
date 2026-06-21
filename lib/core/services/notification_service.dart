@@ -3,7 +3,7 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 abstract interface class NotificationService {
   static const String alarmChannelKey = 'shift_end_alarm_channel';
   static const int shiftAlarmId  = 1;
-  static const int repeatAlarmId = 2;
+  static const List<int> repeatPoolId = [2, 3, 4];
 
   Stream<ReceivedAction> get actionStream;
 
@@ -17,8 +17,10 @@ abstract interface class NotificationService {
     required DateTime scheduledDate,
     required int      delayMinutes,
     required bool     alarmEnabled,
+    required int      notificationId,
   });
   Future<void> cancelAllShiftNotifications();
+  Future<void> cancelNotification(int id);
 }
 
 /// Called from main.dart as a TOP-LEVEL function (required by awesome_notifications

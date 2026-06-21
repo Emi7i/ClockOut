@@ -62,10 +62,11 @@ class NotificationServiceImpl implements NotificationService {
         channelKey: NotificationService.alarmChannelKey,
         title:      'Shift Over!',
         body:       'Your shift has ended. Time to clock out!',
+        // DO NOT TOUCH THESE PARAMETERS
         category:   NotificationCategory.Alarm,
         criticalAlert: true,
-        wakeUpScreen: true,
-        fullScreenIntent: true,
+        wakeUpScreen: false,
+        fullScreenIntent: false,
         autoDismissible: true, // dismiss notif if user taps on it
         payload: {
           'alarmEnabled': alarmEnabled.toString(),
@@ -85,6 +86,8 @@ class NotificationServiceImpl implements NotificationService {
       ),
     );
 
+    developer.log('Scheduling end shift alarm at: $scheduledDate (now: ${DateTime.now()})');
+
     // 2. Schedule the hardware alarm if enabled
     if (alarmEnabled) {
       developer.log('Scheduling normal alarm at: $scheduledDate (now: ${DateTime.now()})');
@@ -102,18 +105,20 @@ class NotificationServiceImpl implements NotificationService {
     required DateTime scheduledDate,
     required int      delayMinutes,
     required bool     alarmEnabled,
+    required int      notificationId,
   }) async {
     // 1. Schedule the notification
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
-        id:         NotificationService.repeatAlarmId,
+        id:         notificationId,
         channelKey: NotificationService.alarmChannelKey,
         title:      'Overtime completed!',
         body:       '+ 30 minutes. You can get a beer now.',
+        // DO NOT TOUCH THESE PARAMETERS
         category:   NotificationCategory.Alarm,
         criticalAlert: true,
-        wakeUpScreen: true,
-        fullScreenIntent: true,
+        wakeUpScreen: false,
+        fullScreenIntent: false,
         autoDismissible: true, // dismiss notif if user taps on it
         payload: {
           'alarmEnabled': alarmEnabled.toString(),
@@ -138,7 +143,7 @@ class NotificationServiceImpl implements NotificationService {
     // 2. Schedule hardware alarm if enabled
     if (alarmEnabled) {
       await _alarmService.setAlarm(
-        id: NotificationService.repeatAlarmId,
+        id: notificationId,
         dateTime: scheduledDate,
         title: 'alarm!',
         body: 'Your shift ended a while ago. Please clock out.',
@@ -149,9 +154,17 @@ class NotificationServiceImpl implements NotificationService {
   @override
   Future<void> cancelAllShiftNotifications() async {
     await AwesomeNotifications().cancel(NotificationService.shiftAlarmId);
-    await AwesomeNotifications().cancel(NotificationService.repeatAlarmId);
     await _alarmService.stop(NotificationService.shiftAlarmId);  // cancel sound
-    await _alarmService.stop(NotificationService.repeatAlarmId); // cancel sound
+    for (int notifId in NotificationService.repeatPoolId){
+      await AwesomeNotifications().cancel(notifId);
+      await _alarmService.stop(notifId);  // cancel sound
+    }
+  }
+
+  @override
+  Future<void> cancelNotification(int id) async {
+    await AwesomeNotifications().cancel(id);
+    await _alarmService.stop(id);  // cancel sound
   }
 }
 
