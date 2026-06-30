@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS UserSettings (
     settings_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     accent_color TEXT,
     clock_format TEXT,
-    time_delay INTEGER DEFAULT (30) NOT NULL
+    time_delay INTEGER DEFAULT (0.5) NOT NULL
 );
 CREATE TABLE IF NOT EXISTS ActiveSession (
     clocked_in_time TEXT NOT NULL,

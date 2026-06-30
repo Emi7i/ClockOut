@@ -49,11 +49,14 @@ void main() {
           alarmEnabled:  any(named: 'alarmEnabled'),
         )).thenAnswer((_) async => {});
     when(() => mockNotificationService.scheduleRepeatNotification(
-          scheduledDate: any(named: 'scheduledDate'),
-          delayMinutes:  any(named: 'delayMinutes'),
-          alarmEnabled:  any(named: 'alarmEnabled'),
+          scheduledDate:  any(named: 'scheduledDate'),
+          delayMinutes:   any(named: 'delayMinutes'),
+          alarmEnabled:   any(named: 'alarmEnabled'),
+          notificationId: any(named: 'notificationId'),
         )).thenAnswer((_) async => {});
     when(() => mockNotificationService.cancelAllShiftNotifications())
+        .thenAnswer((_) async => {});
+    when(() => mockNotificationService.cancelNotification(any()))
         .thenAnswer((_) async => {});
     when(() => mockNotificationService.actionStream)
         .thenAnswer((_) => const Stream.empty());
@@ -71,6 +74,11 @@ void main() {
           accentColorHex: 0xFF4CAF50,
           is12HourFormat: false,
           alarmDelayMinutes: 30,
+        ));
+
+    when(() => mockRepository.getActiveSession()).thenAnswer((_) async => ActiveSession(
+          clockedInAt: DateTime.now(),
+          alarmEnabled: false,
         ));
   });
 

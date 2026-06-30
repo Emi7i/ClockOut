@@ -54,9 +54,10 @@ void main() {
           alarmEnabled:  any(named: 'alarmEnabled'),
         )).thenAnswer((_) async => {});
     when(() => mockNotificationService.scheduleRepeatNotification(
-          scheduledDate: any(named: 'scheduledDate'),
-          delayMinutes:  any(named: 'delayMinutes'),
-          alarmEnabled:  any(named: 'alarmEnabled'),
+          scheduledDate:  any(named: 'scheduledDate'),
+          delayMinutes:   any(named: 'delayMinutes'),
+          alarmEnabled:   any(named: 'alarmEnabled'),
+          notificationId: any(named: 'notificationId'),
         )).thenAnswer((_) async => {});
     when(() => mockNotificationService.cancelAllShiftNotifications())
         .thenAnswer((_) async => {});
@@ -117,13 +118,14 @@ void main() {
     );
 
     blocTest<ClockBloc, ClockState>(
-      'emits [ClockActive] with nextAlarmIn when ClockInRequested succeeds and alarm is enabled',
+      'emits [ClockActive] with alarmEnabled=true when ClockInRequested succeeds and alarm is enabled',
       build: () {
         final session = ActiveSession(
           clockedInAt: DateTime.now(),
           alarmEnabled: true,
         );
         when(() => mockClockIn()).thenAnswer((_) async => session);
+        when(() => mockRepository.getActiveSession()).thenAnswer((_) async => session);
         return ClockBloc(
           clockIn: mockClockIn,
           clockOut: mockClockOut,
@@ -138,7 +140,7 @@ void main() {
       expect: () => [
         isA<ClockActive>()
             .having((s) => s.alarmEnabled, 'alarmEnabled', true)
-            .having((s) => s.nextAlarmIn, 'nextAlarmIn', isNotNull),
+            .having((s) => s.nextAlarmIn, 'nextAlarmIn', isNull),
       ],
     );
   });

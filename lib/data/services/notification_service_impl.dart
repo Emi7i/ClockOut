@@ -27,7 +27,7 @@ class NotificationServiceImpl implements NotificationService {
           channelName:      'Shift End Alarms',
           channelDescription: 'Alarm that repeats until you clock out',
           defaultColor:     AppColors.accent,
-          importance:       NotificationImportance.Max,
+          importance:       NotificationImportance.High,
           criticalAlerts:   true,
           playSound:        true,
           onlyAlertOnce:    false,
@@ -65,8 +65,8 @@ class NotificationServiceImpl implements NotificationService {
         // DO NOT TOUCH THESE PARAMETERS
         category:   NotificationCategory.Alarm,
         criticalAlert: true,
-        wakeUpScreen: false,
-        fullScreenIntent: false,
+        wakeUpScreen: true,
+        fullScreenIntent: true,
         autoDismissible: true, // dismiss notif if user taps on it
         payload: {
           'alarmEnabled': alarmEnabled.toString(),
@@ -83,6 +83,7 @@ class NotificationServiceImpl implements NotificationService {
       schedule: NotificationCalendar.fromDate(
         date: scheduledDate,
         preciseAlarm: true,
+        repeats: false,
       ),
     );
 
@@ -117,8 +118,8 @@ class NotificationServiceImpl implements NotificationService {
         // DO NOT TOUCH THESE PARAMETERS
         category:   NotificationCategory.Alarm,
         criticalAlert: true,
-        wakeUpScreen: false,
-        fullScreenIntent: false,
+        wakeUpScreen: true,
+        fullScreenIntent: true,
         autoDismissible: true, // dismiss notif if user taps on it
         payload: {
           'alarmEnabled': alarmEnabled.toString(),
@@ -135,6 +136,7 @@ class NotificationServiceImpl implements NotificationService {
       schedule: NotificationCalendar.fromDate(
         date: scheduledDate,
         preciseAlarm: true,
+        repeats: false,
       ),
     );
 
