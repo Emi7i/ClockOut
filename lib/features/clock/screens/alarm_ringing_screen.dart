@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../common_widgets/common_widgets.dart';
+import '../../settings/bloc/settings_bloc.dart';
 import '../bloc/clock_bloc.dart';
 
 /// ─────────────────────────────────────────────────────────────
@@ -27,6 +28,8 @@ class AlarmRingingScreen extends StatelessWidget {
             child: BlocBuilder<ClockBloc, ClockState>(
               builder: (context, state) {
                 final now = state is ClockActive ? state.currentTime : DateTime.now();
+                final settingsState = context.watch<SettingsBloc>().state;
+                final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
 
                 return Center(
                   child: Column(
@@ -37,7 +40,10 @@ class AlarmRingingScreen extends StatelessWidget {
 
                       const SizedBox(height: AppDimensions.spaceLg),
 
-                      Text(DateFormatter.clockTime(now), style: AppTextStyles.timeDisplay),
+                      Text(
+                        DateFormatter.clockTime(now, is12Hour: is12Hour),
+                        style: AppTextStyles.timeDisplay,
+                      ),
 
                       const SizedBox(height: AppDimensions.spaceSm),
 

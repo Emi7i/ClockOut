@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../common_widgets/common_widgets.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../settings/bloc/settings_bloc.dart';
 import '../bloc/clock_bloc.dart';
 import '../widgets/remaining_ring.dart';
 import '../widgets/clock_out_button.dart';
@@ -30,6 +31,8 @@ class ClockedInScreen extends StatelessWidget {
       buildWhen: (_, s) => s is ClockActive,
       builder: (context, state) {
         final active = state as ClockActive;
+        final settingsState = context.watch<SettingsBloc>().state;
+        final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -45,7 +48,7 @@ class ClockedInScreen extends StatelessWidget {
                 children: [
                   // ── Top bar ────────────────────────────────
                   AppTopBar(
-                    timeLabel:     DateFormatter.clockTime(active.currentTime),
+                    timeLabel:     DateFormatter.clockTime(active.currentTime, is12Hour: is12Hour),
                     onSettingsTap: onSettingsTap,
                   ),
 
@@ -61,6 +64,11 @@ class ClockedInScreen extends StatelessWidget {
                               final TimeOfDay? newTime = await showTimePicker(
                                 context: context,
                                 initialTime: TimeOfDay.fromDateTime(active.clockedInAt),
+                                builder: (context, child) => MediaQuery(
+                                  data: MediaQuery.of(context)
+                                      .copyWith(alwaysUse24HourFormat: !is12Hour),
+                                  child: child!,
+                                ),
                               );
 
                               if (newTime != null && context.mounted) {
@@ -83,7 +91,7 @@ class ClockedInScreen extends StatelessWidget {
                               }
                             },
                             child: Text(
-                              'Clocked in time: ${DateFormatter.clockTime(active.clockedInAt)}',
+                              'Clocked in time: ${DateFormatter.clockTime(active.clockedInAt, is12Hour: is12Hour)}',
                               style: AppTextStyles.bodyMedium,
                             ),
                           ),

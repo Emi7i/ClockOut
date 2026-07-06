@@ -4,10 +4,14 @@
 ///  Swap format strings here — UI updates automatically.
 /// ─────────────────────────────────────────────────────────────
 abstract final class DateFormatter {
-  /// e.g. "8:55 am"
-  static String clockTime(DateTime dt) {
-    final hour   = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+  /// e.g. "8:55 am" (12-hour) or "08:55" (24-hour).
+  static String clockTime(DateTime dt, {bool is12Hour = true}) {
     final minute = dt.minute.toString().padLeft(2, '0');
+    if (!is12Hour) {
+      final hour = dt.hour.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    }
+    final hour   = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
     final period = dt.hour < 12 ? 'am' : 'pm';
     return '$hour:$minute $period';
   }

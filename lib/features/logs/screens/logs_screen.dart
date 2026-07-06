@@ -4,6 +4,7 @@ import '../../../common_widgets/common_widgets.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../domain/entities/log_entry.dart';
+import '../../settings/bloc/settings_bloc.dart';
 import '../bloc/logs_bloc.dart';
 import '../widgets/donut_chart.dart';
 import '../widgets/log_list_tile.dart';
@@ -29,6 +30,9 @@ class LogsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<LogsBloc, LogsState>(
       builder: (context, state) {
+        final settingsState = context.watch<SettingsBloc>().state;
+        final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
+
         return Scaffold(
           backgroundColor: AppColors.background,
           body: SafeArea(
@@ -36,7 +40,7 @@ class LogsScreen extends StatelessWidget {
               children: [
                 // ── Top bar with edit toggle ────────────────
                 AppTopBar(
-                  timeLabel:     DateFormatter.clockTime(DateTime.now()),
+                  timeLabel:     DateFormatter.clockTime(DateTime.now(), is12Hour: is12Hour),
                   onSettingsTap: onSettingsTap,
                   trailing: switch (state) {
                     LogsLoaded() => _EditModeChip(
@@ -148,8 +152,15 @@ class _LoadedBody extends StatelessWidget {
 /// Opens a dialog letting the user pick new start/end times for [entry].
 void _showEditLogDialog(BuildContext context, LogEntry entry) {
   final logsBloc = context.read<LogsBloc>();
+  final settingsState = context.read<SettingsBloc>().state;
+  final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
   DateTime start = entry.clockedInTime ?? entry.date;
   DateTime end   = entry.clockedOutTime ?? entry.date;
+
+  MediaQuery timePickerTheme(BuildContext context, Widget? child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: !is12Hour),
+        child: child!,
+      );
 
   showDialog<void>(
     context: context,
@@ -159,6 +170,7 @@ void _showEditLogDialog(BuildContext context, LogEntry entry) {
           final picked = await showTimePicker(
             context: context,
             initialTime: TimeOfDay.fromDateTime(start),
+            builder: timePickerTheme,
           );
           if (picked == null) return;
           setState(() {
@@ -174,6 +186,7 @@ void _showEditLogDialog(BuildContext context, LogEntry entry) {
           final picked = await showTimePicker(
             context: context,
             initialTime: TimeOfDay.fromDateTime(end),
+            builder: timePickerTheme,
           );
           if (picked == null) return;
           setState(() {
@@ -236,6 +249,8 @@ class _EditTimeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accentColor = Theme.of(context).colorScheme.primary;
+    final settingsState = context.watch<SettingsBloc>().state;
+    final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
 
     return GestureDetector(
       onTap: onTap,
@@ -248,7 +263,7 @@ class _EditTimeRow extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  DateFormatter.clockTime(time),
+                  DateFormatter.clockTime(time, is12Hour: is12Hour),
                   style: AppTextStyles.bodyMedium.copyWith(color: accentColor),
                 ),
                 const SizedBox(width: AppDimensions.spaceXs),
