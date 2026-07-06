@@ -133,19 +133,28 @@ class ClockApp extends StatelessWidget {
           )..add(const SettingsStarted()),
         ),
       ],
-      child: MaterialApp(
-        title:        'Work Clock',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          scaffoldBackgroundColor: AppColors.background,
-          colorScheme: ColorScheme.dark(
-            primary:   AppColors.accent,
-            surface:   AppColors.surface,
-          ),
-          fontFamily:  'Caveat',
-          useMaterial3: true,
-        ),
-        home: const AppShell(),
+      child: BlocBuilder<SettingsBloc, SettingsState>(
+        builder: (context, settingsState) {
+          final accentColor = settingsState is SettingsLoaded
+              ? settingsState.accentColor
+              : AppColors.accent;
+
+          return MaterialApp(
+            title:        'Work Clock',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              scaffoldBackgroundColor: AppColors.background,
+              colorScheme: ColorScheme.dark(
+                primary:   accentColor,
+                secondary: accentColor,
+                surface:   AppColors.surface,
+              ),
+              fontFamily:  'Caveat',
+              useMaterial3: true,
+            ),
+            home: const AppShell(),
+          );
+        },
       ),
     );
   }

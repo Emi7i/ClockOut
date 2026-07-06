@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../common_widgets/common_widgets.dart';
 import '../../../core/constants/constants.dart';
@@ -28,7 +29,9 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, state) {
-        final accentColor = state is SettingsLoaded ? state.accentColor : AppColors.accent;
+        final accentColor = state is SettingsLoaded
+            ? state.accentColor
+            : Theme.of(context).colorScheme.primary;
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -155,55 +158,87 @@ class SettingsScreen extends StatelessWidget {
 
   void _showColorPicker(BuildContext context, SettingsState state) {
     if (state is! SettingsLoaded) return;
-    
-    final colors = [
-      const Color(0xFFC8F000), // Original Lime
-      const Color(0xFF00E5FF), // Cyan
-      const Color(0xFF7C4DFF), // Purple
-      const Color(0xFFFF4081), // Pink
-      const Color(0xFFFFAB40), // Orange
-      const Color(0xFF69F0AE), // Teal
-      const Color(0xFFFF5252), // Red
-      const Color(0xFF448AFF), // Blue
-      const Color(0xFFFFD740), // Amber
+
+    final settingsBloc = context.read<SettingsBloc>();
+    Color tempColor = state.accentColor;
+
+    // Always offer a quick way back to the app's original default, even if
+    // it's fallen out of (or never entered) the recently-picked history.
+    final swatches = [
+      ...state.recentColors,
+      if (!state.recentColors.any((c) => c.value == AppColors.accent.value))
+        AppColors.accent,
     ];
 
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Pick accent color', style: AppTextStyles.bodyLarge),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: GridView.count(
-            shrinkWrap: true,
-            crossAxisCount: 3,
-            mainAxisSpacing: 15,
-            crossAxisSpacing: 15,
-            children: colors.map((color) {
-              final isSelected = state.accentColor.value == color.value;
-              return GestureDetector(
-                onTap: () {
-                  context.read<SettingsBloc>().add(AccentColorChanged(color));
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: Text('Pick accent color', style: AppTextStyles.bodyLarge),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ColorPicker(
+                    pickerColor: tempColor,
+                    onColorChanged: (color) => setState(() => tempColor = color),
+                    enableAlpha: false,
+                    labelTypes: const [ColorLabelType.hex],
+                    pickerAreaHeightPercent: 0.7,
+                  ),
+
+                  const SizedBox(height: AppDimensions.spaceMd),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Recent', style: AppTextStyles.bodySmall),
+                  ),
+                  const SizedBox(height: AppDimensions.spaceXs),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      for (final recent in swatches)
+                        GestureDetector(
+                          onTap: () => setState(() => tempColor = recent),
+                          child: Container(
+                            width:  32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: recent,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: recent.value == tempColor.value
+                                    ? Colors.white
+                                    : Colors.black26,
+                                width: recent.value == tempColor.value ? 3 : 1,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text('Cancel', style: AppTextStyles.bodySmall),
+              ),
+              TextButton(
+                onPressed: () {
+                  settingsBloc.add(AccentColorChanged(tempColor));
                   Navigator.of(dialogContext).pop();
                 },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? Colors.white : Colors.black26,
-                      width: isSelected ? 3 : 1,
-                    ),
-                  ),
-                  child: isSelected 
-                    ? const Icon(Icons.check, color: Colors.white, size: 20)
-                    : null,
+                child: Text(
+                  'Save',
+                  style: AppTextStyles.bodySmall.copyWith(color: tempColor),
                 ),
-              );
-            }).toList(),
-          ),
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

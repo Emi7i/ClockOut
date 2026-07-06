@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import '../../../core/constants/app_constants.dart';
 
 /// ─────────────────────────────────────────────────────────────
 ///  DATABASE HELPER
@@ -31,6 +32,7 @@ class DatabaseHelper {
   static const String colAccentColor = 'accent_color';
   static const String colClockFormat = 'clock_format';
   static const String colTimeDelay = 'time_delay';
+  static const String colRecentColors = 'recent_colors';
 
   // Column Names - ActiveSession
   static const String colSessionClockedInTime = 'clocked_in_time';
@@ -71,7 +73,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: AppConstants.dbVersion,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -98,7 +100,8 @@ class DatabaseHelper {
         $colSettingsId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
         $colAccentColor TEXT,
         $colClockFormat TEXT,
-        $colTimeDelay INTEGER DEFAULT (30) NOT NULL
+        $colTimeDelay INTEGER DEFAULT (30) NOT NULL,
+        $colRecentColors TEXT
       )
     ''');
 
@@ -122,12 +125,9 @@ class DatabaseHelper {
 
   /// Handles database schema updates (Migrations).
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    /* 
-    EXAMPLE MIGRATION (Version 1 -> 2):
     if (oldVersion < 2) {
-       await db.execute('ALTER TABLE $tableLogs ADD COLUMN notes TEXT');
+      await db.execute('ALTER TABLE $tableSettings ADD COLUMN $colRecentColors TEXT');
     }
-    */
   }
 
   /// Closes the database connection.

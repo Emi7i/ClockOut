@@ -70,5 +70,67 @@ void main() {
         verify(() => mockSettingsRepo.updateSettings(any())).called(1);
       },
     );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'adds a newly picked accent color to the front of recentColors',
+      build: () {
+        when(() => mockSettingsRepo.updateSettings(any())).thenAnswer((_) async => {});
+        return SettingsBloc(
+          settingsRepo: mockSettingsRepo,
+          logRepo: mockLogRepo,
+        );
+      },
+      seed: () => const SettingsLoaded(
+        accentColor: Color(0xFFC8F000),
+        is12HourFormat: false,
+        alarmDelayMinutes: 30,
+        recentColors: [Color(0xFF00E5FF), Color(0xFF7C4DFF)],
+      ),
+      act: (bloc) => bloc.add(const AccentColorChanged(Color(0xFFFF4081))),
+      expect: () => [
+        isA<SettingsLoaded>().having(
+          (s) => s.recentColors,
+          'recentColors',
+          const [Color(0xFFFF4081), Color(0xFF00E5FF), Color(0xFF7C4DFF)],
+        ),
+      ],
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'does not duplicate a color already in recentColors, and caps at 5',
+      build: () {
+        when(() => mockSettingsRepo.updateSettings(any())).thenAnswer((_) async => {});
+        return SettingsBloc(
+          settingsRepo: mockSettingsRepo,
+          logRepo: mockLogRepo,
+        );
+      },
+      seed: () => const SettingsLoaded(
+        accentColor: Color(0xFFC8F000),
+        is12HourFormat: false,
+        alarmDelayMinutes: 30,
+        recentColors: [
+          Color(0xFF00E5FF),
+          Color(0xFF7C4DFF),
+          Color(0xFFFF4081),
+          Color(0xFFFFAB40),
+          Color(0xFF69F0AE),
+        ],
+      ),
+      act: (bloc) => bloc.add(const AccentColorChanged(Color(0xFF7C4DFF))),
+      expect: () => [
+        isA<SettingsLoaded>().having(
+          (s) => s.recentColors,
+          'recentColors',
+          const [
+            Color(0xFF7C4DFF),
+            Color(0xFF00E5FF),
+            Color(0xFFFF4081),
+            Color(0xFFFFAB40),
+            Color(0xFF69F0AE),
+          ],
+        ),
+      ],
+    );
   });
 }

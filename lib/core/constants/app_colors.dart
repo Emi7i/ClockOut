@@ -17,11 +17,10 @@ abstract final class AppColors {
   static const Color surface = Color(0xFF343A40);
 
   // ── Accent ────────────────────────────────────────────────
-  /// Primary neon yellow-green accent
+  /// Default accent before user settings load, or if the user has never
+  /// picked a colour. The live accent is `Theme.of(context).colorScheme
+  /// .primary`, driven by SettingsBloc — see main.dart.
   static const Color accent = Color(0xFFC8F000);
-
-  /// Accent at ~16 % opacity (used for icon-box fills)
-  static const Color accentDim = Color(0x28C8F000);
 
   // ── Text ──────────────────────────────────────────────────
   static const Color textPrimary   = Color(0xFFFFFFFF);
@@ -43,5 +42,4 @@ abstract final class AppColors {
 
   // ── Toggle ────────────────────────────────────────────────
   static const Color toggleOff = Colors.transparent;
-  static const Color toggleOn  = Color(0xFFC8F000);
 }

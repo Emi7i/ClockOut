@@ -27,7 +27,7 @@ class SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = accentColor ?? AppColors.accent;
+    final color = accentColor ?? Theme.of(context).colorScheme.primary;
     final colorDim = color.withOpacity(0.16);
 
     return GestureDetector(

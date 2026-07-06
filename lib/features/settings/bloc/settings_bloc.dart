@@ -7,6 +7,9 @@ import '../../../domain/repositories/log_repository.dart';
 part 'settings_event.dart';
 part 'settings_state.dart';
 
+/// Maximum number of distinct recently-picked accent colours to remember.
+const int _maxRecentColors = 5;
+
 /// ─────────────────────────────────────────────────────────────
 ///  SETTINGS BLOC
 ///  Manages accent colour, clock format, alarm delay, log deletion.
@@ -35,6 +38,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         accentColor:       Color(settings.accentColorHex),
         is12HourFormat:    settings.is12HourFormat,
         alarmDelayMinutes: settings.alarmDelayMinutes,
+        recentColors:      settings.recentAccentColors.map(Color.new).toList(),
       ));
     } catch (e) {
       emit(SettingsError(e.toString()));
@@ -46,12 +50,20 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     Emitter<SettingsState> emit,
   ) async {
     if (state case SettingsLoaded loaded) {
-      final updated = loaded.copyWith(accentColor: event.color);
+      final updatedRecentHex = _withRecentColor(
+        loaded.recentColors.map((c) => c.value).toList(),
+        event.color.value,
+      );
+      final updated = loaded.copyWith(
+        accentColor:  event.color,
+        recentColors: updatedRecentHex.map(Color.new).toList(),
+      );
       emit(updated);
       await _settingsRepo.updateSettings(UserSettings(
-        accentColorHex:    updated.accentColor.value,
-        is12HourFormat:    updated.is12HourFormat,
-        alarmDelayMinutes: updated.alarmDelayMinutes,
+        accentColorHex:      updated.accentColor.value,
+        is12HourFormat:      updated.is12HourFormat,
+        alarmDelayMinutes:   updated.alarmDelayMinutes,
+        recentAccentColors:  updatedRecentHex,
       ));
     }
   }
@@ -64,9 +76,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       final updated = loaded.copyWith(is12HourFormat: !loaded.is12HourFormat);
       emit(updated);
       await _settingsRepo.updateSettings(UserSettings(
-        accentColorHex:    updated.accentColor.value,
-        is12HourFormat:    updated.is12HourFormat,
-        alarmDelayMinutes: updated.alarmDelayMinutes,
+        accentColorHex:     updated.accentColor.value,
+        is12HourFormat:     updated.is12HourFormat,
+        alarmDelayMinutes:  updated.alarmDelayMinutes,
+        recentAccentColors: updated.recentColors.map((c) => c.value).toList(),
       ));
     }
   }
@@ -79,9 +92,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       final updated = loaded.copyWith(alarmDelayMinutes: event.minutes);
       emit(updated);
       await _settingsRepo.updateSettings(UserSettings(
-        accentColorHex:    updated.accentColor.value,
-        is12HourFormat:    updated.is12HourFormat,
-        alarmDelayMinutes: updated.alarmDelayMinutes,
+        accentColorHex:     updated.accentColor.value,
+        is12HourFormat:     updated.is12HourFormat,
+        alarmDelayMinutes:  updated.alarmDelayMinutes,
+        recentAccentColors: updated.recentColors.map((c) => c.value).toList(),
       ));
     }
   }
@@ -91,5 +105,12 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     Emitter<SettingsState> emit,
   ) async {
     await _logRepo.deleteAllLogs();
+  }
+
+  /// Moves [newColorHex] to the front of [current], removing any earlier
+  /// occurrence, and caps the result at [_maxRecentColors].
+  List<int> _withRecentColor(List<int> current, int newColorHex) {
+    final updated = [newColorHex, ...current.where((c) => c != newColorHex)];
+    return updated.take(_maxRecentColors).toList();
   }
 }

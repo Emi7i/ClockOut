@@ -18,21 +18,27 @@ final class SettingsLoaded extends SettingsState {
   /// Alarm delay increment in minutes (e.g. 15).
   final int alarmDelayMinutes;
 
+  /// Last few distinct accent colours picked, most recent first.
+  final List<Color> recentColors;
+
   const SettingsLoaded({
     required this.accentColor,
     required this.is12HourFormat,
     required this.alarmDelayMinutes,
+    this.recentColors = const [],
   });
 
   SettingsLoaded copyWith({
     Color? accentColor,
     bool?  is12HourFormat,
     int?   alarmDelayMinutes,
+    List<Color>? recentColors,
   }) {
     return SettingsLoaded(
       accentColor:       accentColor       ?? this.accentColor,
       is12HourFormat:    is12HourFormat    ?? this.is12HourFormat,
       alarmDelayMinutes: alarmDelayMinutes ?? this.alarmDelayMinutes,
+      recentColors:      recentColors      ?? this.recentColors,
     );
   }
 }

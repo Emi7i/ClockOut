@@ -52,9 +52,9 @@ class LogsScreen extends StatelessWidget {
                 // ── Body ───────────────────────────────────
                 Expanded(
                   child: switch (state) {
-                    LogsLoading() => const Center(
+                    LogsLoading() => Center(
                         child: CircularProgressIndicator(
-                          color: AppColors.accent,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     LogsError(:final message) => Center(
@@ -213,7 +213,9 @@ void _showEditLogDialog(BuildContext context, LogEntry entry) {
               },
               child: Text(
                 'Save',
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.accent),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
             ),
           ],
@@ -233,6 +235,8 @@ class _EditTimeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = Theme.of(context).colorScheme.primary;
+
     return GestureDetector(
       onTap: onTap,
       child: Padding(
@@ -245,10 +249,10 @@ class _EditTimeRow extends StatelessWidget {
               children: [
                 Text(
                   DateFormatter.clockTime(time),
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.accent),
+                  style: AppTextStyles.bodyMedium.copyWith(color: accentColor),
                 ),
                 const SizedBox(width: AppDimensions.spaceXs),
-                const Icon(Icons.access_time_rounded, size: 18, color: AppColors.accent),
+                Icon(Icons.access_time_rounded, size: 18, color: accentColor),
               ],
             ),
           ],
@@ -272,7 +276,7 @@ class _EditModeChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
         decoration: BoxDecoration(
-          color:        AppColors.accent,
+          color:        Theme.of(context).colorScheme.primary,
           borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
         ),
         child: Text(isEditMode ? 'done' : 'edit', style: AppTextStyles.chipButton),

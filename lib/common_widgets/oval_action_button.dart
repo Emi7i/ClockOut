@@ -19,7 +19,7 @@ class OvalActionButton extends StatelessWidget {
   final VoidCallback onPressed;
   final double    width;
   final double    height;
-  final Color     strokeColor;
+  final Color?    strokeColor;
   final double    hatchOpacity;
 
   const OvalActionButton({
@@ -28,12 +28,14 @@ class OvalActionButton extends StatelessWidget {
     required this.onPressed,
     this.width        = AppDimensions.ovalWidth,
     this.height       = AppDimensions.ovalHeight,
-    this.strokeColor  = AppColors.accent,
+    this.strokeColor,
     this.hatchOpacity = 0.30,
   });
 
   @override
   Widget build(BuildContext context) {
+    final resolvedStrokeColor = strokeColor ?? Theme.of(context).colorScheme.primary;
+
     return GestureDetector(
       onTap: onPressed,
       child: SizedBox(
@@ -43,11 +45,15 @@ class OvalActionButton extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             // ── Hand-drawn border image ─────────────────────
+            // Tinted to the resolved accent colour — the asset itself is
+            // just a transparent-background stroke.
             Image.asset(
               'assets/ui/timer_border.png',
               width:  width,
               height: height,
               fit:    BoxFit.contain,
+              color:  resolvedStrokeColor,
+              colorBlendMode: BlendMode.srcIn,
             ),
 
             // ── Crosshatch fill ─────────────────────────────
@@ -57,7 +63,7 @@ class OvalActionButton extends StatelessWidget {
               child: CustomPaint(
                 size: Size(width, height),
                 painter: _OvalButtonPainter(
-                  strokeColor:  strokeColor,
+                  strokeColor:  resolvedStrokeColor,
                   hatchOpacity: hatchOpacity,
                 ),
               ),

@@ -88,6 +88,8 @@ class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderSta
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = Theme.of(context).colorScheme.primary;
+
     return ScaleTransition(
       scale: Tween(begin: 0.9, end: 1.1).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
@@ -95,13 +97,13 @@ class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderSta
       child: Container(
         width: 96,
         height: 96,
-        decoration: const BoxDecoration(
-          color: AppColors.accentDim,
+        decoration: BoxDecoration(
+          color: accentColor.withOpacity(0.16),
           shape: BoxShape.circle,
         ),
-        child: const Icon(
+        child: Icon(
           Icons.alarm_rounded,
-          color: AppColors.accent,
+          color: accentColor,
           size: 52,
         ),
       ),
