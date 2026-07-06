@@ -6,6 +6,7 @@ import '../../../domain/use_cases/clock_out_use_case.dart';
 import '../../../domain/repositories/active_session_repository.dart';
 import '../../../domain/repositories/user_settings_repository.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/constants/constants.dart';
 
 part 'clock_event.dart';
 part 'clock_state.dart';
@@ -23,9 +24,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   final UserSettingsRepository      _settingsRepository;
   final NotificationService         _notificationService;
 
-  // Debug
-  static const Duration _shiftDuration = Duration(seconds: 30);
-  //static const Duration _shiftDuration = Duration(hours: 8);
+  static const Duration _shiftDuration = AppConstants.shiftDuration;
 
   Timer?              _ticker;
   StreamSubscription? _alertFiredSubscription;

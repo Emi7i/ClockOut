@@ -11,6 +11,7 @@ class DonutChart extends StatelessWidget {
   final double hoursWorked;
   final double hoursTarget;
   final double progress; // 0.0 – 1.0
+  final String periodLabel;
 
   /// ← change size here
   final double size;
@@ -20,6 +21,7 @@ class DonutChart extends StatelessWidget {
     required this.hoursWorked,
     required this.hoursTarget,
     required this.progress,
+    this.periodLabel = 'hours this week',
     this.size = AppDimensions.donutSize,
   });
 
@@ -39,7 +41,7 @@ class DonutChart extends StatelessWidget {
                 '${hoursWorked.toStringAsFixed(0)} / ${hoursTarget.toStringAsFixed(0)}',
                 style: AppTextStyles.donutPrimary,
               ),
-              Text('hours this week', style: AppTextStyles.donutSecondary),
+              Text(periodLabel, style: AppTextStyles.donutSecondary),
             ],
           ),
         ),
@@ -95,9 +97,12 @@ class _DonutPainter extends CustomPainter {
       ..strokeCap   = StrokeCap.round;
 
     // ── Dash config ───────────────────────────────────────
-    const dashAngle = 0.18; // radians per dash
-    const gapAngle  = 0.10; // radians per gap
-    const step      = dashAngle + gapAngle;
+    // Exactly 8 evenly-spaced blobs around the full circle, with a
+    // wide gap between them for clear separation.
+    const segmentCount = 8;
+    const dashFraction = 0.4; // portion of each segment that's a visible blob
+    const step         = (2 * pi) / segmentCount;
+    const dashAngle    = step * dashFraction;
 
     double angle = startAngle;
     final end    = startAngle + sweepAngle;

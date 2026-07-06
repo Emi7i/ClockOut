@@ -34,16 +34,16 @@ class LogsScreen extends StatelessWidget {
           body: SafeArea(
             child: Column(
               children: [
-                // ── Top bar with "change" chip ─────────────
+                // ── Top bar with edit toggle ────────────────
                 AppTopBar(
                   timeLabel:     DateFormatter.clockTime(DateTime.now()),
                   onSettingsTap: onSettingsTap,
                   trailing: switch (state) {
-                    LogsLoaded() => _ChangePeriodChip(
-                        label: state.isWeeklyView ? 'weekly' : 'monthly',
+                    LogsLoaded() => _EditModeChip(
+                        isEditMode: state.isEditMode,
                         onTap: () => context
                             .read<LogsBloc>()
-                            .add(const LogsPeriodToggled()),
+                            .add(const LogsEditModeToggled()),
                       ),
                     _ => const SizedBox(width: 22),
                   },
@@ -89,12 +89,17 @@ class _LoadedBody extends StatelessWidget {
     return Column(
       children: [
         // ── Donut progress chart ───────────────────────────
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppDimensions.spaceMd),
-          child: DonutChart(
-            hoursWorked: state.hoursWorked,
-            hoursTarget: state.hoursTarget,
-            progress:    state.progress,
+        // Tap to switch between weekly and monthly stats.
+        GestureDetector(
+          onTap: () => context.read<LogsBloc>().add(const LogsPeriodToggled()),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppDimensions.spaceMd),
+            child: DonutChart(
+              hoursWorked: state.hoursWorked,
+              hoursTarget: state.hoursTarget,
+              progress:    state.progress,
+              periodLabel: state.isWeeklyView ? 'hours this week' : 'hours this month',
+            ),
           ),
         ),
 
@@ -121,8 +126,15 @@ class _LoadedBody extends StatelessWidget {
                       vertical:   AppDimensions.spaceSm,
                     ),
                     itemCount: state.entries.length,
-                    itemBuilder: (_, i) =>
-                        LogListTile(entry: state.entries[i]),
+                    itemBuilder: (context, i) {
+                      final entry = state.entries[i];
+                      return LogListTile(
+                        entry: entry,
+                        onTap: state.isEditMode
+                            ? () => _showEditLogDialog(context, entry)
+                            : null,
+                      );
+                    },
                   ),
           ),
         ),
@@ -133,12 +145,125 @@ class _LoadedBody extends StatelessWidget {
   }
 }
 
-// ── "change" chip ─────────────────────────────────────────────
-class _ChangePeriodChip extends StatelessWidget {
+/// Opens a dialog letting the user pick new start/end times for [entry].
+void _showEditLogDialog(BuildContext context, LogEntry entry) {
+  final logsBloc = context.read<LogsBloc>();
+  DateTime start = entry.clockedInTime ?? entry.date;
+  DateTime end   = entry.clockedOutTime ?? entry.date;
+
+  showDialog<void>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setState) {
+        Future<void> pickStart() async {
+          final picked = await showTimePicker(
+            context: context,
+            initialTime: TimeOfDay.fromDateTime(start),
+          );
+          if (picked == null) return;
+          setState(() {
+            start = DateTime(start.year, start.month, start.day, picked.hour, picked.minute);
+            // Keep the end time on/after the new start time.
+            if (!end.isAfter(start)) {
+              end = start.add(const Duration(hours: 1));
+            }
+          });
+        }
+
+        Future<void> pickEnd() async {
+          final picked = await showTimePicker(
+            context: context,
+            initialTime: TimeOfDay.fromDateTime(end),
+          );
+          if (picked == null) return;
+          setState(() {
+            var newEnd = DateTime(start.year, start.month, start.day, picked.hour, picked.minute);
+            // Assume an overnight shift if the end time-of-day is before start.
+            if (!newEnd.isAfter(start)) {
+              newEnd = newEnd.add(const Duration(days: 1));
+            }
+            end = newEnd;
+          });
+        }
+
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text('Edit log', style: AppTextStyles.bodyLarge),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _EditTimeRow(label: 'Start', time: start, onTap: pickStart),
+              const SizedBox(height: AppDimensions.spaceSm),
+              _EditTimeRow(label: 'End', time: end, onTap: pickEnd),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text('Cancel', style: AppTextStyles.bodySmall),
+            ),
+            TextButton(
+              onPressed: () {
+                logsBloc.add(LogEntryEdited(
+                  original:        entry,
+                  newClockedInTime:  start,
+                  newClockedOutTime: end,
+                ));
+                Navigator.of(dialogContext).pop();
+              },
+              child: Text(
+                'Save',
+                style: AppTextStyles.bodySmall.copyWith(color: AppColors.accent),
+              ),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+}
+
+// ── Edit dialog time row ────────────────────────────────────────
+class _EditTimeRow extends StatelessWidget {
   final String       label;
+  final DateTime     time;
   final VoidCallback onTap;
 
-  const _ChangePeriodChip({required this.label, required this.onTap});
+  const _EditTimeRow({required this.label, required this.time, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: AppTextStyles.bodyMedium),
+            Row(
+              children: [
+                Text(
+                  DateFormatter.clockTime(time),
+                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.accent),
+                ),
+                const SizedBox(width: AppDimensions.spaceXs),
+                const Icon(Icons.access_time_rounded, size: 18, color: AppColors.accent),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Edit toggle chip ────────────────────────────────────────────
+class _EditModeChip extends StatelessWidget {
+  final bool         isEditMode;
+  final VoidCallback onTap;
+
+  const _EditModeChip({required this.isEditMode, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +275,7 @@ class _ChangePeriodChip extends StatelessWidget {
           color:        AppColors.accent,
           borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
         ),
-        child: Text(label, style: AppTextStyles.chipButton),
+        child: Text(isEditMode ? 'done' : 'edit', style: AppTextStyles.chipButton),
       ),
     );
   }
