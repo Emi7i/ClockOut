@@ -11,4 +11,7 @@ abstract interface class LogRepository {
 
   /// Deletes every stored log.
   Future<void> deleteAllLogs();
+
+  /// Persists changes to an existing log entry (e.g. a user edit).
+  Future<void> updateLog(LogEntry entry);
 }

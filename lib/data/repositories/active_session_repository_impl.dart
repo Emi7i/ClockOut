@@ -1,3 +1,4 @@
+import '../../core/constants/constants.dart';
 import '../../domain/entities/active_session.dart';
 import '../../domain/entities/log_entry.dart';
 import '../../domain/repositories/active_session_repository.dart';
@@ -35,9 +36,14 @@ class ActiveSessionRepositoryImpl implements ActiveSessionRepository {
     }
 
     final now = DateTime.now();
+    final bonusTime = LogEntry.computeBonusTime(
+      clockedInAt: activeSession.clockedInAt,
+      clockedOutAt: now,
+      shiftDuration: AppConstants.shiftDuration,
+    );
     final logEntry = LogEntry(
       date: activeSession.clockedInAt,
-      bonusTime: activeSession.accumulatedBonusTime,
+      bonusTime: bonusTime,
       userEdited: false,
       clockedInTime: activeSession.clockedInAt,
       clockedOutTime: now,

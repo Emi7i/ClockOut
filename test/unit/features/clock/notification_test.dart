@@ -9,6 +9,7 @@ import 'package:clock_app/domain/repositories/user_settings_repository.dart';
 import 'package:clock_app/domain/use_cases/clock_in_use_case.dart';
 import 'package:clock_app/domain/use_cases/clock_out_use_case.dart';
 import 'package:clock_app/features/clock/bloc/clock_bloc.dart';
+import 'package:clock_app/core/constants/constants.dart';
 import 'package:clock_app/core/services/notification_service.dart';
 
 class MockActiveSessionRepository extends Mock implements ActiveSessionRepository {}
@@ -174,7 +175,7 @@ void main() {
   group('ClockBloc Alert Firing', () {
     // Past shift end, so scheduleNextAlarm() lands in the repeat branch.
     final tPastSession = ActiveSession(
-      clockedInAt: DateTime.now().subtract(const Duration(minutes: 5)),
+      clockedInAt: DateTime.now().subtract(AppConstants.shiftDuration + const Duration(minutes: 5)),
       alarmEnabled: true,
     );
 

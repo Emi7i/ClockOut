@@ -8,10 +8,15 @@ import 'package:clock_app/features/logs/bloc/logs_bloc.dart';
 
 class MockLogRepository extends Mock implements LogRepository {}
 class MockGetLogsUseCase extends Mock implements GetLogsUseCase {}
+class FakeLogEntry extends Fake implements LogEntry {}
 
 void main() {
   late MockLogRepository mockRepository;
   late MockGetLogsUseCase mockGetLogs;
+
+  setUpAll(() {
+    registerFallbackValue(FakeLogEntry());
+  });
 
   setUp(() {
     mockRepository = MockLogRepository();
@@ -62,6 +67,67 @@ void main() {
       ],
       verify: (_) {
         verify(() => mockRepository.deleteAllLogs()).called(1);
+      },
+    );
+
+    blocTest<LogsBloc, LogsState>(
+      'toggles edit mode on and off',
+      build: () {
+        when(() => mockGetLogs()).thenAnswer((_) async => tLogs);
+        return LogsBloc(
+          getLogs: mockGetLogs,
+          repository: mockRepository,
+        );
+      },
+      seed: () => const LogsLoaded(entries: [], hoursWorked: 0, hoursTarget: 40),
+      act: (bloc) => bloc.add(const LogsEditModeToggled()),
+      expect: () => [
+        isA<LogsLoaded>().having((s) => s.isEditMode, 'isEditMode', true),
+      ],
+    );
+
+    blocTest<LogsBloc, LogsState>(
+      'switches to monthly stats when the donut chart is tapped',
+      build: () => LogsBloc(
+        getLogs: mockGetLogs,
+        repository: mockRepository,
+      ),
+      seed: () => const LogsLoaded(
+        entries: [],
+        hoursWorked: 0,
+        hoursTarget: 40,
+        isWeeklyView: true,
+      ),
+      act: (bloc) => bloc.add(const LogsPeriodToggled()),
+      expect: () => [
+        isA<LogsLoaded>()
+            .having((s) => s.isWeeklyView, 'isWeeklyView', false)
+            .having((s) => s.hoursTarget, 'hoursTarget', 160),
+      ],
+    );
+
+    blocTest<LogsBloc, LogsState>(
+      'persists an edited entry with userEdited set to true',
+      build: () {
+        when(() => mockRepository.updateLog(any())).thenAnswer((_) async => {});
+        when(() => mockGetLogs()).thenAnswer((_) async => tLogs);
+        return LogsBloc(
+          getLogs: mockGetLogs,
+          repository: mockRepository,
+        );
+      },
+      seed: () => LogsLoaded(entries: tLogs, hoursWorked: 8, hoursTarget: 40, isEditMode: true),
+      act: (bloc) => bloc.add(LogEntryEdited(
+        original:          tLogs.first,
+        newClockedInTime:  DateTime(2026, 1, 1, 9, 0),
+        newClockedOutTime: DateTime(2026, 1, 1, 17, 0),
+      )),
+      verify: (_) {
+        final captured = verify(() => mockRepository.updateLog(captureAny())).captured;
+        final saved = captured.single as LogEntry;
+        expect(saved.userEdited, true);
+        expect(saved.clockedInTime, DateTime(2026, 1, 1, 9, 0));
+        expect(saved.clockedOutTime, DateTime(2026, 1, 1, 17, 0));
       },
     );
   });
