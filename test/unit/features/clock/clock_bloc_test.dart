@@ -110,7 +110,8 @@ void main() {
           clockedInAt: DateTime.now(),
           alarmEnabled: true,
         );
-        when(() => mockClockIn()).thenAnswer((_) async => session);
+        when(() => mockClockIn(alarmEnabled: any(named: 'alarmEnabled')))
+            .thenAnswer((_) async => session);
         when(() => mockRepository.getActiveSession()).thenAnswer((_) async => session);
         return ClockBloc(
           clockIn: mockClockIn,

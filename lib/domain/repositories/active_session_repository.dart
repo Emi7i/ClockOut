@@ -14,7 +14,7 @@ abstract interface class ActiveSessionRepository {
   Future<ActiveSession?> getActiveSession();
 
   /// Starts a new clock-in session.
-  Future<ActiveSession> clockIn();
+  Future<ActiveSession> clockIn({bool alarmEnabled = false});
 
   /// Ends the active session.
   Future<ActiveSession> clockOut();

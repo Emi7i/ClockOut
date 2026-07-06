@@ -10,5 +10,6 @@ class ClockInUseCase {
 
   const ClockInUseCase(this._repository);
 
-  Future<ActiveSession> call() => _repository.clockIn();
+  Future<ActiveSession> call({bool alarmEnabled = false}) =>
+      _repository.clockIn(alarmEnabled: alarmEnabled);
 }

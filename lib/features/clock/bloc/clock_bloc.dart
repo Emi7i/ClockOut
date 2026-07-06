@@ -99,7 +99,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       ) async {
     try {
       final bool initialAlarmEnabled = state is ClockIdle ? (state as ClockIdle).alarmEnabled : false;
-      final session = await _clockIn();
+      final session = await _clockIn(alarmEnabled: initialAlarmEnabled);
       _startTicker();
 
       scheduleNextAlarm();

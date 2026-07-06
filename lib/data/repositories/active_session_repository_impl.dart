@@ -18,9 +18,10 @@ class ActiveSessionRepositoryImpl implements ActiveSessionRepository {
   }
 
   @override
-  Future<ActiveSession> clockIn() async {
+  Future<ActiveSession> clockIn({bool alarmEnabled = false}) async {
     final session = ActiveSession(
       clockedInAt: DateTime.now(),
+      alarmEnabled: alarmEnabled,
     );
     await _dbManager.setActiveSession(ActiveSessionMapper.toDto(session));
     return session;

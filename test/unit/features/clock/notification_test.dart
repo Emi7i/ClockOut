@@ -79,7 +79,8 @@ void main() {
     blocTest<ClockBloc, ClockState>(
       'schedules notification when ClockInRequested succeeds',
       build: () {
-        when(() => mockClockIn()).thenAnswer((_) async => tActiveSession);
+        when(() => mockClockIn(alarmEnabled: any(named: 'alarmEnabled')))
+            .thenAnswer((_) async => tActiveSession);
         return ClockBloc(
           clockIn: mockClockIn,
           clockOut: mockClockOut,
@@ -95,6 +96,30 @@ void main() {
               delayMinutes:  any(named: 'delayMinutes'),
               alarmEnabled:  any(named: 'alarmEnabled'),
             )).called(1);
+      },
+    );
+
+    blocTest<ClockBloc, ClockState>(
+      'persists the alarm toggle into the session when clocking in with it already on',
+      build: () {
+        final session = ActiveSession(clockedInAt: DateTime.now(), alarmEnabled: true);
+        when(() => mockClockIn(alarmEnabled: any(named: 'alarmEnabled')))
+            .thenAnswer((_) async => session);
+        when(() => mockRepository.getActiveSession()).thenAnswer((_) async => session);
+        return ClockBloc(
+          clockIn: mockClockIn,
+          clockOut: mockClockOut,
+          repository: mockRepository,
+          settingsRepository: mockSettingsRepository,
+          notificationService: mockNotificationService,
+        );
+      },
+      seed: () => ClockIdle(currentTime: DateTime.now(), alarmEnabled: true),
+      act: (bloc) => bloc.add(const ClockInRequested()),
+      verify: (_) {
+        // Regression guard: toggling the alarm on while idle must carry
+        // through to the persisted session, not just the emitted UI state.
+        verify(() => mockClockIn(alarmEnabled: true)).called(1);
       },
     );
 
