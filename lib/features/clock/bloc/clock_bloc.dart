@@ -189,10 +189,11 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     _currentNotificationId = event.id;
     _notificationService.showAlertFiredNotification(DateTime.now());
 
+    // Both the sound and vibration-only variants are real alarms now, so the
+    // ringing screen should show either way, not just when sound is on.
+    _isRinging = true;
+
     if (state case ClockActive active) {
-      if (active.alarmEnabled) {
-        _isRinging = true;
-      }
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
     }
     scheduleNextAlarm();
