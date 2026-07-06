@@ -104,7 +104,7 @@ class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderSta
         width: 96,
         height: 96,
         decoration: BoxDecoration(
-          color: accentColor.withOpacity(0.16),
+          color: accentColor.withValues(alpha: 0.16),
           shape: BoxShape.circle,
         ),
         child: Icon(

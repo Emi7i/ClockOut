@@ -24,7 +24,7 @@ class DeleteLogsButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color:        AppColors.negative.withOpacity(0.08),
+          color:        AppColors.negative.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           border: Border.all(
             color: AppColors.negative,

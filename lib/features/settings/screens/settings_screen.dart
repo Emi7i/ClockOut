@@ -106,7 +106,7 @@ class SettingsScreen extends StatelessWidget {
                         onTap:   () => _requestAdvancedPermissions(context),
                         trailing: Icon(
                           Icons.chevron_right_rounded,
-                          color: accentColor.withOpacity(0.5),
+                          color: accentColor.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
@@ -167,7 +167,7 @@ class SettingsScreen extends StatelessWidget {
     // it's fallen out of (or never entered) the recently-picked history.
     final swatches = [
       ...state.recentColors,
-      if (!state.recentColors.any((c) => c.value == AppColors.accent.value))
+      if (!state.recentColors.any((c) => c.toARGB32() == AppColors.accent.toARGB32()))
         AppColors.accent,
     ];
 
@@ -209,10 +209,10 @@ class SettingsScreen extends StatelessWidget {
                               color: recent,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: recent.value == tempColor.value
+                                color: recent.toARGB32() == tempColor.toARGB32()
                                     ? Colors.white
                                     : Colors.black26,
-                                width: recent.value == tempColor.value ? 3 : 1,
+                                width: recent.toARGB32() == tempColor.toARGB32() ? 3 : 1,
                               ),
                             ),
                           ),
@@ -272,7 +272,7 @@ class SettingsScreen extends StatelessWidget {
                     max: 180,
                     divisions: 179,
                     activeColor: state.accentColor,
-                    inactiveColor: state.accentColor.withOpacity(0.2),
+                    inactiveColor: state.accentColor.withValues(alpha: 0.2),
                     onChanged: (val) {
                       setState(() => tempDelay = val.toInt());
                     },

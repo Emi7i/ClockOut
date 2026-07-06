@@ -6,7 +6,6 @@ import '../features/clock/screens/clock_in_screen.dart';
 import '../features/clock/screens/clocked_in_screen.dart';
 import '../features/logs/bloc/logs_bloc.dart';
 import '../features/logs/screens/logs_screen.dart';
-import '../features/settings/bloc/settings_bloc.dart';
 import '../features/settings/screens/settings_screen.dart';
 
 /// ─────────────────────────────────────────────────────────────

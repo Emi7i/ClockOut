@@ -99,7 +99,7 @@ class _OvalButtonPainter extends CustomPainter {
 
     // ── Diagonal hatch lines ──────────────────────────────
     final hatchPaint = Paint()
-      ..color       = strokeColor.withOpacity(hatchOpacity)
+      ..color       = strokeColor.withValues(alpha: hatchOpacity)
       ..strokeWidth = 1.5;
 
     const spacing = 8.0;
