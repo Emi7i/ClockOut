@@ -43,6 +43,7 @@ void main() async {
 
   // ── Notifications ──────────────────────────────────────
   final notificationService = NotificationServiceImpl(alarmService: alarmService);
+  await notificationService.initialize();
 
   // ── Repositories ────────────────────────────────────────
   final dbManager = DatabaseManager();

@@ -21,6 +21,9 @@ dependencies:
   # Alarms
   alarm: ^5.4.1
 
+  # Plain, non-alarming notifications (alert history)
+  flutter_local_notifications: ^21.0.0
+
   # Permissions (exact alarm / notification access)
   permission_handler: ^11.4.0
 

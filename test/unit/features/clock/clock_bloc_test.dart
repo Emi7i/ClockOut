@@ -58,6 +58,8 @@ void main() {
         .thenAnswer((_) => const Stream.empty());
     when(() => mockNotificationService.currentlyRingingId())
         .thenAnswer((_) async => null);
+    when(() => mockNotificationService.showAlertFiredNotification(any()))
+        .thenAnswer((_) async => {});
   });
 
   group('ClockBloc', () {

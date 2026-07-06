@@ -187,6 +187,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     // allowAlarmOverlap on AlarmService already guarantees the newest alert
     // rings regardless of a stale previous one.
     _currentNotificationId = event.id;
+    _notificationService.showAlertFiredNotification(DateTime.now());
 
     if (state case ClockActive active) {
       if (active.alarmEnabled) {

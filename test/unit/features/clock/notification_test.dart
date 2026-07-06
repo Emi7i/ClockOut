@@ -55,6 +55,8 @@ void main() {
         .thenAnswer((_) => const Stream.empty());
     when(() => mockNotificationService.currentlyRingingId())
         .thenAnswer((_) async => null);
+    when(() => mockNotificationService.showAlertFiredNotification(any()))
+        .thenAnswer((_) async => {});
 
     when(() => mockSettingsRepository.getSettings()).thenAnswer((_) async => const UserSettings(
           accentColorHex: 0xFF4CAF50,

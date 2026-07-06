@@ -1,5 +1,7 @@
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/alarm_service.dart';
+import '../../core/utils/date_formatter.dart';
 
 /// Concrete implementation of the Notification Service.
 ///
@@ -8,9 +10,27 @@ import '../../core/services/alarm_service.dart';
 /// both platforms. When [alarmEnabled] is false the alarm still fires with
 /// vibration + a notification, just without the audible ringtone.
 class NotificationServiceImpl implements NotificationService {
+  static const int _firedHistoryNotificationId = 100;
+  static const String _firedHistoryChannelId = 'alert_history_channel';
+
   final AlarmService _alarmService;
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
   NotificationServiceImpl({required AlarmService alarmService}) : _alarmService = alarmService;
+
+  @override
+  Future<void> initialize() async {
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+    await _localNotifications.initialize(
+      settings: const InitializationSettings(android: androidSettings, iOS: iosSettings),
+    );
+  }
 
   @override
   Stream<int> get alertFiredStream =>
@@ -19,6 +39,27 @@ class NotificationServiceImpl implements NotificationService {
   @override
   Future<int?> currentlyRingingId() =>
       _alarmService.currentlyRingingId(NotificationService.allIds);
+
+  @override
+  Future<void> showAlertFiredNotification(DateTime firedAt) async {
+    await _localNotifications.show(
+      id: _firedHistoryNotificationId,
+      title: 'Shift alert fired',
+      body: 'Fired at ${DateFormatter.clockTime(firedAt)}',
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _firedHistoryChannelId,
+          'Alert history',
+          channelDescription: 'Shows when the last shift alert fired',
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+          playSound: false,
+          enableVibration: false,
+        ),
+        iOS: DarwinNotificationDetails(presentSound: false),
+      ),
+    );
+  }
 
   @override
   Future<void> scheduleShiftEndNotification({
