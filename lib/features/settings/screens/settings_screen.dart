@@ -1,9 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../common_widgets/common_widgets.dart';
 import '../../../core/constants/constants.dart';
-import '../../../core/services/notification_service.dart';
 import '../bloc/settings_bloc.dart';
 import '../widgets/settings_row.dart';
 import '../widgets/delete_logs_button.dart';
@@ -141,14 +141,16 @@ class SettingsScreen extends StatelessWidget {
   // ── Helpers ───────────────────────────────────────────────
 
   void _requestAdvancedPermissions(BuildContext context) async {
-    await AwesomeNotifications().requestPermissionToSendNotifications(
-      channelKey: NotificationService.alarmChannelKey,
-      permissions: [
-        NotificationPermission.PreciseAlarms,
-        NotificationPermission.CriticalAlert,
-        NotificationPermission.OverrideDnD,
-      ],
-    );
+    await Permission.notification.request();
+
+    if (Platform.isAndroid) {
+      final status = await Permission.scheduleExactAlarm.request();
+      if (status.isDenied || status.isPermanentlyDenied) {
+        // This permission can only be granted from system settings on
+        // most Android versions — send the user there directly.
+        await openAppSettings();
+      }
+    }
   }
 
   void _showColorPicker(BuildContext context, SettingsState state) {

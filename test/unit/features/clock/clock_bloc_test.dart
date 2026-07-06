@@ -10,16 +10,12 @@ import 'package:clock_app/domain/use_cases/clock_in_use_case.dart';
 import 'package:clock_app/domain/use_cases/clock_out_use_case.dart';
 import 'package:clock_app/features/clock/bloc/clock_bloc.dart';
 import 'package:clock_app/core/services/notification_service.dart';
-import 'package:clock_app/core/services/alarm_service.dart';
-import 'package:alarm/model/alarm_settings.dart';
 
 class MockActiveSessionRepository extends Mock implements ActiveSessionRepository {}
 class MockUserSettingsRepository extends Mock implements UserSettingsRepository {}
 class MockClockInUseCase extends Mock implements ClockInUseCase {}
 class MockClockOutUseCase extends Mock implements ClockOutUseCase {}
 class MockNotificationService extends Mock implements NotificationService {}
-class MockAlarmService extends Mock implements AlarmService {}
-class FakeAlarmSettings extends Fake implements AlarmSettings {}
 
 void main() {
   late MockActiveSessionRepository mockRepository;
@@ -27,11 +23,9 @@ void main() {
   late MockClockInUseCase mockClockIn;
   late MockClockOutUseCase mockClockOut;
   late MockNotificationService mockNotificationService;
-  late MockAlarmService mockAlarmService;
 
   setUpAll(() {
     registerFallbackValue(DateTime.now());
-    registerFallbackValue(FakeAlarmSettings());
   });
 
   setUp(() {
@@ -40,7 +34,6 @@ void main() {
     mockClockIn = MockClockInUseCase();
     mockClockOut = MockClockOutUseCase();
     mockNotificationService = MockNotificationService();
-    mockAlarmService = MockAlarmService();
 
     // Default mock behaviors
     when(() => mockSettingsRepository.getSettings()).thenAnswer((_) async => const UserSettings(
@@ -61,17 +54,10 @@ void main() {
         )).thenAnswer((_) async => {});
     when(() => mockNotificationService.cancelAllShiftNotifications())
         .thenAnswer((_) async => {});
-    when(() => mockNotificationService.actionStream)
+    when(() => mockNotificationService.alertFiredStream)
         .thenAnswer((_) => const Stream.empty());
-    
-    when(() => mockAlarmService.ringStream).thenAnswer((_) => const Stream.empty());
-    when(() => mockAlarmService.setAlarm(
-          id: any(named: 'id'),
-          dateTime: any(named: 'dateTime'),
-          title: any(named: 'title'),
-          body: any(named: 'body'),
-        )).thenAnswer((_) async => {});
-    when(() => mockAlarmService.stop(any())).thenAnswer((_) async => true);
+    when(() => mockNotificationService.currentlyRingingId())
+        .thenAnswer((_) async => null);
   });
 
   group('ClockBloc', () {
@@ -89,7 +75,6 @@ void main() {
           repository: mockRepository,
           settingsRepository: mockSettingsRepository,
           notificationService: mockNotificationService,
-          alarmService: mockAlarmService,
         );
       },
       act: (bloc) => bloc.add(const ClockStarted()),
@@ -108,7 +93,6 @@ void main() {
           repository: mockRepository,
           settingsRepository: mockSettingsRepository,
           notificationService: mockNotificationService,
-          alarmService: mockAlarmService,
         );
       },
       act: (bloc) => bloc.add(const ClockStarted()),
@@ -132,7 +116,6 @@ void main() {
           repository: mockRepository,
           settingsRepository: mockSettingsRepository,
           notificationService: mockNotificationService,
-          alarmService: mockAlarmService,
         );
       },
       seed: () => ClockIdle(currentTime: DateTime.now(), alarmEnabled: true),

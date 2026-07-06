@@ -40,14 +40,10 @@ final class AlarmStopRequested extends ClockEvent {
   const AlarmStopRequested();
 }
 
-/// App was in foreground when alarm fired — auto dismiss after 2 seconds
-final class AlarmAutoDismissed extends ClockEvent {
-  const AlarmAutoDismissed();
-}
-
-/// Internal event fired when an alarm/notification triggers.
+/// Internal event fired when an alert (sound or vibration alarm) starts ringing.
 final class AlertFired extends ClockEvent {
-  const AlertFired(bool isRepeatingAlarm);
+  final int id;
+  const AlertFired(this.id);
 }
 
 /// Periodic tick emitted every second while clocked in.

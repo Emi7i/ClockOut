@@ -1,13 +1,16 @@
-import 'package:awesome_notifications/awesome_notifications.dart';
-
 abstract interface class NotificationService {
-  static const String alarmChannelKey = 'shift_end_alarm_channel';
-  static const int shiftAlarmId  = 1;
+  static const int shiftAlarmId = 1;
   static const List<int> repeatPoolId = [2, 3, 4];
+  static const List<int> allIds = [shiftAlarmId, ...repeatPoolId];
 
-  Stream<ReceivedAction> get actionStream;
+  /// Emits the alert's id whenever a scheduled alert (sound or
+  /// vibration-only) starts ringing.
+  Stream<int> get alertFiredStream;
 
-  Future<void> initialize();
+  /// Returns the id of the alert currently ringing, if any. Used to recover
+  /// the ringing state after the app is cold-started or resumed.
+  Future<int?> currentlyRingingId();
+
   Future<void> scheduleShiftEndNotification({
     required DateTime scheduledDate,
     required int      delayMinutes,
@@ -21,15 +24,4 @@ abstract interface class NotificationService {
   });
   Future<void> cancelAllShiftNotifications();
   Future<void> cancelNotification(int id);
-}
-
-/// Called from main.dart as a TOP-LEVEL function (required by awesome_notifications
-/// for background isolate execution).
-/// Background isolates must set up their own repository builders.
-@pragma('vm:entry-point')
-Future<void> onNotificationActionReceived(ReceivedAction receivedAction) async {
-  // This function is the entry point for the background isolate.
-  // We need to re-import and re-setup if we were using builders, 
-  // but since we want to avoid 'data' imports in core, we delegate to 
-  // a handler that lives in the data layer.
 }

@@ -1,14 +1,11 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:path/path.dart';
 import '../../../domain/use_cases/clock_in_use_case.dart';
 import '../../../domain/use_cases/clock_out_use_case.dart';
 import '../../../domain/repositories/active_session_repository.dart';
 import '../../../domain/repositories/user_settings_repository.dart';
 import '../../../core/services/notification_service.dart';
-import '../../../core/services/alarm_service.dart';
-import 'package:awesome_notifications/awesome_notifications.dart';
 
 part 'clock_event.dart';
 part 'clock_state.dart';
@@ -25,22 +22,16 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   final ActiveSessionRepository     _repository;
   final UserSettingsRepository      _settingsRepository;
   final NotificationService         _notificationService;
-  final AlarmService                _alarmService;
-  /// EndShiftNotification is 1
-  /// RepeatNotifications are 2, 3, 4
-  final List<int>           _validNotifIds = [1, 2, 3, 4];
 
   // Debug
   static const Duration _shiftDuration = Duration(seconds: 30);
   //static const Duration _shiftDuration = Duration(hours: 8);
 
   Timer?              _ticker;
-  StreamSubscription? _alarmRingSubscription;
-  StreamSubscription? _notificationActionSubscription;
+  StreamSubscription? _alertFiredSubscription;
   DateTime?           _nextAlarmAt;
   bool                _isRinging = false;
-  int                 _currentNotificationId = 1;
-  bool                _stopEndShiftAlarm = true;
+  int                 _currentNotificationId = NotificationService.shiftAlarmId;
 
   ClockBloc({
     required ClockInUseCase clockIn,
@@ -48,13 +39,11 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     required ActiveSessionRepository repository,
     required UserSettingsRepository settingsRepository,
     required NotificationService notificationService,
-    required AlarmService alarmService,
   })  : _clockIn             = clockIn,
         _clockOut            = clockOut,
         _repository          = repository,
         _settingsRepository  = settingsRepository,
         _notificationService = notificationService,
-        _alarmService        = alarmService,
         super(const ClockLoading()) {
     on<ClockStarted>      (_onStarted);
     on<ClockInRequested>  (_onClockIn);
@@ -64,25 +53,15 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     on<AlarmStopRequested>(_onAlarmStop);
     on<AlertFired>        (_onAlertFired);
     on<ClockTicked>       (_onTicked);
-    on<AlarmAutoDismissed>(_onAlarmAutoDismissed);
 
-    _listenToAlarmRings();
-    _listenToNotificationActions();
+    _listenToAlertFired();
   }
 
-  void _listenToAlarmRings() {
-    _alarmRingSubscription = _alarmService.ringStream.listen((alarmSettings) {
-      final id = alarmSettings.id;
-      if (_validNotifIds.contains(id)) {
-        add(AlertFired(id != NotificationService.shiftAlarmId));
+  void _listenToAlertFired() {
+    _alertFiredSubscription = _notificationService.alertFiredStream.listen((id) {
+      if (NotificationService.allIds.contains(id)) {
+        add(AlertFired(id));
       }
-    });
-  }
-
-  void _listenToNotificationActions() {
-    _notificationActionSubscription = _notificationService.actionStream.listen((action) {
-      // Notification was dismissed — clear ringing state only, don't reschedule.
-      // Rescheduling already happened in _onAlertFired when the alarm first fired.
     });
   }
 
@@ -92,19 +71,21 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       ClockStarted event,
       Emitter<ClockState> emit,
       ) async {
-    print('DEBUG: _onStarted called. Current _isRinging: $_isRinging');
     try {
       final active = await _repository.getActiveSession();
       if (active == null) {
         emit(ClockIdle(currentTime: DateTime.now()));
       } else {
         _startTicker();
-        // Stop last notification if the app is opened
-        // If its ringing, let _onAlarmStop handle it
-        if (!active.alarmEnabled) {
-          Timer(const Duration(seconds: 2), stopActiveAlarm);
-          _currentNotificationId = _getNextRepeatId();
+
+        // Recover ringing state in case the app was killed/backgrounded
+        // while an alert was firing.
+        final ringingId = await _notificationService.currentlyRingingId();
+        if (ringingId != null) {
+          _currentNotificationId = ringingId;
+          _isRinging = true;
         }
+
         emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
       }
     } catch (e) {
@@ -121,7 +102,6 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       final session = await _clockIn();
       _startTicker();
 
-      print('DEBUG: Clocked in!');
       scheduleNextAlarm();
 
       emit(_buildActiveState(session.clockedInAt, initialAlarmEnabled));
@@ -160,7 +140,6 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       _isRinging               = false;
       await _clockOut();
 
-      print('DEBUG: Clocked out!');
       emit(ClockIdle(currentTime: DateTime.now()));
     } catch (e) {
       emit(ClockError(e.toString()));
@@ -169,32 +148,18 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
 
   Future<void> _onAlarmStop(AlarmStopRequested event, Emitter<ClockState> emit) async {
     stopActiveAlarm();
-    // Bump up the id
-    _currentNotificationId = _getNextRepeatId();
     _isRinging = false;
     if (state case ClockActive active) {
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
     }
   }
 
-  Future<void> _onAlarmAutoDismissed(AlarmAutoDismissed event, Emitter<ClockState> emit) async {
-    // stopActiveAlarm();
-    // // Bump up the id
-    // _currentNotificationId = _getNextRepeatId();
-    // _isRinging = false;
-    // if (state case ClockActive active) {
-    //   emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
-    // }
-  }
-
   Future<void> _onAlarmToggled(
       AlarmToggled event,
       Emitter<ClockState> emit,
       ) async {
-    print('DEBUG: Toggle pressed');
     await _repository.setAlarmSound(enabled: event.enabled);
     // cancel the current notif gracefully
-    print('Canceling alarm: $_currentNotificationId');
     stopActiveAlarm();
 
     if (state case ClockActive active) {
@@ -209,14 +174,26 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   }
 
   Future<void> _onAlertFired(AlertFired event, Emitter<ClockState> emit) async {
-    // Cancel last notif in case user didn't dismiss the alarm
+    // Sync to the id that actually just rang — don't trust whatever was
+    // last set on a manual stop, since the user may have missed dismissing
+    // one or more repeats in between.
+    //
+    // Note: we deliberately don't cancel other pool ids here. Calling
+    // Alarm.stop() on an unrelated id reaches into the same native alarm
+    // service that's ringing the real alert, and on a cold start (e.g. the
+    // screen was locked and the full-screen intent just relaunched the app)
+    // that races with the media player spinning up and can tear the whole
+    // service down a second in, killing the real alarm's vibration/sound.
+    // allowAlarmOverlap on AlarmService already guarantees the newest alert
+    // rings regardless of a stale previous one.
+    _currentNotificationId = event.id;
+
     if (state case ClockActive active) {
       if (active.alarmEnabled) {
         _isRinging = true;
       }
       emit(_buildActiveState(active.clockedInAt, active.alarmEnabled));
     }
-    print('Alert fired! Scheduling next alarm!');
     scheduleNextAlarm();
   }
 
@@ -238,9 +215,6 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       // If shift hasn't ended yet, schedule a shift end alarm
       // We need a buffer of 2 seconds to avoid race condition
       if (endOfShift!.isAfter(DateTime.now().add(const Duration(seconds: 2)))) {
-        print(
-            'DEBUG: Scheduling shift end notification for $endOfShift');
-
         await _notificationService.scheduleShiftEndNotification(
           scheduledDate: endOfShift,
           delayMinutes: settings.alarmDelayMinutes,
@@ -255,19 +229,18 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
         }
 
         _nextAlarmAt = nextRepeat;
-        print(
-            'DEBUG: Scheduling repeating notification at $nextRepeat');
+        var notifToSchedule = override ? _currentNotificationId : _getNextRepeatId();
 
         await _notificationService.scheduleRepeatNotification(
           scheduledDate: nextRepeat,
           delayMinutes: settings.alarmDelayMinutes,
           alarmEnabled: active!.alarmEnabled,
           // Alarm toggle needs to override current notif
-          notificationId: override ? _currentNotificationId : _getNextRepeatId(),
+          notificationId: notifToSchedule,
         );
       }
     }catch (e) {
-      print(e.toString());
+      developer.log(e.toString());
     }
   }
 
@@ -279,7 +252,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   /// It doesn't change the _currentNotificationId
   int _getNextRepeatId() {
     // If _currentNotificationId == 4 return 2
-    if (_currentNotificationId >= _validNotifIds[_validNotifIds.length - 1]){
+    if (_currentNotificationId >= NotificationService.repeatPoolId.last){
       return NotificationService.repeatPoolId[0];
     } else {
       return _currentNotificationId + 1;
@@ -318,8 +291,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   @override
   Future<void> close() {
     _ticker?.cancel();
-    _alarmRingSubscription?.cancel();
-    _notificationActionSubscription?.cancel();
+    _alertFiredSubscription?.cancel();
     return super.close();
   }
 }

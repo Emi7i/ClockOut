@@ -1,7 +1,7 @@
-import 'package:alarm/alarm.dart';
-import 'package:awesome_notifications/awesome_notifications.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'app_shell.dart';
 import 'core/constants/constants.dart';
 import 'data/datasources/database_manager.dart';
@@ -32,23 +32,19 @@ void main() async {
   // ── Setup Builders ────────────────────────────────────
   _setupBuilders();
 
-  // ── Database Manager ───────────────────────────────────
-  // (Optional: can also be part of builders if needed)
-
   // ── Alarm Service ──────────────────────────────────────
+  // Alerts (both sound and vibration-only) are scheduled as system alarms
+  // via the `alarm` package, giving exact timing, screen wake-up and DND
+  // override on both Android and iOS.
   final alarmService = AlarmServiceImpl();
   await alarmService.init();
 
+  await _requestAlertPermissions();
+
   // ── Notifications ──────────────────────────────────────
   final notificationService = NotificationServiceImpl(alarmService: alarmService);
-  await notificationService.initialize();
 
-  // Register the background-capable action handler
-  await AwesomeNotifications().setListeners(
-    onActionReceivedMethod: onNotificationActionReceived,
-  );
-
-  // ── Repositories (Legacy instantiation for ClockApp, though builders could be used) ───
+  // ── Repositories ────────────────────────────────────────
   final dbManager = DatabaseManager();
   final activeSessionRepo = ActiveSessionRepositoryImpl(dbManager);
   final logRepo           = LogRepositoryImpl(dbManager);
@@ -68,7 +64,6 @@ void main() async {
       logRepo:            logRepo,
       settingsRepo:       settingsRepo,
       notificationService: notificationService,
-      alarmService:       alarmService,
     ),
   );
 }
@@ -76,20 +71,19 @@ void main() async {
 /// Sets up the domain-layer builders with data-layer implementations.
 void _setupBuilders() {
   final dbManager = DatabaseManager();
-  
+
   ActiveSessionRepository.build = () => ActiveSessionRepositoryImpl(dbManager);
   LogRepository.build           = () => LogRepositoryImpl(dbManager);
   UserSettingsRepository.build  = () => UserSettingsRepositoryImpl(dbManager);
 }
 
-/// Background entry point for AwesomeNotifications
-@pragma('vm:entry-point')
-Future<void> onNotificationActionReceived(ReceivedAction receivedAction) async {
-  // 1. Setup builders in the new isolate
-  _setupBuilders();
-  
-  // 2. Delegate to the controller in the data layer
-  await NotificationController.onActionReceivedMethod(receivedAction);
+/// Requests the permissions alerts need to reliably fire: notifications
+/// (Android 13+) and exact alarm scheduling (Android 12+).
+Future<void> _requestAlertPermissions() async {
+  await Permission.notification.request();
+  if (Platform.isAndroid) {
+    await Permission.scheduleExactAlarm.request();
+  }
 }
 
 class ClockApp extends StatelessWidget {
@@ -100,7 +94,6 @@ class ClockApp extends StatelessWidget {
   final LogRepository           logRepo;
   final UserSettingsRepository  settingsRepo;
   final NotificationService     notificationService;
-  final AlarmService            alarmService;
 
   const ClockApp({
     super.key,
@@ -111,7 +104,6 @@ class ClockApp extends StatelessWidget {
     required this.logRepo,
     required this.settingsRepo,
     required this.notificationService,
-    required this.alarmService,
   });
 
   @override
@@ -125,7 +117,6 @@ class ClockApp extends StatelessWidget {
             repository:         activeSessionRepo,
             settingsRepository: settingsRepo,
             notificationService: notificationService,
-            alarmService:       alarmService,
           ),
         ),
         BlocProvider(

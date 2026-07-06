@@ -1,23 +1,29 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:alarm/alarm.dart';
-import 'package:alarm/model/alarm_settings.dart';
-import 'package:alarm/model/notification_settings.dart';
-import 'package:alarm/model/volume_settings.dart';
 
 abstract class AlarmService {
+  /// Fires whenever an alarm starts ringing (sound or vibration-only).
   Stream<AlarmSettings> get ringStream;
-  
-  /// Schedules an alarm with the project's standard visual and audio settings.
+
+  /// Schedules an alarm with the project's standard visual/haptic settings.
+  ///
+  /// When [soundEnabled] is true, the alarm plays the loud alarm ringtone.
+  /// When false, it plays a silent asset instead — the device still vibrates,
+  /// wakes the screen and shows the notification, but stays quiet.
   Future<void> setAlarm({
     required int id,
     required DateTime dateTime,
     required String title,
     required String body,
+    required bool soundEnabled,
   });
-  
+
   Future<bool> stop(int id);
   Future<void> init();
+
+  /// Returns the id of the alarm currently ringing among [ids], if any.
+  Future<int?> currentlyRingingId(List<int> ids);
 }
 
 class AlarmServiceImpl implements AlarmService {
@@ -30,20 +36,31 @@ class AlarmServiceImpl implements AlarmService {
     required DateTime dateTime,
     required String title,
     required String body,
+    required bool soundEnabled,
   }) async {
     final alarmSettings = AlarmSettings(
       id: id,
       dateTime: dateTime,
-      assetAudioPath: 'assets/alarm.mp3',
+      assetAudioPath: soundEnabled ? 'assets/alarm.mp3' : 'assets/silence.wav',
       loopAudio: true,
       vibrate: true,
       warningNotificationOnKill: Platform.isIOS,
       androidFullScreenIntent: true,
-      volumeSettings: VolumeSettings.fade(
-        volume: 0.8,
-        fadeDuration: const Duration(seconds: 5),
-        volumeEnforced: true,
-      ),
+      // Without this, a new alert is silently dropped (no sound, no
+      // vibration, nothing) whenever a previous one is still ringing —
+      // e.g. the user missed dismissing the last repeat in time.
+      allowAlarmOverlap: true,
+      volumeSettings: soundEnabled
+          ? VolumeSettings.fade(
+              volume: 0.8,
+              fadeDuration: const Duration(seconds: 5),
+              volumeEnforced: true,
+            )
+          : VolumeSettings.fixed(
+              volume: 0,
+              volumeEnforced: true,
+              showSystemUI: false,
+            ),
       notificationSettings: NotificationSettings(
         title: title,
         body: body,
@@ -60,4 +77,12 @@ class AlarmServiceImpl implements AlarmService {
 
   @override
   Future<void> init() => Alarm.init();
+
+  @override
+  Future<int?> currentlyRingingId(List<int> ids) async {
+    for (final id in ids) {
+      if (await Alarm.isRinging(id)) return id;
+    }
+    return null;
+  }
 }

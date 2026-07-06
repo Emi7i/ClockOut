@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../features/clock/bloc/clock_bloc.dart';
+import '../features/clock/screens/alarm_ringing_screen.dart';
 import '../features/clock/screens/clock_in_screen.dart';
 import '../features/clock/screens/clocked_in_screen.dart';
 import '../features/logs/bloc/logs_bloc.dart';
@@ -29,6 +30,7 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   int  _navIndex      = 0;
   bool _showSettings  = false;
+  bool _ringingScreenOpen = false;
 
   @override
   void initState() {
@@ -60,8 +62,32 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void _openSettings()  => setState(() => _showSettings = true);
   void _closeSettings() => setState(() => _showSettings = false);
 
+  bool _isRinging(ClockState state) => state is ClockActive && state.isRinging;
+
   @override
   Widget build(BuildContext context) {
+    return BlocListener<ClockBloc, ClockState>(
+      listenWhen: (previous, current) => _isRinging(previous) != _isRinging(current),
+      listener: (context, state) {
+        final navigator = Navigator.of(context, rootNavigator: true);
+        if (_isRinging(state) && !_ringingScreenOpen) {
+          _ringingScreenOpen = true;
+          navigator
+              .push(MaterialPageRoute(
+                builder: (_) => const AlarmRingingScreen(),
+                fullscreenDialog: true,
+              ))
+              .then((_) => _ringingScreenOpen = false);
+        } else if (!_isRinging(state) && _ringingScreenOpen) {
+          _ringingScreenOpen = false;
+          navigator.pop();
+        }
+      },
+      child: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
     // ── Settings overlay ──────────────────────────────────
     if (_showSettings) {
       return SettingsScreen(
