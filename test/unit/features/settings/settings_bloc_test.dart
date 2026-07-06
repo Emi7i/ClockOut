@@ -4,17 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:clock_app/domain/entities/user_settings.dart';
 import 'package:clock_app/domain/repositories/user_settings_repository.dart';
-import 'package:clock_app/domain/repositories/log_repository.dart';
 import 'package:clock_app/features/settings/bloc/settings_bloc.dart';
 
 class MockUserSettingsRepository extends Mock implements UserSettingsRepository {}
-class MockLogRepository extends Mock implements LogRepository {}
 
 class UserSettingsFake extends Fake implements UserSettings {}
 
 void main() {
   late MockUserSettingsRepository mockSettingsRepo;
-  late MockLogRepository mockLogRepo;
 
   setUpAll(() {
     registerFallbackValue(UserSettingsFake());
@@ -22,7 +19,6 @@ void main() {
 
   setUp(() {
     mockSettingsRepo = MockUserSettingsRepository();
-    mockLogRepo = MockLogRepository();
   });
 
   group('SettingsBloc', () {
@@ -38,7 +34,6 @@ void main() {
         when(() => mockSettingsRepo.getSettings()).thenAnswer((_) async => tSettings);
         return SettingsBloc(
           settingsRepo: mockSettingsRepo,
-          logRepo: mockLogRepo,
         );
       },
       act: (bloc) => bloc.add(const SettingsStarted()),
@@ -54,7 +49,6 @@ void main() {
         when(() => mockSettingsRepo.updateSettings(any())).thenAnswer((_) async => {});
         return SettingsBloc(
           settingsRepo: mockSettingsRepo,
-          logRepo: mockLogRepo,
         );
       },
       seed: () => SettingsLoaded(
@@ -77,7 +71,6 @@ void main() {
         when(() => mockSettingsRepo.updateSettings(any())).thenAnswer((_) async => {});
         return SettingsBloc(
           settingsRepo: mockSettingsRepo,
-          logRepo: mockLogRepo,
         );
       },
       seed: () => const SettingsLoaded(
@@ -102,7 +95,6 @@ void main() {
         when(() => mockSettingsRepo.updateSettings(any())).thenAnswer((_) async => {});
         return SettingsBloc(
           settingsRepo: mockSettingsRepo,
-          logRepo: mockLogRepo,
         );
       },
       seed: () => const SettingsLoaded(

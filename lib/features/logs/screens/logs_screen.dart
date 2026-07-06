@@ -210,26 +210,39 @@ void _showEditLogDialog(BuildContext context, LogEntry entry) {
               _EditTimeRow(label: 'End', time: end, onTap: pickEnd),
             ],
           ),
+          actionsAlignment: MainAxisAlignment.spaceBetween,
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text('Cancel', style: AppTextStyles.bodySmall),
-            ),
-            TextButton(
               onPressed: () {
-                logsBloc.add(LogEntryEdited(
-                  original:        entry,
-                  newClockedInTime:  start,
-                  newClockedOutTime: end,
-                ));
+                logsBloc.add(LogEntryDeleted(entry));
                 Navigator.of(dialogContext).pop();
               },
-              child: Text(
-                'Save',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
+              child: Text('Delete', style: AppTextStyles.destructiveButton),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text('Cancel', style: AppTextStyles.bodySmall),
                 ),
-              ),
+                TextButton(
+                  onPressed: () {
+                    logsBloc.add(LogEntryEdited(
+                      original:        entry,
+                      newClockedInTime:  start,
+                      newClockedOutTime: end,
+                    ));
+                    Navigator.of(dialogContext).pop();
+                  },
+                  child: Text(
+                    'Save',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         );

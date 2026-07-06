@@ -5,6 +5,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../common_widgets/common_widgets.dart';
 import '../../../core/constants/constants.dart';
+import '../../logs/bloc/logs_bloc.dart';
 import '../bloc/settings_bloc.dart';
 import '../widgets/settings_row.dart';
 import '../widgets/delete_logs_button.dart';
@@ -121,8 +122,8 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   child: DeleteLogsButton(
                     onConfirmed: () => context
-                        .read<SettingsBloc>()
-                        .add(const DeleteAllLogsConfirmed()),
+                        .read<LogsBloc>()
+                        .add(const LogsDeleteAllRequested()),
                   ),
                 ),
 

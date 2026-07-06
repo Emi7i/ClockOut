@@ -36,3 +36,9 @@ final class LogEntryEdited extends LogsEvent {
     required this.newClockedOutTime,
   });
 }
+
+/// User deleted a single log entry while in edit mode.
+final class LogEntryDeleted extends LogsEvent {
+  final LogEntry entry;
+  const LogEntryDeleted(this.entry);
+}

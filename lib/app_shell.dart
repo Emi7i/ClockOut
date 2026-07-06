@@ -54,10 +54,17 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     }
   }
 
-  void _onNavTap(int index) => setState(() {
-        _navIndex     = index;
-        _showSettings = false;
-      });
+  void _onNavTap(int index) {
+    // Log entries can be added (clock out) or deleted (settings) from other
+    // tabs, so refresh the cached list whenever the Logs tab is opened.
+    if (index == 1 && _navIndex != 1) {
+      context.read<LogsBloc>().add(const LogsStarted());
+    }
+    setState(() {
+      _navIndex     = index;
+      _showSettings = false;
+    });
+  }
 
   void _openSettings()  => setState(() => _showSettings = true);
   void _closeSettings() => setState(() => _showSettings = false);

@@ -25,8 +25,3 @@ final class TimeDelayChanged extends SettingsEvent {
   final int minutes;
   const TimeDelayChanged(this.minutes);
 }
-
-/// User confirmed deletion of all logs.
-final class DeleteAllLogsConfirmed extends SettingsEvent {
-  const DeleteAllLogsConfirmed();
-}

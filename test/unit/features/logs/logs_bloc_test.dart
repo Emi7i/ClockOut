@@ -130,5 +130,25 @@ void main() {
         expect(saved.clockedOutTime, DateTime(2026, 1, 1, 17, 0));
       },
     );
+
+    blocTest<LogsBloc, LogsState>(
+      'removes a single entry when LogEntryDeleted is added',
+      build: () {
+        when(() => mockRepository.deleteLog(any())).thenAnswer((_) async => {});
+        when(() => mockGetLogs()).thenAnswer((_) async => []);
+        return LogsBloc(
+          getLogs: mockGetLogs,
+          repository: mockRepository,
+        );
+      },
+      seed: () => LogsLoaded(entries: tLogs, hoursWorked: 8, hoursTarget: 40, isEditMode: true),
+      act: (bloc) => bloc.add(LogEntryDeleted(tLogs.first)),
+      expect: () => [
+        isA<LogsLoaded>().having((s) => s.entries, 'entries', isEmpty),
+      ],
+      verify: (_) {
+        verify(() => mockRepository.deleteLog(tLogs.first.id!)).called(1);
+      },
+    );
   });
 }

@@ -129,7 +129,6 @@ class ClockApp extends StatelessWidget {
         BlocProvider(
           create: (_) => SettingsBloc(
             settingsRepo: settingsRepo,
-            logRepo:      logRepo,
           )..add(const SettingsStarted()),
         ),
       ],

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/entities/user_settings.dart';
 import '../../../domain/repositories/user_settings_repository.dart';
-import '../../../domain/repositories/log_repository.dart';
 
 part 'settings_event.dart';
 part 'settings_state.dart';
@@ -12,23 +11,19 @@ const int _maxRecentColors = 5;
 
 /// ─────────────────────────────────────────────────────────────
 ///  SETTINGS BLOC
-///  Manages accent colour, clock format, alarm delay, log deletion.
+///  Manages accent colour, clock format, alarm delay.
 /// ─────────────────────────────────────────────────────────────
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   final UserSettingsRepository _settingsRepo;
-  final LogRepository          _logRepo;
 
   SettingsBloc({
     required UserSettingsRepository settingsRepo,
-    required LogRepository          logRepo,
   })  : _settingsRepo = settingsRepo,
-        _logRepo      = logRepo,
         super(const SettingsLoading()) {
-    on<SettingsStarted>       (_onStarted);
-    on<AccentColorChanged>    (_onAccentColorChanged);
-    on<ClockFormatToggled>    (_onClockFormatToggled);
-    on<TimeDelayChanged>      (_onTimeDelayChanged);
-    on<DeleteAllLogsConfirmed>(_onDeleteAllLogs);
+    on<SettingsStarted>   (_onStarted);
+    on<AccentColorChanged>(_onAccentColorChanged);
+    on<ClockFormatToggled>(_onClockFormatToggled);
+    on<TimeDelayChanged>  (_onTimeDelayChanged);
   }
 
   Future<void> _onStarted(SettingsStarted _, Emitter<SettingsState> emit) async {
@@ -98,13 +93,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         recentAccentColors: updated.recentColors.map((c) => c.value).toList(),
       ));
     }
-  }
-
-  Future<void> _onDeleteAllLogs(
-    DeleteAllLogsConfirmed _,
-    Emitter<SettingsState> emit,
-  ) async {
-    await _logRepo.deleteAllLogs();
   }
 
   /// Moves [newColorHex] to the front of [current], removing any earlier
