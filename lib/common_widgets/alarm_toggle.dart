@@ -27,6 +27,8 @@ class AlarmToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = Theme.of(context).colorScheme.primary;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -42,10 +44,10 @@ class AlarmToggle extends StatelessWidget {
                 height: 32,
                 decoration: BoxDecoration(
                   // filled when on, transparent when off
-                  color: isOn ? AppColors.toggleOn : AppColors.toggleOff,
+                  color: isOn ? accentColor : AppColors.toggleOff,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.accent,
+                    color: accentColor,
                     width: 2.0,
                   ),
                 ),
@@ -63,7 +65,7 @@ class AlarmToggle extends StatelessWidget {
                         // knob colour: dark on accent, accent on dark
                         color: isOn
                             ? AppColors.background
-                            : AppColors.accent,
+                            : accentColor,
                         shape: BoxShape.circle,
                       ),
                     ),

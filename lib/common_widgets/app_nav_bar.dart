@@ -66,7 +66,7 @@ class AppNavBar extends StatelessWidget {
             right: 0,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(items.length, _buildTab),
+              children: List.generate(items.length, (i) => _buildTab(context, i)),
             ),
           ),
         ],
@@ -74,7 +74,7 @@ class AppNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildTab(int index) {
+  Widget _buildTab(BuildContext context, int index) {
     final bool isSelected = index == selectedIndex;
 
     return GestureDetector(
@@ -84,7 +84,7 @@ class AppNavBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 28),
         child: Icon(
           items[index].icon,
-          color: isSelected ? AppColors.accent : AppColors.textMuted,
+          color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.textMuted,
           size: 32,
           semanticLabel: items[index].semanticLabel,
         ),

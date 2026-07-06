@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../domain/entities/log_entry.dart';
+import '../../settings/bloc/settings_bloc.dart';
 
 /// ─────────────────────────────────────────────────────────────
 ///  LOG LIST TILE
@@ -25,8 +27,11 @@ class LogListTile extends StatelessWidget {
       LogStatus.late   => AppTextStyles.logNegative,
     };
 
+    final settingsState = context.watch<SettingsBloc>().state;
+    final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
+
     final dateTimeLabel = entry.clockedOutTime != null
-        ? '${DateFormatter.logDate(entry.date)}  ${DateFormatter.clockTime(entry.clockedOutTime!)}'
+        ? '${DateFormatter.logDate(entry.date)}  ${DateFormatter.clockTime(entry.clockedOutTime!, is12Hour: is12Hour)}'
         : DateFormatter.logDate(entry.date);
 
     return InkWell(

@@ -36,9 +36,9 @@ class AppTopBar extends StatelessWidget {
           // ── Settings gear ──────────────────────────────
           GestureDetector(
             onTap: onSettingsTap,
-            child: const Icon(
+            child: Icon(
               Icons.settings,          // ← swap icon here
-              color: AppColors.accent,
+              color: Theme.of(context).colorScheme.primary,
               size: 28,
               semanticLabel: 'Settings',
             ),

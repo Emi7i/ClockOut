@@ -27,6 +27,9 @@ dependencies:
   # Permissions (exact alarm / notification access)
   permission_handler: ^11.4.0
 
+  # Accent colour picker
+  flutter_colorpicker: ^1.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

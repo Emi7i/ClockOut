@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../common_widgets/common_widgets.dart';
+import '../../settings/bloc/settings_bloc.dart';
 import '../bloc/clock_bloc.dart';
 
 /// ─────────────────────────────────────────────────────────────
@@ -27,6 +28,8 @@ class AlarmRingingScreen extends StatelessWidget {
             child: BlocBuilder<ClockBloc, ClockState>(
               builder: (context, state) {
                 final now = state is ClockActive ? state.currentTime : DateTime.now();
+                final settingsState = context.watch<SettingsBloc>().state;
+                final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
 
                 return Center(
                   child: Column(
@@ -37,7 +40,10 @@ class AlarmRingingScreen extends StatelessWidget {
 
                       const SizedBox(height: AppDimensions.spaceLg),
 
-                      Text(DateFormatter.clockTime(now), style: AppTextStyles.timeDisplay),
+                      Text(
+                        DateFormatter.clockTime(now, is12Hour: is12Hour),
+                        style: AppTextStyles.timeDisplay,
+                      ),
 
                       const SizedBox(height: AppDimensions.spaceSm),
 
@@ -88,6 +94,8 @@ class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderSta
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = Theme.of(context).colorScheme.primary;
+
     return ScaleTransition(
       scale: Tween(begin: 0.9, end: 1.1).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
@@ -95,13 +103,13 @@ class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderSta
       child: Container(
         width: 96,
         height: 96,
-        decoration: const BoxDecoration(
-          color: AppColors.accentDim,
+        decoration: BoxDecoration(
+          color: accentColor.withOpacity(0.16),
           shape: BoxShape.circle,
         ),
-        child: const Icon(
+        child: Icon(
           Icons.alarm_rounded,
-          color: AppColors.accent,
+          color: accentColor,
           size: 52,
         ),
       ),

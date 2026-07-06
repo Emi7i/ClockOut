@@ -14,6 +14,8 @@ class RemainingRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = Theme.of(context).colorScheme.primary;
+
     return SizedBox(
       width:  AppDimensions.ovalWidth,
       height: AppDimensions.ovalHeight,
@@ -21,11 +23,15 @@ class RemainingRing extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           // ── Hand-drawn border image ─────────────────────
+          // Tinted to the live accent colour — the asset itself is just a
+          // transparent-background stroke.
           Image.asset(
             'assets/ui/timer_border.png',
             width:  AppDimensions.ovalWidth,
             height: AppDimensions.ovalHeight,
             fit:    BoxFit.contain,
+            color:  accentColor,
+            colorBlendMode: BlendMode.srcIn,
           ),
 
           Column(
@@ -33,9 +39,12 @@ class RemainingRing extends StatelessWidget {
             children: [
               Text(
                 DateFormatter.duration(remaining),
-                style: AppTextStyles.remainingLarge,
+                style: AppTextStyles.remainingLarge.copyWith(color: accentColor),
               ),
-              Text('remaining', style: AppTextStyles.remainingSmall),
+              Text(
+                'remaining',
+                style: AppTextStyles.remainingSmall.copyWith(color: accentColor),
+              ),
             ],
           ),
         ],

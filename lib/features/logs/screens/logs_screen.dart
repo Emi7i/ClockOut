@@ -4,6 +4,7 @@ import '../../../common_widgets/common_widgets.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../domain/entities/log_entry.dart';
+import '../../settings/bloc/settings_bloc.dart';
 import '../bloc/logs_bloc.dart';
 import '../widgets/donut_chart.dart';
 import '../widgets/log_list_tile.dart';
@@ -29,6 +30,9 @@ class LogsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<LogsBloc, LogsState>(
       builder: (context, state) {
+        final settingsState = context.watch<SettingsBloc>().state;
+        final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
+
         return Scaffold(
           backgroundColor: AppColors.background,
           body: SafeArea(
@@ -36,7 +40,7 @@ class LogsScreen extends StatelessWidget {
               children: [
                 // ── Top bar with edit toggle ────────────────
                 AppTopBar(
-                  timeLabel:     DateFormatter.clockTime(DateTime.now()),
+                  timeLabel:     DateFormatter.clockTime(DateTime.now(), is12Hour: is12Hour),
                   onSettingsTap: onSettingsTap,
                   trailing: switch (state) {
                     LogsLoaded() => _EditModeChip(
@@ -52,9 +56,9 @@ class LogsScreen extends StatelessWidget {
                 // ── Body ───────────────────────────────────
                 Expanded(
                   child: switch (state) {
-                    LogsLoading() => const Center(
+                    LogsLoading() => Center(
                         child: CircularProgressIndicator(
-                          color: AppColors.accent,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     LogsError(:final message) => Center(
@@ -148,8 +152,15 @@ class _LoadedBody extends StatelessWidget {
 /// Opens a dialog letting the user pick new start/end times for [entry].
 void _showEditLogDialog(BuildContext context, LogEntry entry) {
   final logsBloc = context.read<LogsBloc>();
+  final settingsState = context.read<SettingsBloc>().state;
+  final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
   DateTime start = entry.clockedInTime ?? entry.date;
   DateTime end   = entry.clockedOutTime ?? entry.date;
+
+  MediaQuery timePickerTheme(BuildContext context, Widget? child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: !is12Hour),
+        child: child!,
+      );
 
   showDialog<void>(
     context: context,
@@ -159,6 +170,7 @@ void _showEditLogDialog(BuildContext context, LogEntry entry) {
           final picked = await showTimePicker(
             context: context,
             initialTime: TimeOfDay.fromDateTime(start),
+            builder: timePickerTheme,
           );
           if (picked == null) return;
           setState(() {
@@ -174,6 +186,7 @@ void _showEditLogDialog(BuildContext context, LogEntry entry) {
           final picked = await showTimePicker(
             context: context,
             initialTime: TimeOfDay.fromDateTime(end),
+            builder: timePickerTheme,
           );
           if (picked == null) return;
           setState(() {
@@ -197,24 +210,39 @@ void _showEditLogDialog(BuildContext context, LogEntry entry) {
               _EditTimeRow(label: 'End', time: end, onTap: pickEnd),
             ],
           ),
+          actionsAlignment: MainAxisAlignment.spaceBetween,
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text('Cancel', style: AppTextStyles.bodySmall),
-            ),
-            TextButton(
               onPressed: () {
-                logsBloc.add(LogEntryEdited(
-                  original:        entry,
-                  newClockedInTime:  start,
-                  newClockedOutTime: end,
-                ));
+                logsBloc.add(LogEntryDeleted(entry));
                 Navigator.of(dialogContext).pop();
               },
-              child: Text(
-                'Save',
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.accent),
-              ),
+              child: Text('Delete', style: AppTextStyles.destructiveButton),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text('Cancel', style: AppTextStyles.bodySmall),
+                ),
+                TextButton(
+                  onPressed: () {
+                    logsBloc.add(LogEntryEdited(
+                      original:        entry,
+                      newClockedInTime:  start,
+                      newClockedOutTime: end,
+                    ));
+                    Navigator.of(dialogContext).pop();
+                  },
+                  child: Text(
+                    'Save',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -233,6 +261,10 @@ class _EditTimeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = Theme.of(context).colorScheme.primary;
+    final settingsState = context.watch<SettingsBloc>().state;
+    final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
+
     return GestureDetector(
       onTap: onTap,
       child: Padding(
@@ -244,11 +276,11 @@ class _EditTimeRow extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  DateFormatter.clockTime(time),
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.accent),
+                  DateFormatter.clockTime(time, is12Hour: is12Hour),
+                  style: AppTextStyles.bodyMedium.copyWith(color: accentColor),
                 ),
                 const SizedBox(width: AppDimensions.spaceXs),
-                const Icon(Icons.access_time_rounded, size: 18, color: AppColors.accent),
+                Icon(Icons.access_time_rounded, size: 18, color: accentColor),
               ],
             ),
           ],
@@ -272,7 +304,7 @@ class _EditModeChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
         decoration: BoxDecoration(
-          color:        AppColors.accent,
+          color:        Theme.of(context).colorScheme.primary,
           borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
         ),
         child: Text(isEditMode ? 'done' : 'edit', style: AppTextStyles.chipButton),

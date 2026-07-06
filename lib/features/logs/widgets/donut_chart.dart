@@ -31,7 +31,10 @@ class DonutChart extends StatelessWidget {
       width:  size,
       height: size,
       child: CustomPaint(
-        painter: _DonutPainter(progress: progress),
+        painter: _DonutPainter(
+          progress: progress,
+          accentColor: Theme.of(context).colorScheme.primary,
+        ),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -53,8 +56,9 @@ class DonutChart extends StatelessWidget {
 // ── Painter ───────────────────────────────────────────────────
 class _DonutPainter extends CustomPainter {
   final double progress;
+  final Color  accentColor;
 
-  const _DonutPainter({required this.progress});
+  const _DonutPainter({required this.progress, required this.accentColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -78,7 +82,7 @@ class _DonutPainter extends CustomPainter {
         rect,
         startAngle: -pi / 2,
         sweepAngle: 2 * pi * progress,
-        color:      AppColors.accent,
+        color:      accentColor,
       );
     }
   }
@@ -115,5 +119,6 @@ class _DonutPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DonutPainter old) => old.progress != progress;
+  bool shouldRepaint(_DonutPainter old) =>
+      old.progress != progress || old.accentColor != accentColor;
 }

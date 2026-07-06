@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../common_widgets/common_widgets.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../settings/bloc/settings_bloc.dart';
 import '../bloc/clock_bloc.dart';
 
 /// ─────────────────────────────────────────────────────────────
@@ -28,6 +29,8 @@ class ClockInScreen extends StatelessWidget {
       buildWhen: (_, s) => s is ClockIdle,
       builder: (context, state) {
         final idle = state as ClockIdle;
+        final settingsState = context.watch<SettingsBloc>().state;
+        final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -36,7 +39,7 @@ class ClockInScreen extends StatelessWidget {
               children: [
                 // ── Top bar: gear + time ───────────────────
                 AppTopBar(
-                  timeLabel:     DateFormatter.clockTime(idle.currentTime),
+                  timeLabel:     DateFormatter.clockTime(idle.currentTime, is12Hour: is12Hour),
                   onSettingsTap: onSettingsTap,
                 ),
 
