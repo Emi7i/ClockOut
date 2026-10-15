@@ -16,12 +16,14 @@ class AppTopBar extends StatelessWidget {
   final String      timeLabel;
   final VoidCallback onSettingsTap;
   final Widget?     trailing;
+  final VoidCallback? onCalendarTap;
 
   const AppTopBar({
     super.key,
     required this.timeLabel,
     required this.onSettingsTap,
     this.trailing,
+    this.onCalendarTap,
   });
 
   @override
@@ -54,6 +56,16 @@ class AppTopBar extends StatelessWidget {
           // ── Optional trailing widget ───────────────────
           if (trailing != null)
             trailing!
+          else if (onCalendarTap != null)
+            GestureDetector(
+              onTap: onCalendarTap,
+              child: Icon(
+                Icons.calendar_month_outlined,
+                color: Theme.of(context).colorScheme.primary,
+                size: 28,
+                semanticLabel: 'Calendar',
+              ),
+            )
           else
             const SizedBox(width: 28), // mirror gear width for centering
         ],

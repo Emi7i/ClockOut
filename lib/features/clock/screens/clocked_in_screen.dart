@@ -15,12 +15,14 @@ import '../widgets/clock_out_button.dart';
 /// ─────────────────────────────────────────────────────────────
 class ClockedInScreen extends StatelessWidget {
   final VoidCallback      onSettingsTap;
+  final VoidCallback? onCalendarTap;
   final int               navIndex;
   final ValueChanged<int> onNavTap;
 
   const ClockedInScreen({
     super.key,
     required this.onSettingsTap,
+    this.onCalendarTap,
     required this.navIndex,
     required this.onNavTap,
   });
@@ -50,6 +52,7 @@ class ClockedInScreen extends StatelessWidget {
                   AppTopBar(
                     timeLabel:     DateFormatter.clockTime(active.currentTime, is12Hour: is12Hour),
                     onSettingsTap: onSettingsTap,
+                    onCalendarTap: onCalendarTap,
                   ),
 
                   // ── Main content ───────────────────────────

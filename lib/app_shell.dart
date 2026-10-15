@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../features/calendar/screens/calendar_screen.dart';
 import '../features/clock/bloc/clock_bloc.dart';
 import '../features/clock/screens/alarm_ringing_screen.dart';
 import '../features/clock/screens/clock_in_screen.dart';
@@ -29,6 +30,7 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   int  _navIndex      = 0;
   bool _showSettings  = false;
+  bool _showCalendar  = false;
   bool _ringingScreenOpen = false;
 
   @override
@@ -62,11 +64,14 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     setState(() {
       _navIndex     = index;
       _showSettings = false;
+      _showCalendar = false;
     });
   }
 
   void _openSettings()  => setState(() => _showSettings = true);
   void _closeSettings() => setState(() => _showSettings = false);
+  void _openCalendar()  => setState(() => _showCalendar = true);
+  void _closeCalendar() => setState(() => _showCalendar = false);
 
   bool _isRinging(ClockState state) => state is ClockActive && state.isRinging;
 
@@ -103,10 +108,20 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       );
     }
 
+    // ── Calendar overlay ──────────────────────────────────
+    if (_showCalendar) {
+      return CalendarScreen(
+        onBack:   _closeCalendar,
+        navIndex: _navIndex,
+        onNavTap: _onNavTap,
+      );
+    }
+
     // ── Tab content ───────────────────────────────────────
     return switch (_navIndex) {
       0 => _ClockTabSwitcher(
            onSettingsTap: _openSettings,
+           onCalendarTap: _openCalendar,
            navIndex:      _navIndex,
            onNavTap:      _onNavTap,
          ),
@@ -117,6 +132,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
          ),
       _ => _ClockTabSwitcher(
            onSettingsTap: _openSettings,
+           onCalendarTap: _openCalendar,
            navIndex:      _navIndex,
            onNavTap:      _onNavTap,
          ),
@@ -128,11 +144,13 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 /// based on [ClockBloc] state.
 class _ClockTabSwitcher extends StatelessWidget {
   final VoidCallback      onSettingsTap;
+  final VoidCallback      onCalendarTap;
   final int               navIndex;
   final ValueChanged<int> onNavTap;
 
   const _ClockTabSwitcher({
     required this.onSettingsTap,
+    required this.onCalendarTap,
     required this.navIndex,
     required this.onNavTap,
   });
@@ -143,11 +161,13 @@ class _ClockTabSwitcher extends StatelessWidget {
       builder: (context, state) => switch (state) {
         ClockActive() => ClockedInScreen(
             onSettingsTap: onSettingsTap,
+            onCalendarTap: onCalendarTap,
             navIndex:      navIndex,
             onNavTap:      onNavTap,
           ),
         ClockIdle() => ClockInScreen(
             onSettingsTap: onSettingsTap,
+            onCalendarTap: onCalendarTap,
             navIndex:      navIndex,
             onNavTap:      onNavTap,
           ),

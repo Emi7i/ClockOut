@@ -13,12 +13,14 @@ import '../bloc/clock_bloc.dart';
 /// ─────────────────────────────────────────────────────────────
 class ClockInScreen extends StatelessWidget {
   final VoidCallback onSettingsTap;
+  final VoidCallback? onCalendarTap;
   final int          navIndex;
   final ValueChanged<int> onNavTap;
 
   const ClockInScreen({
     super.key,
     required this.onSettingsTap,
+    this.onCalendarTap,
     required this.navIndex,
     required this.onNavTap,
   });
@@ -41,6 +43,7 @@ class ClockInScreen extends StatelessWidget {
                 AppTopBar(
                   timeLabel:     DateFormatter.clockTime(idle.currentTime, is12Hour: is12Hour),
                   onSettingsTap: onSettingsTap,
+                  onCalendarTap: onCalendarTap,
                 ),
 
                 // ── Main content ───────────────────────────

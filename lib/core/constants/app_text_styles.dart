@@ -10,6 +10,9 @@ abstract final class AppTextStyles {
   /// ← swap font family here
   static const String _font = 'Caveat';
 
+  /// Font used on the calendar screen (plain, non hand-drawn). ← swap here
+  static const String calendarFont = 'Arial';
+
   // ── Display ───────────────────────────────────────────────
   static const TextStyle timeDisplay = TextStyle(
     fontFamily: _font,
