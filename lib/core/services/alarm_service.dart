@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:alarm/alarm.dart';
+import 'package:alarm/utils/alarm_set.dart';
 
 abstract class AlarmService {
   /// Fires whenever an alarm starts ringing (sound or vibration-only).
@@ -28,7 +29,21 @@ abstract class AlarmService {
 
 class AlarmServiceImpl implements AlarmService {
   @override
-  Stream<AlarmSettings> get ringStream => Alarm.ringStream.stream;
+  Stream<AlarmSettings> get ringStream {
+    // Alarm.ringing is a value stream that replays the currently-ringing
+    // set on every listen. Diff consecutive sets so we only emit alarms
+    // transitioning into ringing after subscription — matching the old
+    // ringStream field, which never replayed pre-existing state. Recovery
+    // of an already-ringing alarm on cold start is handled separately via
+    // currentlyRingingId().
+    AlarmSet? previous;
+    return Alarm.ringing.expand((current) {
+      final prior = previous;
+      previous = current;
+      if (prior == null) return const <AlarmSettings>[];
+      return current.alarms.where((a) => !prior.containsId(a.id));
+    });
+  }
 
   @override
   Future<void> setAlarm({

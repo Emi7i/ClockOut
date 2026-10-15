@@ -46,8 +46,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     if (state case SettingsLoaded loaded) {
       final updatedRecentHex = _withRecentColor(
-        loaded.recentColors.map((c) => c.value).toList(),
-        event.color.value,
+        loaded.recentColors.map((c) => c.toARGB32()).toList(),
+        event.color.toARGB32(),
       );
       final updated = loaded.copyWith(
         accentColor:  event.color,
@@ -55,7 +55,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       );
       emit(updated);
       await _settingsRepo.updateSettings(UserSettings(
-        accentColorHex:      updated.accentColor.value,
+        accentColorHex:      updated.accentColor.toARGB32(),
         is12HourFormat:      updated.is12HourFormat,
         alarmDelayMinutes:   updated.alarmDelayMinutes,
         recentAccentColors:  updatedRecentHex,
@@ -71,10 +71,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       final updated = loaded.copyWith(is12HourFormat: !loaded.is12HourFormat);
       emit(updated);
       await _settingsRepo.updateSettings(UserSettings(
-        accentColorHex:     updated.accentColor.value,
+        accentColorHex:     updated.accentColor.toARGB32(),
         is12HourFormat:     updated.is12HourFormat,
         alarmDelayMinutes:  updated.alarmDelayMinutes,
-        recentAccentColors: updated.recentColors.map((c) => c.value).toList(),
+        recentAccentColors: updated.recentColors.map((c) => c.toARGB32()).toList(),
       ));
     }
   }
@@ -87,10 +87,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       final updated = loaded.copyWith(alarmDelayMinutes: event.minutes);
       emit(updated);
       await _settingsRepo.updateSettings(UserSettings(
-        accentColorHex:     updated.accentColor.value,
+        accentColorHex:     updated.accentColor.toARGB32(),
         is12HourFormat:     updated.is12HourFormat,
         alarmDelayMinutes:  updated.alarmDelayMinutes,
-        recentAccentColors: updated.recentColors.map((c) => c.value).toList(),
+        recentAccentColors: updated.recentColors.map((c) => c.toARGB32()).toList(),
       ));
     }
   }
