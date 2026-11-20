@@ -22,14 +22,15 @@ dependencies:
   alarm: ^5.4.1
 
   # Plain, non-alarming notifications (alert history)
-  flutter_local_notifications: ^22.0.1
+  flutter_local_notifications: ^23.0.3
 
   # Permissions (exact alarm / notification access)
-  permission_handler: ^12.0.3
+  permission_handler: ^13.0.2
 
   # Accent colour picker
   flutter_colorpicker: ^1.1.0
 
+  material_ui: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
