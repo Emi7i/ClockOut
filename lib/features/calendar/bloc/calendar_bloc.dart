@@ -35,6 +35,7 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
   static CalendarState _initialState(DateTime now) => CalendarState(
         visibleMonth: DateTime(now.year, now.month),
         selectedDay: MonthGrid.dateOnly(now),
+        today: MonthGrid.dateOnly(now),
       );
 
   Future<void> _onStarted(

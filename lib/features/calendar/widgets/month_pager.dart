@@ -86,7 +86,7 @@ class _MonthPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<CalendarBloc>().state;
     final days = MonthGrid.daysFor(month);
-    final today = MonthGrid.dateOnly(DateTime.now());
+    final today = state.today;
 
     final weeks = [
       for (var i = 0; i < days.length; i += MonthGrid.daysPerWeek)

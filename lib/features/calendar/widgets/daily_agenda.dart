@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
-import '../../../core/utils/month_grid.dart';
 import '../../../domain/entities/log_entry.dart';
 import '../bloc/calendar_bloc.dart';
 import 'agenda_section.dart';
@@ -47,7 +46,7 @@ class _DailyAgendaState extends State<DailyAgenda> {
     if (!monthChanged) return _jumpTo(state.selectedDay, animate: true);
 
     // New month: start at today if it's in this month, otherwise the 1st.
-    final today = MonthGrid.dateOnly(DateTime.now());
+    final today = state.today;
     final todayInMonth =
         today.year == state.visibleMonth.year && today.month == state.visibleMonth.month;
     _jumpTo(todayInMonth ? today : state.visibleMonth, animate: false);
@@ -74,7 +73,7 @@ class _DailyAgendaState extends State<DailyAgenda> {
           (prev.isLoading && !curr.isLoading),
       listener: (_, state) => _onStateChanged(state),
       builder: (_, state) {
-        final today = MonthGrid.dateOnly(DateTime.now());
+        final today = state.today;
 
         return SingleChildScrollView(
           child: Column(

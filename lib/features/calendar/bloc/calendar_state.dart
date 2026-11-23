@@ -7,6 +7,10 @@ final class CalendarState {
   /// Day whose agenda is shown (date-only).
   final DateTime selectedDay;
 
+  /// Today (date-only), fixed when the bloc is created. Widgets use this
+  /// instead of reading the clock, so tests can pin the date.
+  final DateTime today;
+
   /// The log of each date-only day. There is at most one log per day.
   final Map<DateTime, LogEntry> logByDay;
 
@@ -15,6 +19,7 @@ final class CalendarState {
   const CalendarState({
     required this.visibleMonth,
     required this.selectedDay,
+    required this.today,
     this.logByDay = const {},
     this.isLoading = true,
   });
@@ -39,6 +44,7 @@ final class CalendarState {
       CalendarState(
         visibleMonth: visibleMonth ?? this.visibleMonth,
         selectedDay: selectedDay ?? this.selectedDay,
+        today: today,
         logByDay: logByDay ?? this.logByDay,
         isLoading: isLoading ?? this.isLoading,
       );
