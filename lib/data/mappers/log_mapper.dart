@@ -11,6 +11,7 @@ class LogMapper {
       clockedInTime:  dto.clockedInTime != null ? DateTime.parse(dto.clockedInTime!) : null,
       clockedOutTime: dto.clockedOutTime != null ? DateTime.parse(dto.clockedOutTime!) : null,
       onlineWork:     dto.onlineWork == 1,
+      vacation:       dto.vacation == 1,
     );
   }
 
@@ -23,6 +24,7 @@ class LogMapper {
       clockedInTime:  entity.clockedInTime?.toIso8601String(),
       clockedOutTime: entity.clockedOutTime?.toIso8601String(),
       onlineWork:     entity.onlineWork ? 1 : 0,
+      vacation:       entity.vacation ? 1 : 0,
     );
   }
 }

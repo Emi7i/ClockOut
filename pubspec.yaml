@@ -30,6 +30,9 @@ dependencies:
   # Accent colour picker
   flutter_colorpicker: ^1.1.0
 
+  # SVG rendering (icons, cat illustrations)
+  flutter_svg: ^2.0.10
+
   material_ui: any
 dev_dependencies:
   flutter_test:
@@ -44,14 +47,14 @@ flutter:
   uses-material-design: true
 
   fonts:
-    - family: Caveat
+    # Titles and big text. Everything else is Roboto, the Android system font.
+    - family: Iceland
       fonts:
-        - asset: assets/fonts/Caveat-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Caveat-SemiBold.ttf
-          weight: 600
+        - asset: assets/fonts/Iceland-Regular.ttf
 
   assets:
     - assets/alarm.mp3
     - assets/silence.wav
     - assets/ui/
+    - assets/icons/
+    - assets/cats/

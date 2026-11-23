@@ -111,6 +111,8 @@ class ClockApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        RepositoryProvider.value(value: getLogs),
+        RepositoryProvider<LogRepository>.value(value: logRepo),
         BlocProvider(
           create: (_) => ClockBloc(
             clockIn:            clockIn,
@@ -148,7 +150,7 @@ class ClockApp extends StatelessWidget {
                 secondary: accentColor,
                 surface:   AppColors.surface,
               ),
-              fontFamily:  'Caveat',
+              fontFamily:  'Roboto',
               useMaterial3: true,
             ),
             home: const AppShell(),

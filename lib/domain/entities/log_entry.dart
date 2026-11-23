@@ -4,6 +4,9 @@
 /// ─────────────────────────────────────────────────────────────
 enum LogStatus { onTime, early, late }
 
+/// What kind of day a log records.
+enum LogType { normal, remote, vacation }
+
 class LogEntry {
   final int? id;
   final DateTime date;
@@ -13,6 +16,9 @@ class LogEntry {
   final DateTime? clockedOutTime;
   final bool onlineWork;
 
+  /// A day off. Like remote work it is added manually and has no clock times.
+  final bool vacation;
+
   const LogEntry({
     this.id,
     required this.date,
@@ -21,7 +27,70 @@ class LogEntry {
     this.clockedInTime,
     this.clockedOutTime,
     required this.onlineWork,
+    this.vacation = false,
   });
+
+  /// A log the user adds by hand (the calendar's "Add log" popup).
+  ///
+  /// Normal logs need [clockedIn] and [clockedOut] and get a computed bonus.
+  /// Remote and vacation logs have no clock times and no bonus; they are
+  /// stamped at the start of [day].
+  ///
+  /// Pass [id] to build the replacement for an existing log (editing).
+  ///
+  /// A vacation with [useBank] is paid for from the time bank: it carries a
+  /// bonus of minus one [shiftDuration], so the bank balance (the sum of all
+  /// bonus times) drops by a full day. The bank may go negative.
+  factory LogEntry.manual({
+    int? id,
+    required LogType type,
+    required DateTime day,
+    DateTime? clockedIn,
+    DateTime? clockedOut,
+    required Duration shiftDuration,
+    bool useBank = false,
+  }) {
+    if (type == LogType.normal) {
+      assert(clockedIn != null && clockedOut != null,
+          'A normal log needs both clock times');
+      return LogEntry(
+        id: id,
+        date: clockedIn!,
+        bonusTime: computeBonusTime(
+          clockedInAt: clockedIn,
+          clockedOutAt: clockedOut!,
+          shiftDuration: shiftDuration,
+        ),
+        userEdited: true,
+        clockedInTime: clockedIn,
+        clockedOutTime: clockedOut,
+        onlineWork: false,
+      );
+    }
+
+    return LogEntry(
+      id: id,
+      date: DateTime(day.year, day.month, day.day),
+      bonusTime: type == LogType.vacation && useBank ? -shiftDuration : Duration.zero,
+      userEdited: true,
+      onlineWork: type == LogType.remote,
+      vacation: type == LogType.vacation,
+    );
+  }
+
+  /// A vacation day taken out of the time bank (it has a negative bonus).
+  bool get usedBank => vacation && bonusTime.isNegative;
+
+  /// The time bank: every bonus adds to it, every early leave and every
+  /// bank-paid vacation takes from it. Can be negative.
+  static Duration bankBalance(Iterable<LogEntry> logs) =>
+      logs.fold(Duration.zero, (sum, log) => sum + log.bonusTime);
+
+  LogType get type => vacation
+      ? LogType.vacation
+      : onlineWork
+          ? LogType.remote
+          : LogType.normal;
 
   /// Computes the bonus/deficit time for a shift, relative to when the
   /// shift was expected to end (clockedInAt + shiftDuration).

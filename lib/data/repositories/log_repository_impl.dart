@@ -16,6 +16,11 @@ class LogRepositoryImpl implements LogRepository {
   }
 
   @override
+  Future<void> addLog(LogEntry entry) async {
+    await _dbManager.insertLog(LogMapper.toDto(entry));
+  }
+
+  @override
   Future<void> deleteAllLogs() async {
     final db = await _dbManager.database;
     await db.delete(DatabaseHelper.tableLogs);

@@ -40,6 +40,35 @@ abstract final class AppColors {
   /// Dashed / muted border colour
   static const Color borderDashed = Color(0xFF888888);
 
+  // ── Calendar (redesign) ───────────────────────────────────
+  /// Calendar screen background
+  static const Color calendarBackground = Color(0xFF1C1C1D);
+
+  /// Agenda section header strip
+  static const Color agendaHeader = Color(0xFF1E1E1E);
+
+  /// Agenda event / "No event" row
+  static const Color agendaRow = Color(0xFF000000);
+
+  /// Primary text on calendar rows
+  static const Color calendarText = Color(0xFFEDEDED);
+
+  /// Secondary text on calendar rows (clock in/out times)
+  static const Color calendarTextSecondary = Color(0xFFBCBCBC);
+
+  /// Bonus amount highlight
+  static const Color bonus = Color(0xFF2AB26E);
+
+  /// Ring around the cat of a vacation paid from the time bank.
+  static const Color bankRing = Color(0xFFB22A7C);
+
+  // ── Add log popup (redesign) ──────────────────────────────
+  /// Input fields and the slider track
+  static const Color popupField = Color(0xFF3B3B3B);
+
+  /// "Cancel" button
+  static const Color popupCancel = Color(0xFF2F2F31);
+
   // ── Toggle ────────────────────────────────────────────────
   static const Color toggleOff = Colors.transparent;
 }

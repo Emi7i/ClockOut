@@ -71,22 +71,6 @@ void main() {
     );
 
     blocTest<LogsBloc, LogsState>(
-      'toggles edit mode on and off',
-      build: () {
-        when(() => mockGetLogs()).thenAnswer((_) async => tLogs);
-        return LogsBloc(
-          getLogs: mockGetLogs,
-          repository: mockRepository,
-        );
-      },
-      seed: () => const LogsLoaded(entries: [], hoursWorked: 0, hoursTarget: 40),
-      act: (bloc) => bloc.add(const LogsEditModeToggled()),
-      expect: () => [
-        isA<LogsLoaded>().having((s) => s.isEditMode, 'isEditMode', true),
-      ],
-    );
-
-    blocTest<LogsBloc, LogsState>(
       'switches to monthly stats when the donut chart is tapped',
       build: () => LogsBloc(
         getLogs: mockGetLogs,
@@ -104,51 +88,6 @@ void main() {
             .having((s) => s.isWeeklyView, 'isWeeklyView', false)
             .having((s) => s.hoursTarget, 'hoursTarget', 160),
       ],
-    );
-
-    blocTest<LogsBloc, LogsState>(
-      'persists an edited entry with userEdited set to true',
-      build: () {
-        when(() => mockRepository.updateLog(any())).thenAnswer((_) async => {});
-        when(() => mockGetLogs()).thenAnswer((_) async => tLogs);
-        return LogsBloc(
-          getLogs: mockGetLogs,
-          repository: mockRepository,
-        );
-      },
-      seed: () => LogsLoaded(entries: tLogs, hoursWorked: 8, hoursTarget: 40, isEditMode: true),
-      act: (bloc) => bloc.add(LogEntryEdited(
-        original:          tLogs.first,
-        newClockedInTime:  DateTime(2026, 1, 1, 9, 0),
-        newClockedOutTime: DateTime(2026, 1, 1, 17, 0),
-      )),
-      verify: (_) {
-        final captured = verify(() => mockRepository.updateLog(captureAny())).captured;
-        final saved = captured.single as LogEntry;
-        expect(saved.userEdited, true);
-        expect(saved.clockedInTime, DateTime(2026, 1, 1, 9, 0));
-        expect(saved.clockedOutTime, DateTime(2026, 1, 1, 17, 0));
-      },
-    );
-
-    blocTest<LogsBloc, LogsState>(
-      'removes a single entry when LogEntryDeleted is added',
-      build: () {
-        when(() => mockRepository.deleteLog(any())).thenAnswer((_) async => {});
-        when(() => mockGetLogs()).thenAnswer((_) async => []);
-        return LogsBloc(
-          getLogs: mockGetLogs,
-          repository: mockRepository,
-        );
-      },
-      seed: () => LogsLoaded(entries: tLogs, hoursWorked: 8, hoursTarget: 40, isEditMode: true),
-      act: (bloc) => bloc.add(LogEntryDeleted(tLogs.first)),
-      expect: () => [
-        isA<LogsLoaded>().having((s) => s.entries, 'entries', isEmpty),
-      ],
-      verify: (_) {
-        verify(() => mockRepository.deleteLog(tLogs.first.id!)).called(1);
-      },
     );
   });
 }

@@ -48,6 +48,34 @@ void main() {
       expect(dto.clockedInTime, '2023-01-01T08:00:00.000Z');
       expect(dto.clockedOutTime, '2023-01-01T15:55:00.000Z');
       expect(dto.onlineWork, 0);
+      expect(dto.vacation, 0);
+    });
+
+    test('vacation round-trips through the DTO', () {
+      final entity = LogEntry(
+        date: DateTime.parse('2023-01-01T00:00:00Z'),
+        bonusTime: Duration.zero,
+        userEdited: true,
+        onlineWork: false,
+        vacation: true,
+      );
+
+      final dto = LogMapper.toDto(entity);
+      expect(dto.vacation, 1);
+      expect(dto.toMap()['vacation'], 1);
+      expect(LogMapper.toEntity(dto).vacation, isTrue);
+      expect(LogMapper.toEntity(dto).type, LogType.vacation);
+    });
+
+    test('rows from before the vacation column read as not vacation', () {
+      final dto = LogDto.fromMap({
+        'log_id': 1,
+        'date_added': '2023-01-01T12:00:00Z',
+        'bonus_time': 0,
+        'user_edited': 0,
+        'online_work': 0,
+      });
+      expect(dto.vacation, 0);
     });
   });
 }

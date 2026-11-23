@@ -4,11 +4,79 @@ import 'app_colors.dart';
 /// ─────────────────────────────────────────────────────────────
 ///  APP TEXT STYLES
 ///  All typography in one place.
-///  To swap font: change [_font] and update pubspec.yaml.
+///  To swap fonts: change [_font] / [_titleFont] and update pubspec.yaml.
 /// ─────────────────────────────────────────────────────────────
 abstract final class AppTextStyles {
   /// ← swap font family here
-  static const String _font = 'Caveat';
+  static const String _font = 'Roboto';
+
+  /// Display font for titles and big text (e.g. the calendar's month/year).
+  static const String _titleFont = 'Iceland';
+
+  // ── Calendar (redesign) ───────────────────────────────────
+  /// Month and year. Iceland only ships a regular weight.
+  static const TextStyle calendarTitle = TextStyle(
+    fontFamily: _titleFont,
+    fontSize: 28,
+    fontWeight: FontWeight.w400,
+  );
+
+  static const TextStyle calendarWeekday = TextStyle(
+    fontFamily: _font,
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: AppColors.calendarTextSecondary,
+  );
+
+  static const TextStyle calendarDay = TextStyle(
+    fontFamily: _font,
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: AppColors.calendarText,
+  );
+
+  // ── Add log popup ─────────────────────────────────────────
+  static const TextStyle popupTitle = TextStyle(
+    fontFamily: _font,
+    fontSize: 16,
+    color: AppColors.textPrimary,
+  );
+
+  static const TextStyle popupLabel = TextStyle(
+    fontFamily: _font,
+    fontSize: 10,
+    color: AppColors.textPrimary,
+  );
+
+  static const TextStyle popupButton = TextStyle(
+    fontFamily: _font,
+    fontSize: 12,
+    color: AppColors.textPrimary,
+  );
+
+  static const TextStyle agendaHeader = TextStyle(
+    fontFamily: _font,
+    fontSize: 13,
+    color: AppColors.calendarText,
+  );
+
+  static const TextStyle agendaEmpty = TextStyle(
+    fontFamily: _font,
+    fontSize: 16,
+    color: AppColors.calendarText,
+  );
+
+  static const TextStyle agendaEventTitle = TextStyle(
+    fontFamily: _font,
+    fontSize: 16,
+    color: AppColors.textPrimary,
+  );
+
+  static const TextStyle agendaEventDetail = TextStyle(
+    fontFamily: _font,
+    fontSize: 13,
+    color: AppColors.calendarTextSecondary,
+  );
 
   // ── Display ───────────────────────────────────────────────
   static const TextStyle timeDisplay = TextStyle(
