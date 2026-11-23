@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:clock_app/domain/entities/log_entry.dart';
+import 'package:clock_app/domain/repositories/log_repository.dart';
 import 'package:clock_app/domain/use_cases/get_logs_use_case.dart';
 import 'package:clock_app/features/calendar/bloc/calendar_bloc.dart';
 import 'package:clock_app/features/calendar/screens/calendar_screen.dart';
 import 'package:clock_app/features/calendar/widgets/calendar_handle.dart';
 import 'package:clock_app/features/calendar/widgets/month_pager.dart';
+import 'package:bloc_test/bloc_test.dart';
+import 'package:clock_app/features/settings/bloc/settings_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -13,11 +16,29 @@ import 'package:mocktail/mocktail.dart';
 
 class _MockGetLogs extends Mock implements GetLogsUseCase {}
 
+class _MockLogRepository extends Mock implements LogRepository {}
+
+class _FakeLogEntry extends Fake implements LogEntry {}
+
+class _MockSettingsBloc extends MockBloc<SettingsEvent, SettingsState>
+    implements SettingsBloc {}
+
 void main() {
+  setUpAll(() => registerFallbackValue(_FakeLogEntry()));
+
   late _MockGetLogs getLogs;
+  late _MockLogRepository repository;
+  late _MockSettingsBloc settingsBloc;
 
   setUp(() {
     getLogs = _MockGetLogs();
+    repository = _MockLogRepository();
+    settingsBloc = _MockSettingsBloc();
+    when(() => settingsBloc.state).thenReturn(const SettingsLoaded(
+      accentColor: Color(0xFF3685DF),
+      is12HourFormat: true,
+      alarmDelayMinutes: 15,
+    ));
     // A log on every weekday of November 2026 so the agenda must scroll.
     when(() => getLogs()).thenAnswer((_) async => [
           for (var d = 1; d <= 30; d++)
@@ -33,7 +54,7 @@ void main() {
   });
 
   Future<void> loadRoboto() async {
-    // Real Roboto metrics (flutter_test defaults to a tall placeholder font).
+    // Real font metrics (flutter_test defaults to a wide placeholder font).
     final dir = Platform.environment['FLUTTER_ROOT'] ?? '';
     final loader = FontLoader('Roboto');
     for (final f in ['regular', 'medium', 'bold']) {
@@ -42,6 +63,14 @@ void main() {
       loader.addFont(Future.value(ByteData.sublistView(file.readAsBytesSync())));
     }
     await loader.load();
+
+    // The edit dialog (shared with the Logs screen) uses Caveat.
+    final caveat = FontLoader('Caveat');
+    for (final f in ['Regular', 'SemiBold']) {
+      final bytes = File('assets/fonts/Caveat-$f.ttf').readAsBytesSync();
+      caveat.addFont(Future.value(ByteData.sublistView(bytes)));
+    }
+    await caveat.load();
   }
 
   Future<void> pumpScreen(WidgetTester tester) async {
@@ -51,10 +80,19 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(
-      BlocProvider(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider<SettingsBloc>.value(value: settingsBloc),
+          BlocProvider(
         create: (_) =>
-            CalendarBloc(getLogs: getLogs, today: DateTime(2026, 11, 23))
+            CalendarBloc(
+              getLogs: getLogs,
+              repository: repository,
+              today: DateTime(2026, 11, 23),
+            )
               ..add(const CalendarStarted()),
+          ),
+        ],
         child: const MaterialApp(home: CalendarScreen()),
       ),
     );
@@ -112,6 +150,45 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Dec 2026'), findsOneWidget);
+  });
+
+  testWidgets('the pen opens the edit dialog and saving updates the log',
+      (tester) async {
+    when(() => repository.updateLog(any())).thenAnswer((_) async {});
+    when(() => getLogs()).thenAnswer((_) async => [
+          LogEntry(
+            date: DateTime(2026, 11, 23),
+            bonusTime: Duration.zero,
+            userEdited: false,
+            clockedInTime: DateTime(2026, 11, 23, 7),
+            clockedOutTime: DateTime(2026, 11, 23, 15),
+            onlineWork: false,
+          ),
+        ]);
+    await pumpScreen(tester);
+
+    await tester.tap(find.byType(IconButton).at(1)); // 0 is the header menu
+    await tester.pumpAndSettle();
+    expect(find.text('Edit log'), findsOneWidget);
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    verify(() => repository.updateLog(any())).called(1);
+  });
+
+  testWidgets('remote work logs have no edit pen', (tester) async {
+    when(() => getLogs()).thenAnswer((_) async => [
+          LogEntry(
+            date: DateTime(2026, 11, 23),
+            bonusTime: Duration.zero,
+            userEdited: false,
+            onlineWork: true,
+          ),
+        ]);
+    await pumpScreen(tester);
+
+    expect(find.text('Remote work'), findsOneWidget);
+    expect(find.byType(IconButton), findsOneWidget); // only the header menu
   });
 
   testWidgets('tapping a date scrolls the agenda to that date', (tester) async {

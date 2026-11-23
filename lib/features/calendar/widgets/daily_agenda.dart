@@ -1,6 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
+import '../../../common_widgets/common_widgets.dart';
 import '../../../core/utils/month_grid.dart';
+import '../../../domain/entities/log_entry.dart';
+import '../../settings/bloc/settings_bloc.dart';
 import '../bloc/calendar_bloc.dart';
 import 'agenda_section.dart';
 
@@ -61,6 +64,24 @@ class _DailyAgendaState extends State<DailyAgenda> {
     });
   }
 
+  void _editLog(BuildContext context, LogEntry log) {
+    final bloc = context.read<CalendarBloc>();
+    final settings = context.read<SettingsBloc>().state;
+
+    showEditLogDialog(
+      context,
+      start: log.clockedInTime ?? log.date,
+      end: log.clockedOutTime ?? log.date,
+      is12Hour: settings is SettingsLoaded ? settings.is12HourFormat : true,
+      onSave: (start, end) => bloc.add(CalendarLogEdited(
+        original: log,
+        clockedIn: start,
+        clockedOut: end,
+      )),
+      onDelete: () => bloc.add(CalendarLogDeleted(log)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<CalendarBloc, CalendarState>(
@@ -80,7 +101,8 @@ class _DailyAgendaState extends State<DailyAgenda> {
                   key: _keyFor(day),
                   day: day,
                   today: today,
-                  logs: state.logsOn(day),
+                  log: state.logOn(day),
+                  onEdit: (log) => _editLog(context, log),
                 ),
             ],
           ),

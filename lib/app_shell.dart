@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../domain/repositories/log_repository.dart';
 import '../domain/use_cases/get_logs_use_case.dart';
 import '../features/calendar/bloc/calendar_bloc.dart';
 import '../features/calendar/screens/calendar_screen.dart';
@@ -71,7 +72,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void _openCalendar() {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => BlocProvider(
-        create: (_) => CalendarBloc(getLogs: context.read<GetLogsUseCase>())
+        create: (_) => CalendarBloc(
+          getLogs: context.read<GetLogsUseCase>(),
+          repository: context.read<LogRepository>(),
+        )
           ..add(const CalendarStarted()),
         child: const CalendarScreen(),
       ),

@@ -133,7 +133,7 @@ class _MonthPage extends StatelessWidget {
                                     isToday: MonthGrid.isSameDay(day, today),
                                     isSelected: MonthGrid.isSameDay(
                                         day, state.selectedDay),
-                                    status: state.statusOn(day),
+                                    catAsset: state.catOn(day),
                                     onTap: () => context
                                         .read<CalendarBloc>()
                                         .add(CalendarDaySelected(day)),

@@ -20,3 +20,22 @@ final class CalendarDaySelected extends CalendarEvent {
   final DateTime day;
   const CalendarDaySelected(this.day);
 }
+
+/// User saved new clock-in/out times for a log.
+final class CalendarLogEdited extends CalendarEvent {
+  final LogEntry original;
+  final DateTime clockedIn;
+  final DateTime clockedOut;
+
+  const CalendarLogEdited({
+    required this.original,
+    required this.clockedIn,
+    required this.clockedOut,
+  });
+}
+
+/// User deleted a log.
+final class CalendarLogDeleted extends CalendarEvent {
+  final LogEntry entry;
+  const CalendarLogDeleted(this.entry);
+}

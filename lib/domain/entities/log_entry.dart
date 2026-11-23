@@ -23,6 +23,27 @@ class LogEntry {
     required this.onlineWork,
   });
 
+  /// This log after the user corrected its clock-in/out times: the bonus
+  /// time is recomputed and the entry is flagged as user-edited.
+  LogEntry editedWith({
+    required DateTime clockedIn,
+    required DateTime clockedOut,
+    required Duration shiftDuration,
+  }) =>
+      LogEntry(
+        id: id,
+        date: clockedIn,
+        bonusTime: computeBonusTime(
+          clockedInAt: clockedIn,
+          clockedOutAt: clockedOut,
+          shiftDuration: shiftDuration,
+        ),
+        userEdited: true,
+        clockedInTime: clockedIn,
+        clockedOutTime: clockedOut,
+        onlineWork: onlineWork,
+      );
+
   /// Computes the bonus/deficit time for a shift, relative to when the
   /// shift was expected to end (clockedInAt + shiftDuration).
   ///

@@ -6,17 +6,21 @@ import '../../../domain/entities/log_entry.dart';
 import 'log_event_row.dart';
 import 'no_event_row.dart';
 
-/// A day header strip followed by that day's logs (or "No event").
+/// A day header strip followed by that day's log (or "No event").
 class AgendaSection extends StatelessWidget {
   final DateTime day;
   final DateTime today;
-  final List<LogEntry> logs;
+  final LogEntry? log;
+
+  /// Called with the log when its edit pen is tapped.
+  final void Function(LogEntry log)? onEdit;
 
   const AgendaSection({
     super.key,
     required this.day,
     required this.today,
-    required this.logs,
+    required this.log,
+    this.onEdit,
   });
 
   static const double headerHeight = 35;
@@ -52,10 +56,13 @@ class AgendaSection extends StatelessWidget {
             ),
           ),
         ),
-        if (logs.isEmpty)
-          const NoEventRow()
+        if (log case final log?)
+          LogEventRow(
+            log: log,
+            onEdit: log.onlineWork || onEdit == null ? null : () => onEdit!(log),
+          )
         else
-          for (final log in logs) LogEventRow(log: log),
+          const NoEventRow(),
       ],
     );
   }

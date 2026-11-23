@@ -135,7 +135,7 @@ class _LoadedBody extends StatelessWidget {
                       return LogListTile(
                         entry: entry,
                         onTap: state.isEditMode
-                            ? () => _showEditLogDialog(context, entry)
+                            ? () => _editLog(context, entry)
                             : null,
                       );
                     },
@@ -149,147 +149,24 @@ class _LoadedBody extends StatelessWidget {
   }
 }
 
-/// Opens a dialog letting the user pick new start/end times for [entry].
-void _showEditLogDialog(BuildContext context, LogEntry entry) {
+
+void _editLog(BuildContext context, LogEntry entry) {
   final logsBloc = context.read<LogsBloc>();
   final settingsState = context.read<SettingsBloc>().state;
-  final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
-  DateTime start = entry.clockedInTime ?? entry.date;
-  DateTime end   = entry.clockedOutTime ?? entry.date;
 
-  MediaQuery timePickerTheme(BuildContext context, Widget? child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: !is12Hour),
-        child: child!,
-      );
-
-  showDialog<void>(
-    context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) {
-        Future<void> pickStart() async {
-          final picked = await showTimePicker(
-            context: context,
-            initialTime: TimeOfDay.fromDateTime(start),
-            builder: timePickerTheme,
-          );
-          if (picked == null) return;
-          setState(() {
-            start = DateTime(start.year, start.month, start.day, picked.hour, picked.minute);
-            // Keep the end time on/after the new start time.
-            if (!end.isAfter(start)) {
-              end = start.add(const Duration(hours: 1));
-            }
-          });
-        }
-
-        Future<void> pickEnd() async {
-          final picked = await showTimePicker(
-            context: context,
-            initialTime: TimeOfDay.fromDateTime(end),
-            builder: timePickerTheme,
-          );
-          if (picked == null) return;
-          setState(() {
-            var newEnd = DateTime(start.year, start.month, start.day, picked.hour, picked.minute);
-            // Assume an overnight shift if the end time-of-day is before start.
-            if (!newEnd.isAfter(start)) {
-              newEnd = newEnd.add(const Duration(days: 1));
-            }
-            end = newEnd;
-          });
-        }
-
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: Text('Edit log', style: AppTextStyles.bodyLarge),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _EditTimeRow(label: 'Start', time: start, onTap: pickStart),
-              const SizedBox(height: AppDimensions.spaceSm),
-              _EditTimeRow(label: 'End', time: end, onTap: pickEnd),
-            ],
-          ),
-          actionsAlignment: MainAxisAlignment.spaceBetween,
-          actions: [
-            TextButton(
-              onPressed: () {
-                logsBloc.add(LogEntryDeleted(entry));
-                Navigator.of(dialogContext).pop();
-              },
-              child: Text('Delete', style: AppTextStyles.destructiveButton),
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: Text('Cancel', style: AppTextStyles.bodySmall),
-                ),
-                TextButton(
-                  onPressed: () {
-                    logsBloc.add(LogEntryEdited(
-                      original:        entry,
-                      newClockedInTime:  start,
-                      newClockedOutTime: end,
-                    ));
-                    Navigator.of(dialogContext).pop();
-                  },
-                  child: Text(
-                    'Save',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    ),
+  showEditLogDialog(
+    context,
+    start:    entry.clockedInTime ?? entry.date,
+    end:      entry.clockedOutTime ?? entry.date,
+    is12Hour: settingsState is SettingsLoaded ? settingsState.is12HourFormat : true,
+    onSave: (start, end) => logsBloc.add(LogEntryEdited(
+      original:          entry,
+      newClockedInTime:  start,
+      newClockedOutTime: end,
+    )),
+    onDelete: () => logsBloc.add(LogEntryDeleted(entry)),
   );
 }
-
-// ── Edit dialog time row ────────────────────────────────────────
-class _EditTimeRow extends StatelessWidget {
-  final String       label;
-  final DateTime     time;
-  final VoidCallback onTap;
-
-  const _EditTimeRow({required this.label, required this.time, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final accentColor = Theme.of(context).colorScheme.primary;
-    final settingsState = context.watch<SettingsBloc>().state;
-    final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: AppTextStyles.bodyMedium),
-            Row(
-              children: [
-                Text(
-                  DateFormatter.clockTime(time, is12Hour: is12Hour),
-                  style: AppTextStyles.bodyMedium.copyWith(color: accentColor),
-                ),
-                const SizedBox(width: AppDimensions.spaceXs),
-                Icon(Icons.access_time_rounded, size: 18, color: accentColor),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ── Edit toggle chip ────────────────────────────────────────────
 class _EditModeChip extends StatelessWidget {
   final bool         isEditMode;

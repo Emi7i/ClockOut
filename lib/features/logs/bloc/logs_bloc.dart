@@ -90,20 +90,10 @@ class LogsBloc extends Bloc<LogsEvent, LogsState> {
     LogEntryEdited event,
     Emitter<LogsState> emit,
   ) async {
-    final bonusTime = LogEntry.computeBonusTime(
-      clockedInAt:  event.newClockedInTime,
-      clockedOutAt: event.newClockedOutTime,
+    final updated = event.original.editedWith(
+      clockedIn:     event.newClockedInTime,
+      clockedOut:    event.newClockedOutTime,
       shiftDuration: AppConstants.shiftDuration,
-    );
-
-    final updated = LogEntry(
-      id:             event.original.id,
-      date:           event.newClockedInTime,
-      bonusTime:      bonusTime,
-      userEdited:     true,
-      clockedInTime:  event.newClockedInTime,
-      clockedOutTime: event.newClockedOutTime,
-      onlineWork:     event.original.onlineWork,
     );
     await _repository.updateLog(updated);
 

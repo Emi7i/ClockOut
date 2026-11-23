@@ -7,41 +7,36 @@ final class CalendarState {
   /// Day whose agenda is shown (date-only).
   final DateTime selectedDay;
 
-  /// Logs grouped by date-only day.
-  final Map<DateTime, List<LogEntry>> logsByDay;
+  /// The log of each date-only day. There is at most one log per day.
+  final Map<DateTime, LogEntry> logByDay;
 
   final bool isLoading;
 
   const CalendarState({
     required this.visibleMonth,
     required this.selectedDay,
-    this.logsByDay = const {},
+    this.logByDay = const {},
     this.isLoading = true,
   });
 
-  List<LogEntry> logsOn(DateTime day) =>
-      logsByDay[MonthGrid.dateOnly(day)] ?? const [];
+  LogEntry? logOn(DateTime day) => logByDay[MonthGrid.dateOnly(day)];
 
-  /// Overall status of a day, based on the summed bonus time of its logs.
-  /// `null` when the day has no logs.
-  LogStatus? statusOn(DateTime day) {
-    final logs = logsOn(day);
-    if (logs.isEmpty) return null;
-    final total = logs.fold(Duration.zero, (sum, l) => sum + l.bonusTime);
-    if (total == Duration.zero) return LogStatus.onTime;
-    return total.isNegative ? LogStatus.late : LogStatus.early;
+  /// Cat illustration for a day, or `null` when it has no log.
+  String? catOn(DateTime day) {
+    final log = logOn(day);
+    return log == null ? null : CatAssets.forLog(log);
   }
 
   CalendarState copyWith({
     DateTime? visibleMonth,
     DateTime? selectedDay,
-    Map<DateTime, List<LogEntry>>? logsByDay,
+    Map<DateTime, LogEntry>? logByDay,
     bool? isLoading,
   }) =>
       CalendarState(
         visibleMonth: visibleMonth ?? this.visibleMonth,
         selectedDay: selectedDay ?? this.selectedDay,
-        logsByDay: logsByDay ?? this.logsByDay,
+        logByDay: logByDay ?? this.logByDay,
         isLoading: isLoading ?? this.isLoading,
       );
 }

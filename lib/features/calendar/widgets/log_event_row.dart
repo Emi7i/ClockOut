@@ -26,7 +26,7 @@ class LogEventRow extends StatelessWidget {
       child: Row(
         children: [
           SvgPicture.asset(
-            CatAssets.forStatus(log.status),
+            CatAssets.forLog(log),
             width: _avatarSize,
             height: _avatarSize,
           ),
@@ -51,18 +51,19 @@ class LogEventRow extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            onPressed: onEdit,
-            icon: SvgPicture.asset(
-              'assets/icons/edit.svg',
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                AppColors.textPrimary,
-                BlendMode.srcIn,
+          if (onEdit != null)
+            IconButton(
+              onPressed: onEdit,
+              icon: SvgPicture.asset(
+                'assets/icons/edit.svg',
+                width: 24,
+                height: 24,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.textPrimary,
+                  BlendMode.srcIn,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -77,9 +78,13 @@ class _Title extends StatelessWidget {
   Widget build(BuildContext context) {
     final amount = DateFormatter.bonusDuration(log.bonusTime);
 
+    if (log.onlineWork) {
+      return const Text('Remote work', style: AppTextStyles.agendaEventTitle);
+    }
+
     return switch (log.status) {
       LogStatus.onTime =>
-        const Text('On time', style: AppTextStyles.agendaEventTitle),
+        const Text('Just in time', style: AppTextStyles.agendaEventTitle),
       LogStatus.early => Text.rich(TextSpan(
           style: AppTextStyles.agendaEventTitle,
           children: [
@@ -93,7 +98,7 @@ class _Title extends StatelessWidget {
       LogStatus.late => Text.rich(TextSpan(
           style: AppTextStyles.agendaEventTitle,
           children: [
-            const TextSpan(text: 'Late '),
+            const TextSpan(text: 'Left early '),
             TextSpan(
               text: amount,
               style: const TextStyle(color: AppColors.negative),

@@ -1,8 +1,6 @@
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_ui/material_ui.dart';
 import '../../../core/constants/constants.dart';
-import '../../../domain/entities/log_entry.dart';
-import '../cat_assets.dart';
 
 /// One day in the month grid.
 ///
@@ -14,8 +12,8 @@ class DayCell extends StatelessWidget {
   final bool isToday;
   final bool isSelected;
 
-  /// Status of the day's logs; `null` when there are none (no cat shown).
-  final LogStatus? status;
+  /// Cat asset for the day; `null` when there are no logs (no cat shown).
+  final String? catAsset;
   final VoidCallback onTap;
 
   const DayCell({
@@ -24,7 +22,7 @@ class DayCell extends StatelessWidget {
     required this.isInVisibleMonth,
     required this.isToday,
     required this.isSelected,
-    required this.status,
+    required this.catAsset,
     required this.onTap,
   });
 
@@ -42,11 +40,11 @@ class DayCell extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(6, 6, 6, 2),
-              child: status == null
+              child: catAsset == null
                   ? null
                   : Opacity(
                       opacity: isInVisibleMonth ? 1 : 0.4,
-                      child: SvgPicture.asset(CatAssets.forStatus(status!)),
+                      child: SvgPicture.asset(catAsset!),
                     ),
             ),
           ),
