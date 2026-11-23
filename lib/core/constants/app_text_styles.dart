@@ -10,6 +10,55 @@ abstract final class AppTextStyles {
   /// ← swap font family here
   static const String _font = 'Caveat';
 
+  // ── Calendar (redesign) ───────────────────────────────────
+  /// Redesign typeface. Roboto is the Android system default, so no
+  /// font asset is bundled.
+  static const String _calendarFont = 'Roboto';
+
+  static const TextStyle calendarTitle = TextStyle(
+    fontFamily: _calendarFont,
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+  );
+
+  static const TextStyle calendarWeekday = TextStyle(
+    fontFamily: _calendarFont,
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: AppColors.calendarTextSecondary,
+  );
+
+  static const TextStyle calendarDay = TextStyle(
+    fontFamily: _calendarFont,
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: AppColors.calendarText,
+  );
+
+  static const TextStyle agendaHeader = TextStyle(
+    fontFamily: _calendarFont,
+    fontSize: 13,
+    color: AppColors.calendarText,
+  );
+
+  static const TextStyle agendaEmpty = TextStyle(
+    fontFamily: _calendarFont,
+    fontSize: 16,
+    color: AppColors.calendarText,
+  );
+
+  static const TextStyle agendaEventTitle = TextStyle(
+    fontFamily: _calendarFont,
+    fontSize: 16,
+    color: AppColors.textPrimary,
+  );
+
+  static const TextStyle agendaEventDetail = TextStyle(
+    fontFamily: _calendarFont,
+    fontSize: 13,
+    color: AppColors.calendarTextSecondary,
+  );
+
   // ── Display ───────────────────────────────────────────────
   static const TextStyle timeDisplay = TextStyle(
     fontFamily: _font,

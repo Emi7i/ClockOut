@@ -111,6 +111,7 @@ class ClockApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        RepositoryProvider.value(value: getLogs),
         BlocProvider(
           create: (_) => ClockBloc(
             clockIn:            clockIn,
