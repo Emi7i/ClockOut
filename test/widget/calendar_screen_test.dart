@@ -293,6 +293,20 @@ void main() {
       expect(find.text('From:'), findsNothing);
     });
 
+    testWidgets('Remote shows only the date, no time fields', (tester) async {
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Remote'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Date:'), findsOneWidget);
+      expect(find.text('Time enter:'), findsNothing);
+      expect(find.text('Time leave:'), findsNothing);
+      expect(find.text('From:'), findsNothing);
+    });
+
     testWidgets('everything in the popup is centered', (tester) async {
       await pumpScreen(tester);
       await tester.tap(find.byType(AddLogButton));
@@ -414,6 +428,76 @@ void main() {
       expect(saved.type, LogType.vacation);
       expect(saved.date, DateTime(2026, 11, 23));
       expect(find.text('Add log'), findsNothing);
+    });
+
+    testWidgets('"Use time from bank" saves the vacation as paid from the bank',
+        (tester) async {
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Vacation'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Use time from bank'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+
+      final saved =
+          verify(() => repository.addLog(captureAny())).captured.single as LogEntry;
+      expect(saved.usedBank, isTrue);
+      expect(saved.bonusTime, const Duration(hours: -8));
+    });
+
+    testWidgets('the bank toggle is only offered for vacation', (tester) async {
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+      expect(find.text('Use time from bank'), findsNothing);
+
+      await tester.tap(find.text('Vacation'));
+      await tester.pumpAndSettle();
+      expect(find.text('Use time from bank'), findsOneWidget);
+    });
+
+    testWidgets('a bank vacation says "Used time from bank" in the agenda',
+        (tester) async {
+      when(() => getLogs()).thenAnswer((_) async => [
+            LogEntry.manual(
+              type: LogType.vacation,
+              day: DateTime(2026, 11, 23),
+              shiftDuration: const Duration(hours: 8),
+              useBank: true,
+            ),
+          ]);
+      await pumpScreen(tester);
+
+      expect(find.text('Used time from bank'), findsOneWidget);
+    });
+
+    testWidgets('editing a bank vacation shows the toggle already on',
+        (tester) async {
+      when(() => getLogs()).thenAnswer((_) async => [
+            LogEntry.manual(
+              id: 1,
+              type: LogType.vacation,
+              day: DateTime(2026, 11, 23),
+              shiftDuration: const Duration(hours: 8),
+              useBank: true,
+            ),
+          ]);
+      when(() => repository.updateLog(any())).thenAnswer((_) async {});
+      await pumpScreen(tester);
+      // Pens are IconButtons; index 0 is the header's menu.
+      await tester.tap(find.byType(IconButton).at(1));
+      await tester.pumpAndSettle();
+      expect(find.text('Use time from bank'), findsOneWidget);
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      final saved =
+          verify(() => repository.updateLog(captureAny())).captured.single as LogEntry;
+      expect(saved.usedBank, isTrue);
     });
 
     testWidgets('Cancel closes without saving', (tester) async {

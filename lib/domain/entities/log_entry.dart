@@ -37,6 +37,10 @@ class LogEntry {
   /// stamped at the start of [day].
   ///
   /// Pass [id] to build the replacement for an existing log (editing).
+  ///
+  /// A vacation with [useBank] is paid for from the time bank: it carries a
+  /// bonus of minus one [shiftDuration], so the bank balance (the sum of all
+  /// bonus times) drops by a full day. The bank may go negative.
   factory LogEntry.manual({
     int? id,
     required LogType type,
@@ -44,6 +48,7 @@ class LogEntry {
     DateTime? clockedIn,
     DateTime? clockedOut,
     required Duration shiftDuration,
+    bool useBank = false,
   }) {
     if (type == LogType.normal) {
       assert(clockedIn != null && clockedOut != null,
@@ -66,12 +71,20 @@ class LogEntry {
     return LogEntry(
       id: id,
       date: DateTime(day.year, day.month, day.day),
-      bonusTime: Duration.zero,
+      bonusTime: type == LogType.vacation && useBank ? -shiftDuration : Duration.zero,
       userEdited: true,
       onlineWork: type == LogType.remote,
       vacation: type == LogType.vacation,
     );
   }
+
+  /// A vacation day taken out of the time bank (it has a negative bonus).
+  bool get usedBank => vacation && bonusTime.isNegative;
+
+  /// The time bank: every bonus adds to it, every early leave and every
+  /// bank-paid vacation takes from it. Can be negative.
+  static Duration bankBalance(Iterable<LogEntry> logs) =>
+      logs.fold(Duration.zero, (sum, log) => sum + log.bonusTime);
 
   LogType get type => vacation
       ? LogType.vacation

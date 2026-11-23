@@ -63,6 +63,26 @@ void main() {
   );
 
   blocTest<CalendarBloc, CalendarState>(
+    'bank balance adds bonus, subtracts early leaves and bank vacations',
+    setUp: () => when(() => getLogs()).thenAnswer((_) async => [
+          log(DateTime(2026, 11, 20, 15), 120),
+          log(DateTime(2026, 11, 21, 8), -30),
+          LogEntry.manual(
+            type: LogType.vacation,
+            day: DateTime(2026, 11, 22),
+            shiftDuration: const Duration(hours: 8),
+            useBank: true,
+          ),
+        ]),
+    build: build,
+    act: (bloc) => bloc.add(const CalendarStarted()),
+    verify: (bloc) => expect(
+      bloc.state.bankBalance,
+      const Duration(hours: -6, minutes: -30),
+    ),
+  );
+
+  blocTest<CalendarBloc, CalendarState>(
     'month change normalises to the first of the month',
     build: build,
     act: (bloc) => bloc.add(CalendarMonthChanged(DateTime(2026, 12, 15))),

@@ -38,6 +38,11 @@ class LogEventRow extends StatelessWidget {
               children: [
                 _Title(log: log),
                 const SizedBox(height: 6),
+                if (log.usedBank)
+                  const Text(
+                    'Used time from bank',
+                    style: AppTextStyles.agendaEventDetail,
+                  ),
                 if (clockedIn != null)
                   Text(
                     'Clocked in at ${DateFormatter.compactTime(clockedIn)}',

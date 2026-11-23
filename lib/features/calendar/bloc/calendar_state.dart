@@ -21,6 +21,9 @@ final class CalendarState {
 
   LogEntry? logOn(DateTime day) => logByDay[MonthGrid.dateOnly(day)];
 
+  /// Banked time across all logs (can be negative).
+  Duration get bankBalance => LogEntry.bankBalance(logByDay.values);
+
   /// Cat illustration for a day, or `null` when it has no log.
   String? catOn(DateTime day) {
     final log = logOn(day);

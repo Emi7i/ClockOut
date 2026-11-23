@@ -25,7 +25,7 @@ class LogEditorPopup extends StatefulWidget {
   const LogEditorPopup({super.key, this.editing, required this.onClose});
 
   static const double width = 209;
-  static const double height = 262;
+  static const double height = 272;
 
   @override
   State<LogEditorPopup> createState() => _LogEditorPopupState();
@@ -38,6 +38,9 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
   late DateTime _to;
   TimeOfDay? _enter;
   TimeOfDay? _leave;
+
+  /// Vacation only: pay each day from the time bank.
+  bool _useBank = false;
 
   bool get _isEditing => widget.editing != null;
   bool get _isVacation => _type == LogType.vacation;
@@ -55,6 +58,7 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
     _to = _day;
     _enter = _timeOf(log?.clockedInTime);
     _leave = _timeOf(log?.clockedOutTime);
+    _useBank = log?.usedBank ?? false;
   }
 
   static TimeOfDay? _timeOf(DateTime? dt) =>
@@ -177,6 +181,7 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
         clockedIn: _enter == null ? null : _at(day, _enter!),
         clockedOut: _leave == null ? null : _at(day, _leave!),
         shiftDuration: AppConstants.shiftDuration,
+        useBank: _useBank,
       );
 
   void _save() {
@@ -220,7 +225,12 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
 
     return Material(
       color: AppColors.calendarBackground,
-      borderRadius: BorderRadius.circular(10),
+      elevation: 12,
+      shadowColor: Colors.black,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: accent.withValues(alpha: 0.35)),
+      ),
       clipBehavior: Clip.antiAlias,
       child: SizedBox(
         width: LogEditorPopup.width,
@@ -235,7 +245,16 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
                     _isEditing ? 'Edit log' : 'Add log',
                     style: AppTextStyles.popupTitle,
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: 24,
+                    height: 2,
+                    decoration: BoxDecoration(
+                      color: accent,
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
 
                   // ── Type ──────────────────────────────────
                   const Text('Type:', style: AppTextStyles.popupLabel),
@@ -248,9 +267,11 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
                     height: 78,
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 150),
-                      child: _isVacation
-                          ? _rangeFields(accent)
-                          : _dayAndTimeFields(accent),
+                      child: switch (_type) {
+                        LogType.vacation => _rangeFields(accent),
+                        LogType.remote => _remoteFields(accent),
+                        LogType.normal => _dayAndTimeFields(accent),
+                      },
                     ),
                   ),
 
@@ -338,41 +359,59 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
     );
   }
 
-  /// Date row, then the enter/leave times (disabled for remote days).
+  /// The date pill with its accent calendar button.
+  Widget _dateRow(Color accent) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _Field(
+          width: 108,
+          height: 24,
+          onTap: _pickDay,
+          child: Center(
+            child: Text(
+              DateFormatter.weekdaySlashDate(_day),
+              style: AppTextStyles.popupLabel,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        _Field(
+          width: 37,
+          height: 24,
+          color: accent,
+          onTap: _pickDay,
+          child: Center(
+            child: SvgPicture.asset(
+              'assets/icons/calendar_today.svg',
+              width: 14,
+              height: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Remote: just the date — no clock times, it counts as a full day.
+  Widget _remoteFields(Color accent) {
+    return Column(
+      key: const ValueKey('remote'),
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text('Date:', style: AppTextStyles.popupLabel),
+        const SizedBox(height: 4),
+        _dateRow(accent),
+      ],
+    );
+  }
+
+  /// Normal: date row, then the enter/leave times.
   Widget _dayAndTimeFields(Color accent) {
     return Column(
       key: const ValueKey('day-and-times'),
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _Field(
-              width: 108,
-              height: 24,
-              onTap: _pickDay,
-              child: Center(
-                child: Text(
-                  DateFormatter.weekdaySlashDate(_day),
-                  style: AppTextStyles.popupLabel,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            _Field(
-              width: 37,
-              height: 24,
-              color: accent,
-              onTap: _pickDay,
-              child: Center(
-                child: SvgPicture.asset(
-                  'assets/icons/calendar_today.svg',
-                  width: 14,
-                  height: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
+        _dateRow(accent),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -380,14 +419,12 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
             _LabeledField(
               label: 'Time enter:',
               text: _timeText(_enter),
-              enabled: _takesTimes,
               onTap: () => _pickTime(_enter, (t) => _enter = t),
             ),
             const SizedBox(width: 9),
             _LabeledField(
               label: 'Time leave:',
               text: _timeText(_leave),
-              enabled: _takesTimes,
               onTap: () => _pickTime(_leave, (t) => _leave = t),
             ),
           ],
@@ -398,22 +435,78 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
 
   /// Vacation: a From / To date range in place of the date and times.
   Widget _rangeFields(Color accent) {
-    return Row(
+    return Column(
       key: const ValueKey('range'),
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _LabeledField(
-          label: 'From:',
-          text: DateFormatter.slashDate(_from),
-          onTap: _pickRange,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _LabeledField(
+              label: 'From:',
+              text: DateFormatter.slashDate(_from),
+              onTap: _pickRange,
+            ),
+            const SizedBox(width: 9),
+            _LabeledField(
+              label: 'To:',
+              text: DateFormatter.slashDate(_to),
+              onTap: _pickRange,
+            ),
+          ],
         ),
-        const SizedBox(width: 9),
-        _LabeledField(
-          label: 'To:',
-          text: DateFormatter.slashDate(_to),
-          onTap: _pickRange,
+        const SizedBox(height: 10),
+        _BankToggle(
+          value: _useBank,
+          accent: accent,
+          onChanged: (v) => setState(() => _useBank = v),
         ),
       ],
+    );
+  }
+}
+
+/// "Use time from bank" with a small switch.
+class _BankToggle extends StatelessWidget {
+  final bool value;
+  final Color accent;
+  final ValueChanged<bool> onChanged;
+
+  const _BankToggle({
+    required this.value,
+    required this.accent,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => onChanged(!value),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Use time from bank', style: AppTextStyles.popupLabel),
+          const SizedBox(width: 8),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 28,
+            height: 16,
+            padding: const EdgeInsets.all(2),
+            alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+            decoration: BoxDecoration(
+              color: value ? accent : AppColors.popupField,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.calendarText,
+                shape: BoxShape.circle,
+              ),
+              child: SizedBox(width: 12, height: 12),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -422,14 +515,12 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
 class _LabeledField extends StatelessWidget {
   final String label;
   final String text;
-  final bool enabled;
   final VoidCallback onTap;
 
   const _LabeledField({
     required this.label,
     required this.text,
     required this.onTap,
-    this.enabled = true,
   });
 
   @override
@@ -442,7 +533,6 @@ class _LabeledField extends StatelessWidget {
         _Field(
           width: 81,
           height: 24,
-          enabled: enabled,
           onTap: onTap,
           child: Center(child: Text(text, style: AppTextStyles.popupLabel)),
         ),

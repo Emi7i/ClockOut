@@ -70,6 +70,12 @@ small and looks pixelated.
   schema v3). Remote and vacation days are **added manually** (never clocked
   through the app), have no clock times and a zero bonus. Remote counts as an
   8h day.
+- **Time bank:** the balance is the sum of every log's `bonusTime`
+  (`LogEntry.bankBalance`, `CalendarState.bankBalance`). Bonus adds, leaving
+  early subtracts. A vacation with **"Use time from bank"** is stored with a
+  bonus of −8h (`LogEntry.usedBank`, no extra DB column), shows "Used time from
+  bank" under "Vacation" in the agenda, and takes a full day from the bank. The
+  balance may go negative and can always be taken from.
 - Manual logs are made in the calendar's **add/edit popup** (`LogEditorPopup`)
   and built with `LogEntry.manual`. Normal entries need both times (leave after
   enter) and get a computed bonus. A day that already has a log can't get
@@ -141,6 +147,7 @@ Alarm sound and notifications are decoupled:
 - **Redesign:** bring Clock, Logs and Settings screens to the new Figma style.
 - **Vacation cat is a placeholder** (`assets/cats/vacation_cat*.svg`) — replace
   with the real light and dark art.
+- **Time bank balance** is computed but not shown anywhere in the UI yet.
 - **Hours totals:** `LogsBloc` sums hours from clock times, so remote and
   vacation days currently count as 0h (remote is meant to count as 8h).
   Undecided: whether remote/vacation should count toward the weekly/monthly
