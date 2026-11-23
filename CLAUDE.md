@@ -12,7 +12,7 @@ flutter test             # unit, widget, integration and architecture tests
 flutter run -d <device>  # `flutter devices` lists them
 ```
 
-Widget tests load real fonts (Roboto from the Flutter SDK cache, Caveat from
+Widget tests load real fonts (Roboto from the Flutter SDK cache, Iceland from
 `assets/fonts`). Without that, flutter_test's wide placeholder font causes
 false RenderFlex overflow errors.
 
@@ -48,7 +48,7 @@ The app is being **redesigned from Figma** ("Orbit App – Earth Day Night",
 file `XPIeLgaUoCSYFzCVQ5coOY`). The calendar screen (node `55:4335`) is the
 first redesigned screen: Roboto, near-black surfaces, accent color taken from
 the user's setting where Figma uses blue. Clock, Logs and Settings screens
-still use the old Caveat style until they are redone.
+still use the old layout until they are redone (they now share the new fonts).
 
 SVG assets are exported from Figma as SVG (rendered with `flutter_svg`). If a
 PNG is ever needed, export it at **512x512** — Figma's native size is too
@@ -121,4 +121,4 @@ Alarm sound and notifications are decoupled:
   can't scroll the agenda to it (it isn't in the shown month).
 - **Redesign:** bring Clock, Logs and Settings screens to the new Figma style.
 - **Remote work:** no in-app way to add it yet (currently manual).
-- The edit dialog still uses the old Caveat look.
+- The edit dialog still uses the old layout/sizes.

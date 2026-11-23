@@ -64,13 +64,12 @@ void main() {
     }
     await loader.load();
 
-    // The edit dialog (shared with the Logs screen) uses Caveat.
-    final caveat = FontLoader('Caveat');
-    for (final f in ['Regular', 'SemiBold']) {
-      final bytes = File('assets/fonts/Caveat-$f.ttf').readAsBytesSync();
-      caveat.addFont(Future.value(ByteData.sublistView(bytes)));
-    }
-    await caveat.load();
+    // The month/year title uses the bundled Iceland font.
+    final iceland = FontLoader('Iceland')
+      ..addFont(Future.value(ByteData.sublistView(
+        File('assets/fonts/Iceland-Regular.ttf').readAsBytesSync(),
+      )));
+    await iceland.load();
   }
 
   Future<void> pumpScreen(WidgetTester tester) async {

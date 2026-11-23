@@ -4,57 +4,57 @@ import 'app_colors.dart';
 /// ─────────────────────────────────────────────────────────────
 ///  APP TEXT STYLES
 ///  All typography in one place.
-///  To swap font: change [_font] and update pubspec.yaml.
+///  To swap fonts: change [_font] / [_titleFont] and update pubspec.yaml.
 /// ─────────────────────────────────────────────────────────────
 abstract final class AppTextStyles {
   /// ← swap font family here
-  static const String _font = 'Caveat';
+  static const String _font = 'Roboto';
+
+  /// Display font for titles and big text (e.g. the calendar's month/year).
+  static const String _titleFont = 'Iceland';
 
   // ── Calendar (redesign) ───────────────────────────────────
-  /// Redesign typeface. Roboto is the Android system default, so no
-  /// font asset is bundled.
-  static const String _calendarFont = 'Roboto';
-
+  /// Month and year. Iceland only ships a regular weight.
   static const TextStyle calendarTitle = TextStyle(
-    fontFamily: _calendarFont,
-    fontSize: 16,
-    fontWeight: FontWeight.w700,
+    fontFamily: _titleFont,
+    fontSize: 28,
+    fontWeight: FontWeight.w400,
   );
 
   static const TextStyle calendarWeekday = TextStyle(
-    fontFamily: _calendarFont,
+    fontFamily: _font,
     fontSize: 12,
     fontWeight: FontWeight.w500,
     color: AppColors.calendarTextSecondary,
   );
 
   static const TextStyle calendarDay = TextStyle(
-    fontFamily: _calendarFont,
+    fontFamily: _font,
     fontSize: 14,
     fontWeight: FontWeight.w500,
     color: AppColors.calendarText,
   );
 
   static const TextStyle agendaHeader = TextStyle(
-    fontFamily: _calendarFont,
+    fontFamily: _font,
     fontSize: 13,
     color: AppColors.calendarText,
   );
 
   static const TextStyle agendaEmpty = TextStyle(
-    fontFamily: _calendarFont,
+    fontFamily: _font,
     fontSize: 16,
     color: AppColors.calendarText,
   );
 
   static const TextStyle agendaEventTitle = TextStyle(
-    fontFamily: _calendarFont,
+    fontFamily: _font,
     fontSize: 16,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle agendaEventDetail = TextStyle(
-    fontFamily: _calendarFont,
+    fontFamily: _font,
     fontSize: 13,
     color: AppColors.calendarTextSecondary,
   );

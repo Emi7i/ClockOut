@@ -150,7 +150,7 @@ class ClockApp extends StatelessWidget {
                 secondary: accentColor,
                 surface:   AppColors.surface,
               ),
-              fontFamily:  'Caveat',
+              fontFamily:  'Roboto',
               useMaterial3: true,
             ),
             home: const AppShell(),
