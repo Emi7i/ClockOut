@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/utils/month_grid.dart';
 import '../bloc/calendar_bloc.dart';
+import '../widgets/add_log_launcher.dart';
 import '../widgets/calendar_handle.dart';
 import '../widgets/calendar_header.dart';
 import '../widgets/daily_agenda.dart';
@@ -22,6 +23,9 @@ class _CalendarScreenState extends State<CalendarScreen>
     with SingleTickerProviderStateMixin {
   static const double _flingVelocity = 300;
 
+  /// Lets the agenda's edit pens open the add/edit popup.
+  final _launcher = GlobalKey<AddLogLauncherState>();
+
   /// 1 = full month, 0 = a single week.
   late final AnimationController _expansion = AnimationController(
     vsync: this,
@@ -35,7 +39,8 @@ class _CalendarScreenState extends State<CalendarScreen>
     super.dispose();
   }
 
-  int get _visibleWeeks => MonthGrid.daysFor(
+  int get _visibleWeeks =>
+      MonthGrid.daysFor(
         context.read<CalendarBloc>().state.visibleMonth,
       ).length ~/
       MonthGrid.daysPerWeek;
@@ -47,9 +52,8 @@ class _CalendarScreenState extends State<CalendarScreen>
 
   void _onDragEnd(DragEndDetails details) {
     final velocity = details.primaryVelocity ?? 0;
-    final expand = velocity.abs() > _flingVelocity
-        ? velocity > 0
-        : _expansion.value > 0.5;
+    final expand =
+        velocity.abs() > _flingVelocity ? velocity > 0 : _expansion.value > 0.5;
     _expansion.animateTo(expand ? 1 : 0, curve: Curves.easeOut);
   }
 
@@ -60,35 +64,46 @@ class _CalendarScreenState extends State<CalendarScreen>
     return Scaffold(
       backgroundColor: AppColors.calendarBackground,
       body: SafeArea(
-        child: Column(
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            BlocSelector<CalendarBloc, CalendarState, DateTime>(
-              selector: (s) => s.visibleMonth,
-              builder: (_, month) => CalendarHeader(month: month),
-            ),
-            BlocSelector<CalendarBloc, CalendarState, int>(
-              selector: (s) =>
-                  MonthGrid.daysFor(s.visibleMonth).length ~/
-                  MonthGrid.daysPerWeek,
-              builder: (_, weeks) => TweenAnimationBuilder<double>(
-                tween: Tween(end: weeks.toDouble()),
-                duration: const Duration(milliseconds: 200),
-                builder: (_, animatedWeeks, __) => AnimatedBuilder(
-                  animation: _expansion,
-                  builder: (_, child) => SizedBox(
-                    height: MonthPager.heightFor(animatedWeeks, _expansion.value),
-                    child: child,
-                  ),
-                  child: MonthPager(expansion: _expansion),
+            Column(
+              children: [
+                BlocSelector<CalendarBloc, CalendarState, DateTime>(
+                  selector: (s) => s.visibleMonth,
+                  builder: (_, month) => CalendarHeader(month: month),
                 ),
-              ),
+                BlocSelector<CalendarBloc, CalendarState, int>(
+                  selector: (s) =>
+                      MonthGrid.daysFor(s.visibleMonth).length ~/
+                      MonthGrid.daysPerWeek,
+                  builder: (_, weeks) => TweenAnimationBuilder<double>(
+                    tween: Tween(end: weeks.toDouble()),
+                    duration: const Duration(milliseconds: 200),
+                    builder: (_, animatedWeeks, __) => AnimatedBuilder(
+                      animation: _expansion,
+                      builder: (_, child) => SizedBox(
+                        height: MonthPager.heightFor(
+                            animatedWeeks, _expansion.value),
+                        child: child,
+                      ),
+                      child: MonthPager(expansion: _expansion),
+                    ),
+                  ),
+                ),
+                CalendarHandle(
+                  onDragUpdate: _onDragUpdate,
+                  onDragEnd: _onDragEnd,
+                  onTap: _toggle,
+                ),
+                Expanded(
+                  child: DailyAgenda(
+                    onEdit: (log) => _launcher.currentState?.open(editing: log),
+                  ),
+                ),
+              ],
             ),
-            CalendarHandle(
-              onDragUpdate: _onDragUpdate,
-              onDragEnd: _onDragEnd,
-              onTap: _toggle,
-            ),
-            const Expanded(child: DailyAgenda()),
+            AddLogLauncher(key: _launcher),
           ],
         ),
       ),

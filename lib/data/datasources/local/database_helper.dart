@@ -26,6 +26,7 @@ class DatabaseHelper {
   static const String colClockedInTime = 'clocked_in_time';
   static const String colClockedOutTime = 'clocked_out_time';
   static const String colOnlineWork = 'online_work';
+  static const String colVacation = 'vacation';
 
   // Column Names - Settings
   static const String colSettingsId = 'settings_id';
@@ -90,7 +91,8 @@ class DatabaseHelper {
         $colUserEdited NUMERIC DEFAULT (0) NOT NULL,
         $colClockedInTime TEXT,
         $colClockedOutTime TEXT,
-        $colOnlineWork INTEGER DEFAULT (0)
+        $colOnlineWork INTEGER DEFAULT (0),
+        $colVacation INTEGER DEFAULT (0) NOT NULL
       )
     ''');
 
@@ -127,6 +129,11 @@ class DatabaseHelper {
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await db.execute('ALTER TABLE $tableSettings ADD COLUMN $colRecentColors TEXT');
+    }
+    if (oldVersion < 3) {
+      await db.execute(
+        'ALTER TABLE $tableLogs ADD COLUMN $colVacation INTEGER DEFAULT (0) NOT NULL',
+      );
     }
   }
 

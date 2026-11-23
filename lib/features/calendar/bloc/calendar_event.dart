@@ -21,17 +21,21 @@ final class CalendarDaySelected extends CalendarEvent {
   const CalendarDaySelected(this.day);
 }
 
-/// User saved new clock-in/out times for a log.
-final class CalendarLogEdited extends CalendarEvent {
-  final LogEntry original;
-  final DateTime clockedIn;
-  final DateTime clockedOut;
+/// User added one or more logs from the add/edit popup (several for a
+/// vacation range). Days that already have a log are skipped.
+final class CalendarLogsAdded extends CalendarEvent {
+  final List<LogEntry> entries;
+  const CalendarLogsAdded(this.entries);
+}
 
-  const CalendarLogEdited({
-    required this.original,
-    required this.clockedIn,
-    required this.clockedOut,
-  });
+/// User saved changes to an existing log (matched by [entry]'s id). When a
+/// vacation was stretched over more days, the extra days come in
+/// [additional] and are added in the same step.
+final class CalendarLogUpdated extends CalendarEvent {
+  final LogEntry entry;
+  final List<LogEntry> additional;
+
+  const CalendarLogUpdated(this.entry, {this.additional = const []});
 }
 
 /// User deleted a log.

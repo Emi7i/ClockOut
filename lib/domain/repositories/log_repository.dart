@@ -9,6 +9,9 @@ abstract interface class LogRepository {
   /// Returns all historical log entries.
   Future<List<LogEntry>> getLogs();
 
+  /// Stores a new log entry.
+  Future<void> addLog(LogEntry entry);
+
   /// Deletes every stored log.
   Future<void> deleteAllLogs();
 

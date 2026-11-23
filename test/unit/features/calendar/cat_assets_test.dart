@@ -44,8 +44,41 @@ void main() {
     expect(CatAssets.forLog(log(bonus: 30, online: true)), CatAssets.remoteWork);
   });
 
-  test('every referenced cat file exists', () {
+  test('vacation gets the vacation cat', () {
+    final vacation = LogEntry.manual(
+      type: LogType.vacation,
+      day: DateTime(2026, 11, 23),
+      shiftDuration: const Duration(hours: 8),
+    );
+    expect(CatAssets.forLog(vacation), CatAssets.vacation);
+  });
+
+  test('manual logs: remote/vacation have no times or bonus; normal computes it', () {
+    final remote = LogEntry.manual(
+      type: LogType.remote,
+      day: DateTime(2026, 11, 23, 14),
+      shiftDuration: const Duration(hours: 8),
+    );
+    expect(remote.onlineWork, isTrue);
+    expect(remote.clockedInTime, isNull);
+    expect(remote.bonusTime, Duration.zero);
+    expect(remote.date, DateTime(2026, 11, 23));
+
+    final normal = LogEntry.manual(
+      type: LogType.normal,
+      day: DateTime(2026, 11, 23),
+      clockedIn: DateTime(2026, 11, 23, 7),
+      clockedOut: DateTime(2026, 11, 23, 15, 45),
+      shiftDuration: const Duration(hours: 8),
+    );
+    expect(normal.bonusTime, const Duration(minutes: 30));
+    expect(normal.type, LogType.normal);
+  });
+
+  test('every referenced cat file exists (light and dark)', () {
     for (final path in [
+      CatAssets.vacation,
+      CatAssets.vacation.replaceFirst('_dark', ''),
       CatAssets.remoteWork,
       CatAssets.bonusTime,
       CatAssets.earlyLeave,

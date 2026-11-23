@@ -65,12 +65,17 @@ small and looks pixelated.
   (negative bonus, i.e. left early).
 - **There is only ever one log per day.** The calendar indexes logs by day and
   would only show one if two shared a date.
-- **Remote work** (`onlineWork == true`) always counts as an 8h day and is
-  **added manually, not through the app**. There is no UI for creating these.
-  The calendar shows them with the remote cat, titles them "Remote work", and
-  hides the edit pen (their times are not editable in-app).
-- Editing a log's times recomputes bonus time and sets `userEdited`
-  (`LogEntry.editedWith`, used by both `LogsBloc` and `CalendarBloc`).
+- **Log types** (`LogType`, `LogEntry.type`): `normal` (clocked in/out in the
+  app), `remote` (`onlineWork`) and `vacation` (`vacation`, DB column added in
+  schema v3). Remote and vacation days are **added manually** (never clocked
+  through the app), have no clock times and a zero bonus. Remote counts as an
+  8h day.
+- Manual logs are made in the calendar's **add/edit popup** (`LogEditorPopup`)
+  and built with `LogEntry.manual`. Normal entries need both times (leave after
+  enter) and get a computed bonus. A day that already has a log can't get
+  another.
+- Adding, editing and deleting single logs happens **only** in that popup. The
+  old edit dialog and the Logs tab's edit mode were removed.
 
 ### Calendar screen (`features/calendar/`)
 - Sunday–Saturday month grid; swipe to change month (`SensitivePagePhysics`
@@ -80,11 +85,25 @@ small and looks pixelated.
 - Agenda below the grid lists **every day of the visible month**, with
   "No event" on empty days. Tapping a date scrolls to it; swiping months
   switches the list (starting at today, or the 1st).
-- Cat per log (`CatAssets.forLog`): remote → Remote work; bonus → Bonus time;
-  left early → Early leave; otherwise → Worker. Titles: "Bonus N minutes",
-  "Left early N minutes", "Just in time", "Remote work".
-- The edit pen opens the shared `showEditLogDialog` (`common_widgets/`), which
-  the Logs screen uses too.
+- Cat per log (`CatAssets.forLog`): vacation → Vacation; remote → Remote work;
+  bonus → Bonus time; left early → Early leave; otherwise → Worker. Titles:
+  "Bonus N minutes", "Left early N minutes", "Just in time", "Remote work",
+  "Vacation".
+- **Edit pen:** every log row has one. It opens the same popup the add button
+  opens, prefilled and titled "Edit log" with a "Save" button and a small red
+  trash can in the top right (deletes the log).
+- **Add button** (`AddLogLauncher`, bottom right): one controller turns the plus
+  180° + 45° (0.625 turns — only the plus, not its frame) while the popup
+  scales up in the middle of the screen (scaled to nearly full width), over a
+  dimming tap-to-close scrim that leaves the button undimmed.
+- **Popup layout** (Figma node `64:5813`), all centered: title, **Type** slider
+  (Normal / Remote / Vacation), then the date and Time enter / Time leave
+  (remote disables the times). Choosing **Vacation** replaces everything below
+  the type with a **From / To** date range (one range picker), saving one
+  vacation log per day. Days that already have a log are skipped. Editing a
+  vacation can stretch it over more days. The type slider only rests on its
+  three keypoints: tapping a segment slides the thumb there, dragging snaps to
+  the segment under the finger.
 
 ### Clock lifecycle (`ClockBloc`)
 - **Clock in** starts a session and schedules alerts for shift end (T + 8h).
@@ -120,5 +139,9 @@ Alarm sound and notifications are decoupled:
   nothing yet. Tapping a grayed-out day from an adjacent month selects it but
   can't scroll the agenda to it (it isn't in the shown month).
 - **Redesign:** bring Clock, Logs and Settings screens to the new Figma style.
-- **Remote work:** no in-app way to add it yet (currently manual).
-- The edit dialog still uses the old layout/sizes.
+- **Vacation cat is a placeholder** (`assets/cats/vacation_cat*.svg`) — replace
+  with the real light and dark art.
+- **Hours totals:** `LogsBloc` sums hours from clock times, so remote and
+  vacation days currently count as 0h (remote is meant to count as 8h).
+  Undecided: whether remote/vacation should count toward the weekly/monthly
+  totals.

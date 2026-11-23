@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/constants/constants.dart';
 import '../../../core/utils/month_grid.dart';
 import '../../../domain/entities/log_entry.dart';
 import '../../../domain/repositories/log_repository.dart';
@@ -28,7 +27,8 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     on<CalendarStarted>(_onStarted);
     on<CalendarMonthChanged>(_onMonthChanged);
     on<CalendarDaySelected>(_onDaySelected);
-    on<CalendarLogEdited>(_onLogEdited);
+    on<CalendarLogsAdded>(_onLogsAdded);
+    on<CalendarLogUpdated>(_onLogUpdated);
     on<CalendarLogDeleted>(_onLogDeleted);
   }
 
@@ -61,16 +61,45 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     emit(state.copyWith(selectedDay: MonthGrid.dateOnly(event.day)));
   }
 
-  Future<void> _onLogEdited(
-    CalendarLogEdited event,
+  Future<void> _onLogsAdded(
+    CalendarLogsAdded event,
     Emitter<CalendarState> emit,
   ) async {
-    await _repository.updateLog(event.original.editedWith(
-      clockedIn: event.clockedIn,
-      clockedOut: event.clockedOut,
-      shiftDuration: AppConstants.shiftDuration,
-    ));
+    final added = await _addToFreeDays(event.entries);
+    if (added.isEmpty) return;
+
     await _reload(emit);
+    emit(state.copyWith(selectedDay: MonthGrid.dateOnly(added.first.date)));
+  }
+
+  /// Stores each entry whose day has no log yet (one log per day) and
+  /// returns the ones that were stored.
+  Future<List<LogEntry>> _addToFreeDays(List<LogEntry> entries) async {
+    final added = <LogEntry>[];
+    for (final entry in entries) {
+      final day = MonthGrid.dateOnly(entry.date);
+      final taken = state.logOn(day) != null || added.any(
+        (a) => MonthGrid.isSameDay(a.date, day),
+      );
+      if (taken) continue;
+      await _repository.addLog(entry);
+      added.add(entry);
+    }
+    return added;
+  }
+
+  Future<void> _onLogUpdated(
+    CalendarLogUpdated event,
+    Emitter<CalendarState> emit,
+  ) async {
+    // Moving a log onto a day that belongs to another log is not allowed.
+    final occupant = state.logOn(event.entry.date);
+    if (occupant != null && occupant.id != event.entry.id) return;
+
+    await _repository.updateLog(event.entry);
+    await _addToFreeDays(event.additional);
+    await _reload(emit);
+    emit(state.copyWith(selectedDay: MonthGrid.dateOnly(event.entry.date)));
   }
 
   Future<void> _onLogDeleted(

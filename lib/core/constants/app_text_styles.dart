@@ -35,6 +35,25 @@ abstract final class AppTextStyles {
     color: AppColors.calendarText,
   );
 
+  // ── Add log popup ─────────────────────────────────────────
+  static const TextStyle popupTitle = TextStyle(
+    fontFamily: _font,
+    fontSize: 16,
+    color: AppColors.textPrimary,
+  );
+
+  static const TextStyle popupLabel = TextStyle(
+    fontFamily: _font,
+    fontSize: 10,
+    color: AppColors.textPrimary,
+  );
+
+  static const TextStyle popupButton = TextStyle(
+    fontFamily: _font,
+    fontSize: 12,
+    color: AppColors.textPrimary,
+  );
+
   static const TextStyle agendaHeader = TextStyle(
     fontFamily: _font,
     fontSize: 13,

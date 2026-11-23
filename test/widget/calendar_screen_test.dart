@@ -5,7 +5,10 @@ import 'package:clock_app/domain/repositories/log_repository.dart';
 import 'package:clock_app/domain/use_cases/get_logs_use_case.dart';
 import 'package:clock_app/features/calendar/bloc/calendar_bloc.dart';
 import 'package:clock_app/features/calendar/screens/calendar_screen.dart';
+import 'package:clock_app/features/calendar/widgets/add_log_button.dart';
 import 'package:clock_app/features/calendar/widgets/calendar_handle.dart';
+import 'package:clock_app/features/calendar/widgets/log_editor_popup.dart';
+import 'package:clock_app/features/calendar/widgets/log_type_slider.dart';
 import 'package:clock_app/features/calendar/widgets/month_pager.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:clock_app/features/settings/bloc/settings_bloc.dart';
@@ -151,43 +154,301 @@ void main() {
     expect(find.text('Dec 2026'), findsOneWidget);
   });
 
-  testWidgets('the pen opens the edit dialog and saving updates the log',
-      (tester) async {
-    when(() => repository.updateLog(any())).thenAnswer((_) async {});
-    when(() => getLogs()).thenAnswer((_) async => [
-          LogEntry(
-            date: DateTime(2026, 11, 23),
-            bonusTime: Duration.zero,
-            userEdited: false,
-            clockedInTime: DateTime(2026, 11, 23, 7),
-            clockedOutTime: DateTime(2026, 11, 23, 15),
-            onlineWork: false,
-          ),
-        ]);
-    await pumpScreen(tester);
+  group('edit with the same popup', () {
+    LogEntry normalLog({int id = 5}) => LogEntry(
+          id: id,
+          date: DateTime(2026, 11, 23),
+          bonusTime: Duration.zero,
+          userEdited: false,
+          clockedInTime: DateTime(2026, 11, 23, 7),
+          clockedOutTime: DateTime(2026, 11, 23, 15),
+          onlineWork: false,
+        );
 
-    await tester.tap(find.byType(IconButton).at(1)); // 0 is the header menu
-    await tester.pumpAndSettle();
-    expect(find.text('Edit log'), findsOneWidget);
+    LogEntry vacationLog() => LogEntry(
+          id: 6,
+          date: DateTime(2026, 11, 23),
+          bonusTime: Duration.zero,
+          userEdited: true,
+          onlineWork: false,
+          vacation: true,
+        );
 
-    await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
-    verify(() => repository.updateLog(any())).called(1);
+    // Pen buttons are IconButtons; index 0 is the header's menu.
+    Finder pen() => find.byType(IconButton).at(1);
+
+    setUp(() {
+      when(() => repository.updateLog(any())).thenAnswer((_) async {});
+      when(() => repository.deleteLog(any())).thenAnswer((_) async {});
+    });
+
+    testWidgets('the pen opens the popup prefilled, as "Edit log" with a trash can',
+        (tester) async {
+      when(() => getLogs()).thenAnswer((_) async => [normalLog()]);
+      await pumpScreen(tester);
+      expect(find.byTooltip('Delete log'), findsNothing);
+
+      await tester.tap(pen());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Edit log'), findsOneWidget);
+      expect(find.text('Add log'), findsNothing);
+      expect(find.text('Save'), findsOneWidget);
+      expect(find.byTooltip('Delete log'), findsOneWidget);
+      expect(find.text('7:00 am'), findsOneWidget); // Time enter, prefilled
+      expect(find.text('3:00 pm'), findsOneWidget); // Time leave, prefilled
+    });
+
+    testWidgets('adding has no trash can', (tester) async {
+      when(() => getLogs()).thenAnswer((_) async => []);
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add log'), findsOneWidget);
+      expect(find.byTooltip('Delete log'), findsNothing);
+    });
+
+    testWidgets('Save updates the same log (same id)', (tester) async {
+      when(() => getLogs()).thenAnswer((_) async => [normalLog(id: 5)]);
+      await pumpScreen(tester);
+      await tester.tap(pen());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      final saved =
+          verify(() => repository.updateLog(captureAny())).captured.single as LogEntry;
+      expect(saved.id, 5);
+      expect(find.text('Edit log'), findsNothing);
+      verifyNever(() => repository.addLog(any()));
+    });
+
+    testWidgets('the trash can deletes the log and closes the popup',
+        (tester) async {
+      when(() => getLogs()).thenAnswer((_) async => [normalLog(id: 5)]);
+      await pumpScreen(tester);
+      await tester.tap(pen());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Delete log'));
+      await tester.pumpAndSettle();
+
+      verify(() => repository.deleteLog(5)).called(1);
+      expect(find.text('Edit log'), findsNothing);
+    });
+
+    testWidgets('every kind of log has an edit pen', (tester) async {
+      when(() => getLogs()).thenAnswer((_) async => [vacationLog()]);
+      await pumpScreen(tester);
+
+      expect(find.text('Vacation'), findsOneWidget); // the agenda row title
+      expect(pen(), findsOneWidget);
+
+      await tester.tap(pen());
+      await tester.pumpAndSettle();
+      // A vacation opens straight into the From / To range.
+      expect(find.text('From:'), findsOneWidget);
+      expect(find.text('To:'), findsOneWidget);
+    });
   });
 
-  testWidgets('remote work logs have no edit pen', (tester) async {
-    when(() => getLogs()).thenAnswer((_) async => [
-          LogEntry(
-            date: DateTime(2026, 11, 23),
-            bonusTime: Duration.zero,
-            userEdited: false,
-            onlineWork: true,
-          ),
-        ]);
-    await pumpScreen(tester);
+  group('popup layout', () {
+    setUp(() => when(() => getLogs()).thenAnswer((_) async => []));
 
-    expect(find.text('Remote work'), findsOneWidget);
-    expect(find.byType(IconButton), findsOneWidget); // only the header menu
+    testWidgets('type sits above the date, and the popup is tall enough',
+        (tester) async {
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+
+      final typeY = tester.getTopLeft(find.text('Type:')).dy;
+      final dateY = tester.getTopLeft(find.textContaining('/ 2026').first).dy;
+      expect(typeY, lessThan(dateY));
+      expect(LogEditorPopup.height, greaterThan(216)); // more room for the title
+    });
+
+    testWidgets('Vacation swaps the date and times for a From / To range',
+        (tester) async {
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+      expect(find.text('Time enter:'), findsOneWidget);
+      expect(find.text('From:'), findsNothing);
+
+      await tester.tap(find.text('Vacation'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('From:'), findsOneWidget);
+      expect(find.text('To:'), findsOneWidget);
+      expect(find.text('Time enter:'), findsNothing);
+      expect(find.text('Time leave:'), findsNothing);
+      // Starts as a single day: the selected one.
+      expect(find.text('23 / 11 / 2026'), findsNWidgets(2));
+
+      await tester.tap(find.text('Normal'));
+      await tester.pumpAndSettle();
+      expect(find.text('Time enter:'), findsOneWidget);
+      expect(find.text('From:'), findsNothing);
+    });
+
+    testWidgets('everything in the popup is centered', (tester) async {
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+
+      final popup = tester.getCenter(find.byType(LogEditorPopup)).dx;
+      for (final finder in [
+        find.text('Add log'),
+        find.text('Type:'),
+        find.byType(LogTypeSlider),
+      ]) {
+        expect(tester.getCenter(finder).dx, closeTo(popup, 1), reason: '$finder');
+      }
+    });
+  });
+
+  group('add log button', () {
+    double plusTurns(WidgetTester tester) =>
+        tester
+            .widget<RotationTransition>(find.descendant(
+              of: find.byType(AddLogButton),
+              matching: find.byType(RotationTransition),
+            ))
+            .turns
+            .value;
+
+    Alignment thumbAlignment(WidgetTester tester) =>
+        tester.widget<AnimatedAlign>(find.byType(AnimatedAlign)).alignment
+            as Alignment;
+
+    setUp(() {
+      when(() => getLogs()).thenAnswer((_) async => []);
+      when(() => repository.addLog(any())).thenAnswer((_) async {});
+    });
+
+    testWidgets('the plus turns 180° + 45° and the popup opens, then reverses',
+        (tester) async {
+      await pumpScreen(tester);
+      expect(find.text('Add log'), findsNothing);
+      expect(plusTurns(tester), 0);
+
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+      expect(find.text('Add log'), findsOneWidget);
+      expect(plusTurns(tester), 0.625); // 225°
+
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+      expect(find.text('Add log'), findsNothing);
+      expect(plusTurns(tester), 0);
+    });
+
+    testWidgets('tapping outside the popup closes it', (tester) async {
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+
+      await tester.tapAt(const Offset(184, 60)); // scrim, above the popup
+      await tester.pumpAndSettle();
+      expect(find.text('Add log'), findsNothing);
+    });
+
+    testWidgets('the slider stops on the keypoint that was tapped',
+        (tester) async {
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+      expect(thumbAlignment(tester), const Alignment(-1, 0)); // Normal
+
+      await tester.tap(find.text('Vacation'));
+      await tester.pumpAndSettle();
+      expect(thumbAlignment(tester), const Alignment(1, 0));
+
+      await tester.tap(find.text('Remote'));
+      await tester.pumpAndSettle();
+      expect(thumbAlignment(tester), const Alignment(0, 0));
+
+      await tester.tap(find.text('Normal'));
+      await tester.pumpAndSettle();
+      expect(thumbAlignment(tester), const Alignment(-1, 0));
+    });
+
+    testWidgets('dragging the slider snaps to a keypoint, never between',
+        (tester) async {
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+
+      await tester.drag(find.byType(LogTypeSlider), const Offset(160, 0));
+      await tester.pumpAndSettle();
+      expect(thumbAlignment(tester), const Alignment(1, 0));
+    });
+
+    testWidgets('Add is disabled until a normal log has both times',
+        (tester) async {
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+      verifyNever(() => repository.addLog(any()));
+      expect(find.text('Add log'), findsOneWidget); // still open
+    });
+
+    testWidgets('adding a vacation day saves it and closes the popup',
+        (tester) async {
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Vacation'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+
+      final saved =
+          verify(() => repository.addLog(captureAny())).captured.single as LogEntry;
+      expect(saved.type, LogType.vacation);
+      expect(saved.date, DateTime(2026, 11, 23));
+      expect(find.text('Add log'), findsNothing);
+    });
+
+    testWidgets('Cancel closes without saving', (tester) async {
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add log'), findsNothing);
+      verifyNever(() => repository.addLog(any()));
+    });
+
+    testWidgets('a day that already has a log cannot get a second one',
+        (tester) async {
+      when(() => getLogs()).thenAnswer((_) async => [
+            LogEntry(
+              date: DateTime(2026, 11, 23),
+              bonusTime: Duration.zero,
+              userEdited: false,
+              onlineWork: true,
+            ),
+          ]);
+      await pumpScreen(tester);
+      await tester.tap(find.byType(AddLogButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('A log already exists for this day'), findsOneWidget);
+      await tester.tap(find.text('Vacation'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+      verifyNever(() => repository.addLog(any()));
+    });
   });
 
   testWidgets('tapping a date scrolls the agenda to that date', (tester) async {

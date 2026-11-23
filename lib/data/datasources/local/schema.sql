@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS Logs (
     user_edited NUMERIC DEFAULT (0) NOT NULL,
     clocked_in_time TEXT,
     clocked_out_time TEXT,
-    online_work INTEGER DEFAULT (0)
+    online_work INTEGER DEFAULT (0),
+    vacation INTEGER DEFAULT (0) NOT NULL
 );
 CREATE TABLE IF NOT EXISTS UserSettings (
     settings_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

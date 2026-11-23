@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/constants/constants.dart';
 import '../../../domain/entities/log_entry.dart';
 import '../../../domain/use_cases/get_logs_use_case.dart';
 import '../../../domain/repositories/log_repository.dart';
@@ -9,8 +8,9 @@ part 'logs_state.dart';
 
 /// ─────────────────────────────────────────────────────────────
 ///  LOGS BLOC
-///  Handles log list fetching, deletion, editing, and the
-///  weekly/monthly stats toggle.
+///  Handles log list fetching, deleting all logs, and the
+///  weekly/monthly stats toggle. (Adding, editing and deleting single
+///  logs happens in the calendar's add/edit widget.)
 /// ─────────────────────────────────────────────────────────────
 class LogsBloc extends Bloc<LogsEvent, LogsState> {
   final GetLogsUseCase  _getLogs;
@@ -27,10 +27,7 @@ class LogsBloc extends Bloc<LogsEvent, LogsState> {
         super(const LogsLoading()) {
     on<LogsStarted>           (_onStarted);
     on<LogsDeleteAllRequested>(_onDeleteAll);
-    on<LogsEditModeToggled>   (_onEditModeToggled);
     on<LogsPeriodToggled>     (_onPeriodToggled);
-    on<LogEntryEdited>        (_onEntryEdited);
-    on<LogEntryDeleted>       (_onEntryDeleted);
   }
 
   Future<void> _onStarted(LogsStarted _, Emitter<LogsState> emit) async {
@@ -61,18 +58,6 @@ class LogsBloc extends Bloc<LogsEvent, LogsState> {
     ));
   }
 
-  void _onEditModeToggled(LogsEditModeToggled _, Emitter<LogsState> emit) {
-    if (state case LogsLoaded loaded) {
-      emit(LogsLoaded(
-        entries:      loaded.entries,
-        hoursWorked:  loaded.hoursWorked,
-        hoursTarget:  loaded.hoursTarget,
-        isWeeklyView: loaded.isWeeklyView,
-        isEditMode:   !loaded.isEditMode,
-      ));
-    }
-  }
-
   void _onPeriodToggled(LogsPeriodToggled _, Emitter<LogsState> emit) {
     if (state case LogsLoaded loaded) {
       final isNowWeekly = !loaded.isWeeklyView;
@@ -81,49 +66,6 @@ class LogsBloc extends Bloc<LogsEvent, LogsState> {
         hoursWorked:  _hoursWorkedFor(loaded.entries, isNowWeekly),
         hoursTarget:  isNowWeekly ? _weeklyTarget : _monthlyTarget,
         isWeeklyView: isNowWeekly,
-        isEditMode:   loaded.isEditMode,
-      ));
-    }
-  }
-
-  Future<void> _onEntryEdited(
-    LogEntryEdited event,
-    Emitter<LogsState> emit,
-  ) async {
-    final updated = event.original.editedWith(
-      clockedIn:     event.newClockedInTime,
-      clockedOut:    event.newClockedOutTime,
-      shiftDuration: AppConstants.shiftDuration,
-    );
-    await _repository.updateLog(updated);
-
-    final entries = await _getLogs();
-    if (state case LogsLoaded loaded) {
-      emit(LogsLoaded(
-        entries:      entries,
-        hoursWorked:  _hoursWorkedFor(entries, loaded.isWeeklyView),
-        hoursTarget:  loaded.hoursTarget,
-        isWeeklyView: loaded.isWeeklyView,
-        isEditMode:   loaded.isEditMode,
-      ));
-    }
-  }
-
-  Future<void> _onEntryDeleted(
-    LogEntryDeleted event,
-    Emitter<LogsState> emit,
-  ) async {
-    if (event.entry.id == null) return;
-    await _repository.deleteLog(event.entry.id!);
-
-    final entries = await _getLogs();
-    if (state case LogsLoaded loaded) {
-      emit(LogsLoaded(
-        entries:      entries,
-        hoursWorked:  _hoursWorkedFor(entries, loaded.isWeeklyView),
-        hoursTarget:  loaded.hoursTarget,
-        isWeeklyView: loaded.isWeeklyView,
-        isEditMode:   loaded.isEditMode,
       ));
     }
   }

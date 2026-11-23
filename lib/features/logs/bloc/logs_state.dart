@@ -20,16 +20,11 @@ final class LogsLoaded extends LogsState {
   /// Whether the donut chart is showing weekly or monthly stats.
   final bool isWeeklyView;
 
-  /// Whether the user is currently in edit mode (tapping a log opens
-  /// the start/end time editor).
-  final bool isEditMode;
-
   const LogsLoaded({
     required this.entries,
     required this.hoursWorked,
     required this.hoursTarget,
     this.isWeeklyView = true,
-    this.isEditMode = false,
   });
 
   double get progress =>

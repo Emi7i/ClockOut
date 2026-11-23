@@ -10,6 +10,7 @@ class LogDto {
   final String? clockedInTime;
   final String? clockedOutTime;
   final int onlineWork;
+  final int vacation; // 0 or 1
 
   const LogDto({
     this.id,
@@ -19,6 +20,7 @@ class LogDto {
     this.clockedInTime,
     this.clockedOutTime,
     required this.onlineWork,
+    this.vacation = 0,
   });
 
   /// Convert from Map (SQLite result)
@@ -31,6 +33,7 @@ class LogDto {
       clockedInTime:  map['clocked_in_time'] as String?,
       clockedOutTime: map['clocked_out_time'] as String?,
       onlineWork:     map['online_work'] as int,
+      vacation:       (map['vacation'] as int?) ?? 0,
     );
   }
 
@@ -44,6 +47,7 @@ class LogDto {
       'clocked_in_time':  clockedInTime,
       'clocked_out_time': clockedOutTime,
       'online_work':      onlineWork,
+      'vacation':         vacation,
     };
   }
 }

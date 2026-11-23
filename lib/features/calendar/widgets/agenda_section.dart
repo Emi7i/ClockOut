@@ -59,7 +59,7 @@ class AgendaSection extends StatelessWidget {
         if (log case final log?)
           LogEventRow(
             log: log,
-            onEdit: log.onlineWork || onEdit == null ? null : () => onEdit!(log),
+            onEdit: onEdit == null ? null : () => onEdit!(log),
           )
         else
           const NoEventRow(),

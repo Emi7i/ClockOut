@@ -59,6 +59,13 @@ abstract final class AppColors {
   /// Bonus amount highlight
   static const Color bonus = Color(0xFF2AB26E);
 
+  // ── Add log popup (redesign) ──────────────────────────────
+  /// Input fields and the slider track
+  static const Color popupField = Color(0xFF3B3B3B);
+
+  /// "Cancel" button
+  static const Color popupCancel = Color(0xFF2F2F31);
+
   // ── Toggle ────────────────────────────────────────────────
   static const Color toggleOff = Colors.transparent;
 }

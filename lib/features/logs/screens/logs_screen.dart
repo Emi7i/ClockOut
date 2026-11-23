@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../common_widgets/common_widgets.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/utils/date_formatter.dart';
-import '../../../domain/entities/log_entry.dart';
 import '../../settings/bloc/settings_bloc.dart';
 import '../bloc/logs_bloc.dart';
 import '../widgets/donut_chart.dart';
@@ -38,19 +37,10 @@ class LogsScreen extends StatelessWidget {
           body: SafeArea(
             child: Column(
               children: [
-                // ── Top bar with edit toggle ────────────────
+                // ── Top bar ─────────────────────────────────
                 AppTopBar(
                   timeLabel:     DateFormatter.clockTime(DateTime.now(), is12Hour: is12Hour),
                   onSettingsTap: onSettingsTap,
-                  trailing: switch (state) {
-                    LogsLoaded() => _EditModeChip(
-                        isEditMode: state.isEditMode,
-                        onTap: () => context
-                            .read<LogsBloc>()
-                            .add(const LogsEditModeToggled()),
-                      ),
-                    _ => const SizedBox(width: 22),
-                  },
                 ),
 
                 // ── Body ───────────────────────────────────
@@ -130,15 +120,8 @@ class _LoadedBody extends StatelessWidget {
                       vertical:   AppDimensions.spaceSm,
                     ),
                     itemCount: state.entries.length,
-                    itemBuilder: (context, i) {
-                      final entry = state.entries[i];
-                      return LogListTile(
-                        entry: entry,
-                        onTap: state.isEditMode
-                            ? () => _editLog(context, entry)
-                            : null,
-                      );
-                    },
+                    itemBuilder: (context, i) =>
+                        LogListTile(entry: state.entries[i]),
                   ),
           ),
         ),
@@ -149,43 +132,3 @@ class _LoadedBody extends StatelessWidget {
   }
 }
 
-
-void _editLog(BuildContext context, LogEntry entry) {
-  final logsBloc = context.read<LogsBloc>();
-  final settingsState = context.read<SettingsBloc>().state;
-
-  showEditLogDialog(
-    context,
-    start:    entry.clockedInTime ?? entry.date,
-    end:      entry.clockedOutTime ?? entry.date,
-    is12Hour: settingsState is SettingsLoaded ? settingsState.is12HourFormat : true,
-    onSave: (start, end) => logsBloc.add(LogEntryEdited(
-      original:          entry,
-      newClockedInTime:  start,
-      newClockedOutTime: end,
-    )),
-    onDelete: () => logsBloc.add(LogEntryDeleted(entry)),
-  );
-}
-// ── Edit toggle chip ────────────────────────────────────────────
-class _EditModeChip extends StatelessWidget {
-  final bool         isEditMode;
-  final VoidCallback onTap;
-
-  const _EditModeChip({required this.isEditMode, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-        decoration: BoxDecoration(
-          color:        Theme.of(context).colorScheme.primary,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-        ),
-        child: Text(isEditMode ? 'done' : 'edit', style: AppTextStyles.chipButton),
-      ),
-    );
-  }
-}

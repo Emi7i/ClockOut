@@ -78,8 +78,13 @@ class _Title extends StatelessWidget {
   Widget build(BuildContext context) {
     final amount = DateFormatter.bonusDuration(log.bonusTime);
 
-    if (log.onlineWork) {
-      return const Text('Remote work', style: AppTextStyles.agendaEventTitle);
+    switch (log.type) {
+      case LogType.vacation:
+        return const Text('Vacation', style: AppTextStyles.agendaEventTitle);
+      case LogType.remote:
+        return const Text('Remote work', style: AppTextStyles.agendaEventTitle);
+      case LogType.normal:
+        break;
     }
 
     return switch (log.status) {

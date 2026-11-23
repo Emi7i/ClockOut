@@ -43,6 +43,17 @@ abstract final class DateFormatter {
   static String weekdayMonthDay(DateTime dt) =>
       '${_weekdaysLong[dt.weekday - 1]}, ${_monthsShort[dt.month - 1]} ${dt.day}';
 
+  /// e.g. "24 / 05 / 2026" (day / month / year).
+  static String slashDate(DateTime dt) {
+    final day   = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    return '$day / $month / ${dt.year}';
+  }
+
+  /// e.g. "Mon   24 / 05 / 2026".
+  static String weekdaySlashDate(DateTime dt) =>
+      '${_weekdaysLong[dt.weekday - 1].substring(0, 3)}   ${slashDate(dt)}';
+
   /// e.g. "30 minutes", "1h" or "1h 30m".
   static String bonusDuration(Duration d) {
     final minutes = d.inMinutes.abs();

@@ -4,6 +4,9 @@
 /// ─────────────────────────────────────────────────────────────
 enum LogStatus { onTime, early, late }
 
+/// What kind of day a log records.
+enum LogType { normal, remote, vacation }
+
 class LogEntry {
   final int? id;
   final DateTime date;
@@ -13,6 +16,9 @@ class LogEntry {
   final DateTime? clockedOutTime;
   final bool onlineWork;
 
+  /// A day off. Like remote work it is added manually and has no clock times.
+  final bool vacation;
+
   const LogEntry({
     this.id,
     required this.date,
@@ -21,28 +27,57 @@ class LogEntry {
     this.clockedInTime,
     this.clockedOutTime,
     required this.onlineWork,
+    this.vacation = false,
   });
 
-  /// This log after the user corrected its clock-in/out times: the bonus
-  /// time is recomputed and the entry is flagged as user-edited.
-  LogEntry editedWith({
-    required DateTime clockedIn,
-    required DateTime clockedOut,
+  /// A log the user adds by hand (the calendar's "Add log" popup).
+  ///
+  /// Normal logs need [clockedIn] and [clockedOut] and get a computed bonus.
+  /// Remote and vacation logs have no clock times and no bonus; they are
+  /// stamped at the start of [day].
+  ///
+  /// Pass [id] to build the replacement for an existing log (editing).
+  factory LogEntry.manual({
+    int? id,
+    required LogType type,
+    required DateTime day,
+    DateTime? clockedIn,
+    DateTime? clockedOut,
     required Duration shiftDuration,
-  }) =>
-      LogEntry(
+  }) {
+    if (type == LogType.normal) {
+      assert(clockedIn != null && clockedOut != null,
+          'A normal log needs both clock times');
+      return LogEntry(
         id: id,
-        date: clockedIn,
+        date: clockedIn!,
         bonusTime: computeBonusTime(
           clockedInAt: clockedIn,
-          clockedOutAt: clockedOut,
+          clockedOutAt: clockedOut!,
           shiftDuration: shiftDuration,
         ),
         userEdited: true,
         clockedInTime: clockedIn,
         clockedOutTime: clockedOut,
-        onlineWork: onlineWork,
+        onlineWork: false,
       );
+    }
+
+    return LogEntry(
+      id: id,
+      date: DateTime(day.year, day.month, day.day),
+      bonusTime: Duration.zero,
+      userEdited: true,
+      onlineWork: type == LogType.remote,
+      vacation: type == LogType.vacation,
+    );
+  }
+
+  LogType get type => vacation
+      ? LogType.vacation
+      : onlineWork
+          ? LogType.remote
+          : LogType.normal;
 
   /// Computes the bonus/deficit time for a shift, relative to when the
   /// shift was expected to end (clockedInAt + shiftDuration).

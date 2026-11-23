@@ -76,26 +76,122 @@ void main() {
     verify: (bloc) => expect(bloc.state.selectedDay, DateTime(2026, 11, 25)),
   );
 
+  LogEntry vacationOn(DateTime day, {int? id}) => LogEntry.manual(
+        id: id,
+        type: LogType.vacation,
+        day: day,
+        shiftDuration: const Duration(hours: 8),
+      );
+
   blocTest<CalendarBloc, CalendarState>(
-    'editing a log saves recomputed bonus time and reloads',
+    'adding logs stores each one, reloads once, and selects the first day',
     setUp: () {
-      when(() => repository.updateLog(any())).thenAnswer((_) async {});
+      when(() => repository.addLog(any())).thenAnswer((_) async {});
       when(() => getLogs()).thenAnswer((_) async => []);
     },
     build: build,
-    act: (bloc) => bloc.add(CalendarLogEdited(
-      original: log(DateTime(2026, 11, 20, 7), 0, id: 4),
-      clockedIn: DateTime(2026, 11, 20, 7),
-      clockedOut: DateTime(2026, 11, 20, 15, 45), // 45 min over → +30
-    )),
-    verify: (_) {
-      final saved = verify(() => repository.updateLog(captureAny())).captured.single
-          as LogEntry;
-      expect(saved.id, 4);
-      expect(saved.bonusTime, const Duration(minutes: 30));
-      expect(saved.userEdited, isTrue);
+    act: (bloc) => bloc.add(CalendarLogsAdded([
+      vacationOn(DateTime(2026, 11, 26)),
+      vacationOn(DateTime(2026, 11, 27)),
+      vacationOn(DateTime(2026, 11, 28)),
+    ])),
+    verify: (bloc) {
+      final saved = verify(() => repository.addLog(captureAny())).captured;
+      expect(saved, hasLength(3));
+      expect((saved.first as LogEntry).type, LogType.vacation);
+      expect(bloc.state.selectedDay, DateTime(2026, 11, 26));
       verify(() => getLogs()).called(1);
     },
+  );
+
+  blocTest<CalendarBloc, CalendarState>(
+    'days that already have a log are skipped (one log per day)',
+    setUp: () => when(() => getLogs()).thenAnswer((_) async => [
+          log(DateTime(2026, 11, 27, 9), 0, id: 1),
+        ]),
+    build: build,
+    act: (bloc) async {
+      bloc.add(const CalendarStarted());
+      await bloc.stream.firstWhere((s) => !s.isLoading);
+      when(() => repository.addLog(any())).thenAnswer((_) async {});
+      bloc.add(CalendarLogsAdded([
+        vacationOn(DateTime(2026, 11, 26)),
+        vacationOn(DateTime(2026, 11, 27)), // taken
+        vacationOn(DateTime(2026, 11, 28)),
+      ]));
+    },
+    verify: (_) {
+      final saved = verify(() => repository.addLog(captureAny())).captured;
+      expect(saved.map((e) => (e as LogEntry).date.day), [26, 28]);
+    },
+  );
+
+  blocTest<CalendarBloc, CalendarState>(
+    'adding onto an occupied day alone does nothing',
+    setUp: () => when(() => getLogs()).thenAnswer((_) async => [
+          log(DateTime(2026, 11, 26, 9), 0, id: 1),
+        ]),
+    build: build,
+    act: (bloc) async {
+      bloc.add(const CalendarStarted());
+      await bloc.stream.firstWhere((s) => !s.isLoading);
+      bloc.add(CalendarLogsAdded([vacationOn(DateTime(2026, 11, 26))]));
+    },
+    verify: (_) => verifyNever(() => repository.addLog(any())),
+  );
+
+  blocTest<CalendarBloc, CalendarState>(
+    'updating a log saves it (same id), adds extra days, and reloads once',
+    setUp: () {
+      when(() => repository.updateLog(any())).thenAnswer((_) async {});
+      when(() => repository.addLog(any())).thenAnswer((_) async {});
+      when(() => getLogs()).thenAnswer((_) async => []);
+    },
+    build: build,
+    act: (bloc) => bloc.add(CalendarLogUpdated(
+      vacationOn(DateTime(2026, 11, 20), id: 4),
+      additional: [vacationOn(DateTime(2026, 11, 21))],
+    )),
+    verify: (bloc) {
+      final updated = verify(() => repository.updateLog(captureAny())).captured.single
+          as LogEntry;
+      expect(updated.id, 4);
+      expect(updated.userEdited, isTrue);
+      verify(() => repository.addLog(any())).called(1);
+      verify(() => getLogs()).called(1);
+      expect(bloc.state.selectedDay, DateTime(2026, 11, 20));
+    },
+  );
+
+  blocTest<CalendarBloc, CalendarState>(
+    'a log cannot be moved onto a day owned by another log',
+    setUp: () => when(() => getLogs()).thenAnswer((_) async => [
+          log(DateTime(2026, 11, 26, 9), 0, id: 1),
+        ]),
+    build: build,
+    act: (bloc) async {
+      bloc.add(const CalendarStarted());
+      await bloc.stream.firstWhere((s) => !s.isLoading);
+      bloc.add(CalendarLogUpdated(vacationOn(DateTime(2026, 11, 26), id: 2)));
+    },
+    verify: (_) => verifyNever(() => repository.updateLog(any())),
+  );
+
+  blocTest<CalendarBloc, CalendarState>(
+    'a log can be saved on its own day',
+    setUp: () {
+      when(() => repository.updateLog(any())).thenAnswer((_) async {});
+      when(() => getLogs()).thenAnswer((_) async => [
+            log(DateTime(2026, 11, 26, 9), 0, id: 1),
+          ]);
+    },
+    build: build,
+    act: (bloc) async {
+      bloc.add(const CalendarStarted());
+      await bloc.stream.firstWhere((s) => !s.isLoading);
+      bloc.add(CalendarLogUpdated(vacationOn(DateTime(2026, 11, 26), id: 1)));
+    },
+    verify: (_) => verify(() => repository.updateLog(any())).called(1),
   );
 
   blocTest<CalendarBloc, CalendarState>(
