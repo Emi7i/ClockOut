@@ -4,6 +4,7 @@ import '../../../core/constants/constants.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../domain/entities/log_entry.dart';
 import '../cat_assets.dart';
+import 'bank_ring.dart';
 
 /// A single log in the agenda: cat avatar, bonus/late summary, clock times.
 class LogEventRow extends StatelessWidget {
@@ -25,10 +26,13 @@ class LogEventRow extends StatelessWidget {
       padding: const EdgeInsets.only(left: 15, right: 6),
       child: Row(
         children: [
-          SvgPicture.asset(
-            CatAssets.forLog(log),
-            width: _avatarSize,
-            height: _avatarSize,
+          BankRing(
+            active: log.usedBank,
+            child: SvgPicture.asset(
+              CatAssets.forLog(log),
+              width: _avatarSize,
+              height: _avatarSize,
+            ),
           ),
           const SizedBox(width: 18),
           Expanded(

@@ -1,6 +1,7 @@
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_ui/material_ui.dart';
 import '../../../core/constants/constants.dart';
+import 'bank_ring.dart';
 
 /// One day in the month grid.
 ///
@@ -14,6 +15,9 @@ class DayCell extends StatelessWidget {
 
   /// Cat asset for the day; `null` when there are no logs (no cat shown).
   final String? catAsset;
+
+  /// The day is a vacation paid from the time bank (purple ring on the cat).
+  final bool usedBank;
   final VoidCallback onTap;
 
   const DayCell({
@@ -23,6 +27,7 @@ class DayCell extends StatelessWidget {
     required this.isToday,
     required this.isSelected,
     required this.catAsset,
+    this.usedBank = false,
     required this.onTap,
   });
 
@@ -39,12 +44,21 @@ class DayCell extends StatelessWidget {
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(6, 6, 6, 2),
+              padding: const EdgeInsets.fromLTRB(6, 4, 6, 4),
               child: catAsset == null
                   ? null
                   : Opacity(
                       opacity: isInVisibleMonth ? 1 : 0.4,
-                      child: SvgPicture.asset(catAsset!),
+                      // Square, so the ring is a circle, not an ellipse.
+                      child: Center(
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: BankRing(
+                            active: usedBank,
+                            child: SvgPicture.asset(catAsset!),
+                          ),
+                        ),
+                      ),
                     ),
             ),
           ),

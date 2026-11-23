@@ -59,6 +59,9 @@ abstract final class AppColors {
   /// Bonus amount highlight
   static const Color bonus = Color(0xFF2AB26E);
 
+  /// Ring around the cat of a vacation paid from the time bank.
+  static const Color bankRing = Color(0xFFB22A7C);
+
   // ── Add log popup (redesign) ──────────────────────────────
   /// Input fields and the slider track
   static const Color popupField = Color(0xFF3B3B3B);

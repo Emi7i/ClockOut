@@ -6,6 +6,7 @@ import 'package:clock_app/domain/use_cases/get_logs_use_case.dart';
 import 'package:clock_app/features/calendar/bloc/calendar_bloc.dart';
 import 'package:clock_app/features/calendar/screens/calendar_screen.dart';
 import 'package:clock_app/features/calendar/widgets/add_log_button.dart';
+import 'package:clock_app/features/calendar/widgets/bank_ring.dart';
 import 'package:clock_app/features/calendar/widgets/calendar_handle.dart';
 import 'package:clock_app/features/calendar/widgets/log_editor_popup.dart';
 import 'package:clock_app/features/calendar/widgets/log_type_slider.dart';
@@ -473,6 +474,18 @@ void main() {
       await pumpScreen(tester);
 
       expect(find.text('Used time from bank'), findsOneWidget);
+      // Purple ring on the cat, in the agenda row and in the grid cell.
+      expect(
+        find.byWidgetPredicate((w) => w is BankRing && w.active),
+        findsNWidgets(2),
+      );
+    });
+
+    testWidgets('no purple ring without the bank', (tester) async {
+      await pumpScreen(tester);
+
+      expect(find.byWidgetPredicate((w) => w is BankRing && w.active),
+          findsNothing);
     });
 
     testWidgets('editing a bank vacation shows the toggle already on',
