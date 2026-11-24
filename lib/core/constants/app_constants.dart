@@ -13,14 +13,7 @@ class AppConstants {
   /// controller's 0..1 value maps linearly onto it.
   static const Duration sceneDuration = Duration(milliseconds: 1396);
 
-  /// Progress past which releasing a swipe always finishes the transition
-  /// (about where the Earth is almost gone). Tuned on device in phase 3.
-  static const double sceneCommitPoint = 0.58;
-
-  /// A full Day↔Night swipe needs this fraction of the screen height.
-  static const double sceneTravelFraction = 0.5;
-
-  /// Per-event vertical movement (px) below which it is jitter and does not
-  /// count as a change of direction.
-  static const double sceneMinDirectionDelta = 1.0;
+  /// Vertical swipe distance (px, after the touch slop) that counts as a
+  /// deliberate swipe. Only the direction matters, not speed or length.
+  static const double sceneSwipeMinDistance = 24;
 }

@@ -52,68 +52,84 @@ void main() {
     await t.pumpWidget(_Host(onReady: (x) => c = x, onTap: () => taps++));
   }
 
-  // 800px screen, travel = 0.5 * 800 = 400px for a full swipe.
-  Future<TestGesture> dragUp(WidgetTester t, double px) async {
+  /// Swipes [px] vertically (negative = up) in a given number of steps.
+  Future<void> swipe(WidgetTester t, double px, {int steps = 1}) async {
     final g = await t.startGesture(const Offset(300, 700));
-    await g.moveBy(const Offset(0, -30)); // past touch slop
+    await g.moveBy(Offset(0, px.sign * 30)); // past touch slop
+    for (var i = 0; i < steps; i++) {
+      await g.moveBy(Offset(0, px / steps));
+    }
     await t.pump();
-    await g.moveBy(Offset(0, -px));
-    await t.pump();
-    return g;
+    await g.up();
   }
 
-  testWidgets('progress follows the finger and does not auto-complete',
-      (t) async {
+  testWidgets('the scene does not follow the finger', (t) async {
     await pump(t);
-    final g = await dragUp(t, 500); // more than a full travel
-    expect(c.value, 1.0); // clamped, finger still down
+    final g = await t.startGesture(const Offset(300, 700));
+    await g.moveBy(const Offset(0, -20)); // just past touch slop, below threshold
+    await t.pump();
+    expect(c.value, 0.0);
     expect(c.isAnimating, isFalse);
     await g.up();
+  });
+
+  testWidgets('swipe up plays to Night at the set speed', (t) async {
+    await pump(t);
+    await swipe(t, -100);
+    expect(c.isAnimating, isTrue);
+    await t.pump(const Duration(milliseconds: 698)); // half of 1396 ms
+    expect(c.value, closeTo(0.5, 0.05));
     await t.pumpAndSettle();
     expect(c.value, 1.0);
   });
 
-  testWidgets('short upward swipe (before commit) still finishes to Night',
+  testWidgets('swipe speed and length do not change the animation',
       (t) async {
     await pump(t);
-    final g = await dragUp(t, 60);
-    expect(c.value, inInclusiveRange(0.05, 0.3));
-    await g.up();
+    await swipe(t, -800, steps: 1); // long and fast
+    await t.pump(const Duration(milliseconds: 698));
+    final fast = c.value;
     await t.pumpAndSettle();
-    expect(c.value, 1.0);
+
+    await pump(t);
+    c.value = 0; // the host State is reused between pumps
+    await swipe(t, -40, steps: 20); // short and slow
+    await t.pump(const Duration(milliseconds: 698));
+    final slow = c.value;
+    expect(slow, closeTo(fast, 0.03));
+    await t.pumpAndSettle();
   });
 
-  testWidgets('swiping up then back down before commit returns to Day',
-      (t) async {
+  testWidgets('swipe down on Night plays back to Day', (t) async {
     await pump(t);
-    final g = await dragUp(t, 100);
-    await g.moveBy(const Offset(0, 40)); // last movement: down
-    await t.pump();
-    await g.up();
+    c.value = 1.0;
+    await swipe(t, 100);
     await t.pumpAndSettle();
     expect(c.value, 0.0);
   });
 
-  testWidgets('past the commit point finishes even if last move was down',
+  testWidgets('swipe down on Day and swipe up on Night do nothing',
       (t) async {
     await pump(t);
-    final g = await dragUp(t, 300); // ~0.82
-    await g.moveBy(const Offset(0, 20));
-    await t.pump();
-    await g.up();
+    await swipe(t, 100);
+    await t.pumpAndSettle();
+    expect(c.value, 0.0);
+    c.value = 1.0;
+    await swipe(t, -100);
     await t.pumpAndSettle();
     expect(c.value, 1.0);
   });
 
-  testWidgets('mirrored on Night: swipe down returns to Day', (t) async {
+  testWidgets('a swipe the other way mid-animation turns it around',
+      (t) async {
     await pump(t);
-    c.value = 1.0;
-    final g = await t.startGesture(const Offset(300, 300));
-    await g.moveBy(const Offset(0, 30));
-    await t.pump();
-    await g.moveBy(const Offset(0, 260)); // ~ -0.65 -> progress ~0.3
-    await t.pump();
-    await g.up();
+    await swipe(t, -100);
+    await t.pump(const Duration(milliseconds: 500));
+    final mid = c.value;
+    expect(mid, inExclusiveRange(0.2, 0.6));
+    await swipe(t, 100);
+    await t.pump(const Duration(milliseconds: 100));
+    expect(c.value, lessThan(mid));
     await t.pumpAndSettle();
     expect(c.value, 0.0);
   });
@@ -124,19 +140,5 @@ void main() {
     await t.pumpAndSettle();
     expect(c.value, 0.0);
     expect(taps, 1);
-  });
-
-  testWidgets('catching the scene mid-animation interrupts it', (t) async {
-    await pump(t);
-    c.forward();
-    await t.pump(const Duration(milliseconds: 400));
-    final mid = c.value;
-    final g = await t.startGesture(const Offset(300, 700));
-    await g.moveBy(const Offset(0, 30));
-    await t.pump();
-    expect(c.isAnimating, isFalse);
-    expect(c.value, closeTo(mid, 0.06));
-    await g.up();
-    await t.pumpAndSettle();
   });
 }
