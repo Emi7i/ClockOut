@@ -8,7 +8,7 @@ import 'wave_painter.dart';
 /// ─────────────────────────────────────────────────────────────
 class NavItem {
   final IconData icon;
-  final String   semanticLabel; // used by screen-readers
+  final String semanticLabel; // used by screen-readers
 
   const NavItem({
     required this.icon,
@@ -20,7 +20,7 @@ class NavItem {
 //    ← Add / remove / reorder tabs here
 const List<NavItem> kDefaultNavItems = [
   NavItem(icon: Icons.access_time_rounded, semanticLabel: 'Clock'),
-  NavItem(icon: Icons.menu_rounded,        semanticLabel: 'Menu'),
+  NavItem(icon: Icons.menu_rounded, semanticLabel: 'Menu'),
 ];
 
 /// ─────────────────────────────────────────────────────────────
@@ -36,9 +36,9 @@ const List<NavItem> kDefaultNavItems = [
 ///  To customise tabs pass [items]; defaults to [kDefaultNavItems].
 /// ─────────────────────────────────────────────────────────────
 class AppNavBar extends StatelessWidget {
-  final int                selectedIndex;
-  final ValueChanged<int>  onItemTapped;
-  final List<NavItem>      items;
+  final int selectedIndex;
+  final ValueChanged<int> onItemTapped;
+  final List<NavItem> items;
 
   const AppNavBar({
     super.key,
@@ -66,7 +66,8 @@ class AppNavBar extends StatelessWidget {
             right: 0,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(items.length, (i) => _buildTab(context, i)),
+              children:
+                  List.generate(items.length, (i) => _buildTab(context, i)),
             ),
           ),
         ],
@@ -84,7 +85,9 @@ class AppNavBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 28),
         child: Icon(
           items[index].icon,
-          color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.textMuted,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : AppColors.textMuted,
           size: 32,
           semanticLabel: items[index].semanticLabel,
         ),

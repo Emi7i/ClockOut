@@ -13,6 +13,18 @@ class AppConstants {
   /// controller's 0..1 value maps linearly onto it.
   static const Duration sceneDuration = Duration(milliseconds: 1396);
 
+  /// Length of the Figma "Start Shift" UFO timeline (3 s). Played once,
+  /// forward, when a shift starts.
+  static const Duration shiftIntroDuration = Duration(seconds: 3);
+
+  /// How fast the dashed ring turns, in full turns per second. Decorative
+  /// only; it is not tied to the shift timer.
+  static const double ringTurnsPerSecond = 0.02;
+
+  /// Opacity of the dashed ring once it has faded in: 0 = invisible,
+  /// 1 = solid white. Change it here.
+  static const double ringOpacity = 0.34;
+
   /// Vertical swipe distance (px, after the touch slop) that counts as a
   /// deliberate swipe. Only the direction matters, not speed or length.
   static const double sceneSwipeMinDistance = 24;

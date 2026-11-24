@@ -13,9 +13,9 @@ import '../core/constants/constants.dart';
 ///                       (e.g. the "change" chip on Logs screen)
 /// ─────────────────────────────────────────────────────────────
 class AppTopBar extends StatelessWidget {
-  final String      timeLabel;
+  final String timeLabel;
   final VoidCallback onSettingsTap;
-  final Widget?     trailing;
+  final Widget? trailing;
 
   /// When set, a calendar icon is shown on the right (unless [trailing]
   /// is provided) that calls this on tap.
@@ -34,7 +34,7 @@ class AppTopBar extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.screenPaddingH,
-        vertical:   AppDimensions.screenPaddingV,
+        vertical: AppDimensions.screenPaddingV,
       ),
       child: Row(
         children: [
@@ -42,7 +42,7 @@ class AppTopBar extends StatelessWidget {
           GestureDetector(
             onTap: onSettingsTap,
             child: Icon(
-              Icons.settings,          // ← swap icon here
+              Icons.settings, // ← swap icon here
               color: Theme.of(context).colorScheme.primary,
               size: 28,
               semanticLabel: 'Settings',

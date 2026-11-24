@@ -71,7 +71,8 @@ class LogEntry {
     return LogEntry(
       id: id,
       date: DateTime(day.year, day.month, day.day),
-      bonusTime: type == LogType.vacation && useBank ? -shiftDuration : Duration.zero,
+      bonusTime:
+          type == LogType.vacation && useBank ? -shiftDuration : Duration.zero,
       userEdited: true,
       onlineWork: type == LogType.remote,
       vacation: type == LogType.vacation,

@@ -30,15 +30,15 @@ final class SettingsLoaded extends SettingsState {
 
   SettingsLoaded copyWith({
     Color? accentColor,
-    bool?  is12HourFormat,
-    int?   alarmDelayMinutes,
+    bool? is12HourFormat,
+    int? alarmDelayMinutes,
     List<Color>? recentColors,
   }) {
     return SettingsLoaded(
-      accentColor:       accentColor       ?? this.accentColor,
-      is12HourFormat:    is12HourFormat    ?? this.is12HourFormat,
+      accentColor: accentColor ?? this.accentColor,
+      is12HourFormat: is12HourFormat ?? this.is12HourFormat,
       alarmDelayMinutes: alarmDelayMinutes ?? this.alarmDelayMinutes,
-      recentColors:      recentColors      ?? this.recentColors,
+      recentColors: recentColors ?? this.recentColors,
     );
   }
 }

@@ -14,7 +14,7 @@ import '../bloc/clock_bloc.dart';
 class ClockInScreen extends StatelessWidget {
   final VoidCallback onSettingsTap;
   final VoidCallback onCalendarTap;
-  final int          navIndex;
+  final int navIndex;
   final ValueChanged<int> onNavTap;
 
   const ClockInScreen({
@@ -32,7 +32,9 @@ class ClockInScreen extends StatelessWidget {
       builder: (context, state) {
         final idle = state as ClockIdle;
         final settingsState = context.watch<SettingsBloc>().state;
-        final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
+        final is12Hour = settingsState is SettingsLoaded
+            ? settingsState.is12HourFormat
+            : true;
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -41,7 +43,8 @@ class ClockInScreen extends StatelessWidget {
               children: [
                 // ── Top bar: gear + time ───────────────────
                 AppTopBar(
-                  timeLabel:     DateFormatter.clockTime(idle.currentTime, is12Hour: is12Hour),
+                  timeLabel: DateFormatter.clockTime(idle.currentTime,
+                      is12Hour: is12Hour),
                   onSettingsTap: onSettingsTap,
                   onCalendarTap: onCalendarTap,
                 ),
@@ -53,7 +56,7 @@ class ClockInScreen extends StatelessWidget {
                     children: [
                       // ── Clock In button ──────────────────
                       OvalActionButton(
-                        label:     'Clock in',  // ← label here
+                        label: 'Clock in', // ← label here
                         onPressed: () => context
                             .read<ClockBloc>()
                             .add(const ClockInRequested()),
@@ -63,7 +66,7 @@ class ClockInScreen extends StatelessWidget {
 
                       // ── Alarm toggle ─────────────────────
                       AlarmToggle(
-                        isOn:      idle.alarmEnabled,
+                        isOn: idle.alarmEnabled,
                         onChanged: (v) => context
                             .read<ClockBloc>()
                             .add(AlarmToggled(enabled: v)),
@@ -75,7 +78,7 @@ class ClockInScreen extends StatelessWidget {
                 // ── Bottom nav ─────────────────────────────
                 AppNavBar(
                   selectedIndex: navIndex,
-                  onItemTapped:  onNavTap,
+                  onItemTapped: onNavTap,
                 ),
               ],
             ),

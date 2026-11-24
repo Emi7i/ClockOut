@@ -26,14 +26,14 @@ class LogDto {
   /// Convert from Map (SQLite result)
   factory LogDto.fromMap(Map<String, dynamic> map) {
     return LogDto(
-      id:             map['log_id'] as int?,
-      dateAdded:      map['date_added'] as String,
-      bonusTime:      map['bonus_time'] as int,
-      userEdited:     map['user_edited'] as int,
-      clockedInTime:  map['clocked_in_time'] as String?,
+      id: map['log_id'] as int?,
+      dateAdded: map['date_added'] as String,
+      bonusTime: map['bonus_time'] as int,
+      userEdited: map['user_edited'] as int,
+      clockedInTime: map['clocked_in_time'] as String?,
       clockedOutTime: map['clocked_out_time'] as String?,
-      onlineWork:     map['online_work'] as int,
-      vacation:       (map['vacation'] as int?) ?? 0,
+      onlineWork: map['online_work'] as int,
+      vacation: (map['vacation'] as int?) ?? 0,
     );
   }
 
@@ -41,13 +41,13 @@ class LogDto {
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'log_id': id,
-      'date_added':       dateAdded,
-      'bonus_time':       bonusTime,
-      'user_edited':      userEdited,
-      'clocked_in_time':  clockedInTime,
+      'date_added': dateAdded,
+      'bonus_time': bonusTime,
+      'user_edited': userEdited,
+      'clocked_in_time': clockedInTime,
       'clocked_out_time': clockedOutTime,
-      'online_work':      onlineWork,
-      'vacation':         vacation,
+      'online_work': onlineWork,
+      'vacation': vacation,
     };
   }
 }

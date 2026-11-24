@@ -23,13 +23,17 @@ class AlarmRingingScreen extends StatelessWidget {
         backgroundColor: AppColors.background,
         body: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () => context.read<ClockBloc>().add(const AlarmStopRequested()),
+          onTap: () =>
+              context.read<ClockBloc>().add(const AlarmStopRequested()),
           child: SafeArea(
             child: BlocBuilder<ClockBloc, ClockState>(
               builder: (context, state) {
-                final now = state is ClockActive ? state.currentTime : DateTime.now();
+                final now =
+                    state is ClockActive ? state.currentTime : DateTime.now();
                 final settingsState = context.watch<SettingsBloc>().state;
-                final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
+                final is12Hour = settingsState is SettingsLoaded
+                    ? settingsState.is12HourFormat
+                    : true;
 
                 return Center(
                   child: Column(
@@ -37,31 +41,25 @@ class AlarmRingingScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _PulsingIcon(),
-
                       const SizedBox(height: AppDimensions.spaceLg),
-
                       Text(
                         DateFormatter.clockTime(now, is12Hour: is12Hour),
                         style: AppTextStyles.timeDisplay,
                       ),
-
                       const SizedBox(height: AppDimensions.spaceSm),
-
-                      const Text('Shift over!', style: AppTextStyles.screenTitle),
-
+                      const Text('Shift over!',
+                          style: AppTextStyles.screenTitle),
                       const SizedBox(height: AppDimensions.spaceXs),
-
                       const Text(
                         'Time to clock out.',
                         style: AppTextStyles.bodyMedium,
                       ),
-
                       const SizedBox(height: AppDimensions.spaceXl),
-
                       OvalActionButton(
                         label: 'Stop the Alarm',
-                        onPressed: () =>
-                            context.read<ClockBloc>().add(const AlarmStopRequested()),
+                        onPressed: () => context
+                            .read<ClockBloc>()
+                            .add(const AlarmStopRequested()),
                       ),
                     ],
                   ),
@@ -80,7 +78,8 @@ class _PulsingIcon extends StatefulWidget {
   State<_PulsingIcon> createState() => _PulsingIconState();
 }
 
-class _PulsingIconState extends State<_PulsingIcon> with SingleTickerProviderStateMixin {
+class _PulsingIconState extends State<_PulsingIcon>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 800),

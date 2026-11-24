@@ -12,16 +12,16 @@ import '../core/constants/constants.dart';
 ///    [subLabel]   – optional line below (e.g. countdown text)
 /// ─────────────────────────────────────────────────────────────
 class AlarmToggle extends StatelessWidget {
-  final bool     isOn;
+  final bool isOn;
   final ValueChanged<bool> onChanged;
-  final String   label;
-  final String?  subLabel;
+  final String label;
+  final String? subLabel;
 
   const AlarmToggle({
     super.key,
     required this.isOn,
     required this.onChanged,
-    this.label    = 'alarm',
+    this.label = 'alarm',
     this.subLabel,
   });
 
@@ -40,7 +40,7 @@ class AlarmToggle extends StatelessWidget {
               onTap: () => onChanged(!isOn),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width:  56,
+                width: 56,
                 height: 32,
                 decoration: BoxDecoration(
                   // filled when on, transparent when off
@@ -53,19 +53,16 @@ class AlarmToggle extends StatelessWidget {
                 ),
                 child: AnimatedAlign(
                   duration: const Duration(milliseconds: 200),
-                  alignment: isOn
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
+                  alignment:
+                      isOn ? Alignment.centerRight : Alignment.centerLeft,
                   child: Padding(
                     padding: const EdgeInsets.all(3),
                     child: Container(
-                      width:  24,
+                      width: 24,
                       height: 24,
                       decoration: BoxDecoration(
                         // knob colour: dark on accent, accent on dark
-                        color: isOn
-                            ? AppColors.background
-                            : accentColor,
+                        color: isOn ? AppColors.background : accentColor,
                         shape: BoxShape.circle,
                       ),
                     ),

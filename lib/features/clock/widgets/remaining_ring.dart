@@ -17,7 +17,7 @@ class RemainingRing extends StatelessWidget {
     final accentColor = Theme.of(context).colorScheme.primary;
 
     return SizedBox(
-      width:  AppDimensions.ovalWidth,
+      width: AppDimensions.ovalWidth,
       height: AppDimensions.ovalHeight,
       child: Stack(
         alignment: Alignment.center,
@@ -27,10 +27,10 @@ class RemainingRing extends StatelessWidget {
           // transparent-background stroke.
           Image.asset(
             'assets/ui/timer_border.png',
-            width:  AppDimensions.ovalWidth,
+            width: AppDimensions.ovalWidth,
             height: AppDimensions.ovalHeight,
-            fit:    BoxFit.contain,
-            color:  accentColor,
+            fit: BoxFit.contain,
+            color: accentColor,
             colorBlendMode: BlendMode.srcIn,
           ),
 
@@ -39,11 +39,13 @@ class RemainingRing extends StatelessWidget {
             children: [
               Text(
                 DateFormatter.duration(remaining),
-                style: AppTextStyles.remainingLarge.copyWith(color: accentColor),
+                style:
+                    AppTextStyles.remainingLarge.copyWith(color: accentColor),
               ),
               Text(
                 'remaining',
-                style: AppTextStyles.remainingSmall.copyWith(color: accentColor),
+                style:
+                    AppTextStyles.remainingSmall.copyWith(color: accentColor),
               ),
             ],
           ),
@@ -54,4 +56,3 @@ class RemainingRing extends StatelessWidget {
 }
 
 // ── Painter removed (now using Image.asset) ───────────────
-

@@ -42,28 +42,29 @@ void main() async {
   await _requestAlertPermissions();
 
   // ── Notifications ──────────────────────────────────────
-  final notificationService = NotificationServiceImpl(alarmService: alarmService);
+  final notificationService =
+      NotificationServiceImpl(alarmService: alarmService);
   await notificationService.initialize();
 
   // ── Repositories ────────────────────────────────────────
   final dbManager = DatabaseManager();
   final activeSessionRepo = ActiveSessionRepositoryImpl(dbManager);
-  final logRepo           = LogRepositoryImpl(dbManager);
-  final settingsRepo      = UserSettingsRepositoryImpl(dbManager);
+  final logRepo = LogRepositoryImpl(dbManager);
+  final settingsRepo = UserSettingsRepositoryImpl(dbManager);
 
   // ── Use cases ──────────────────────────────────────────
-  final clockIn  = ClockInUseCase(activeSessionRepo);
+  final clockIn = ClockInUseCase(activeSessionRepo);
   final clockOut = ClockOutUseCase(activeSessionRepo);
-  final getLogs  = GetLogsUseCase(logRepo);
+  final getLogs = GetLogsUseCase(logRepo);
 
   runApp(
     ClockApp(
-      clockIn:            clockIn,
-      clockOut:           clockOut,
-      getLogs:            getLogs,
-      activeSessionRepo:  activeSessionRepo,
-      logRepo:            logRepo,
-      settingsRepo:       settingsRepo,
+      clockIn: clockIn,
+      clockOut: clockOut,
+      getLogs: getLogs,
+      activeSessionRepo: activeSessionRepo,
+      logRepo: logRepo,
+      settingsRepo: settingsRepo,
       notificationService: notificationService,
     ),
   );
@@ -74,8 +75,8 @@ void _setupBuilders() {
   final dbManager = DatabaseManager();
 
   ActiveSessionRepository.build = () => ActiveSessionRepositoryImpl(dbManager);
-  LogRepository.build           = () => LogRepositoryImpl(dbManager);
-  UserSettingsRepository.build  = () => UserSettingsRepositoryImpl(dbManager);
+  LogRepository.build = () => LogRepositoryImpl(dbManager);
+  UserSettingsRepository.build = () => UserSettingsRepositoryImpl(dbManager);
 }
 
 /// Requests the permissions alerts need to reliably fire: notifications
@@ -88,13 +89,13 @@ Future<void> _requestAlertPermissions() async {
 }
 
 class ClockApp extends StatelessWidget {
-  final ClockInUseCase          clockIn;
-  final ClockOutUseCase         clockOut;
-  final GetLogsUseCase          getLogs;
+  final ClockInUseCase clockIn;
+  final ClockOutUseCase clockOut;
+  final GetLogsUseCase getLogs;
   final ActiveSessionRepository activeSessionRepo;
-  final LogRepository           logRepo;
-  final UserSettingsRepository  settingsRepo;
-  final NotificationService     notificationService;
+  final LogRepository logRepo;
+  final UserSettingsRepository settingsRepo;
+  final NotificationService notificationService;
 
   const ClockApp({
     super.key,
@@ -115,16 +116,16 @@ class ClockApp extends StatelessWidget {
         RepositoryProvider<LogRepository>.value(value: logRepo),
         BlocProvider(
           create: (_) => ClockBloc(
-            clockIn:            clockIn,
-            clockOut:           clockOut,
-            repository:         activeSessionRepo,
+            clockIn: clockIn,
+            clockOut: clockOut,
+            repository: activeSessionRepo,
             settingsRepository: settingsRepo,
             notificationService: notificationService,
           ),
         ),
         BlocProvider(
           create: (_) => LogsBloc(
-            getLogs:    getLogs,
+            getLogs: getLogs,
             repository: logRepo,
           )..add(const LogsStarted()),
         ),
@@ -141,16 +142,16 @@ class ClockApp extends StatelessWidget {
               : AppColors.accent;
 
           return MaterialApp(
-            title:        'Work Clock',
+            title: 'Work Clock',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
               scaffoldBackgroundColor: AppColors.background,
               colorScheme: ColorScheme.dark(
-                primary:   accentColor,
+                primary: accentColor,
                 secondary: accentColor,
-                surface:   AppColors.surface,
+                surface: AppColors.surface,
               ),
-              fontFamily:  'Roboto',
+              fontFamily: 'Roboto',
               useMaterial3: true,
             ),
             home: const AppShell(),

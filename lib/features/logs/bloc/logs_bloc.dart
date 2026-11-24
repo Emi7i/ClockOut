@@ -13,21 +13,21 @@ part 'logs_state.dart';
 ///  logs happens in the calendar's add/edit widget.)
 /// ─────────────────────────────────────────────────────────────
 class LogsBloc extends Bloc<LogsEvent, LogsState> {
-  final GetLogsUseCase  _getLogs;
-  final LogRepository   _repository;
+  final GetLogsUseCase _getLogs;
+  final LogRepository _repository;
 
-  static const double _weeklyTarget  = 40.0;
+  static const double _weeklyTarget = 40.0;
   static const double _monthlyTarget = 160.0;
 
   LogsBloc({
     required GetLogsUseCase getLogs,
     required LogRepository repository,
-  })  : _getLogs    = getLogs,
+  })  : _getLogs = getLogs,
         _repository = repository,
         super(const LogsLoading()) {
-    on<LogsStarted>           (_onStarted);
+    on<LogsStarted>(_onStarted);
     on<LogsDeleteAllRequested>(_onDeleteAll);
-    on<LogsPeriodToggled>     (_onPeriodToggled);
+    on<LogsPeriodToggled>(_onPeriodToggled);
   }
 
   Future<void> _onStarted(LogsStarted _, Emitter<LogsState> emit) async {
@@ -35,9 +35,9 @@ class LogsBloc extends Bloc<LogsEvent, LogsState> {
     try {
       final entries = await _getLogs();
       emit(LogsLoaded(
-        entries:      entries,
-        hoursWorked:  _hoursWorkedFor(entries, true),
-        hoursTarget:  _weeklyTarget,
+        entries: entries,
+        hoursWorked: _hoursWorkedFor(entries, true),
+        hoursTarget: _weeklyTarget,
       ));
     } catch (e) {
       emit(LogsError(e.toString()));
@@ -49,11 +49,12 @@ class LogsBloc extends Bloc<LogsEvent, LogsState> {
     Emitter<LogsState> emit,
   ) async {
     await _repository.deleteAllLogs();
-    final isWeeklyView = state is LogsLoaded ? (state as LogsLoaded).isWeeklyView : true;
+    final isWeeklyView =
+        state is LogsLoaded ? (state as LogsLoaded).isWeeklyView : true;
     emit(LogsLoaded(
-      entries:      const [],
-      hoursWorked:  0,
-      hoursTarget:  isWeeklyView ? _weeklyTarget : _monthlyTarget,
+      entries: const [],
+      hoursWorked: 0,
+      hoursTarget: isWeeklyView ? _weeklyTarget : _monthlyTarget,
       isWeeklyView: isWeeklyView,
     ));
   }
@@ -62,9 +63,9 @@ class LogsBloc extends Bloc<LogsEvent, LogsState> {
     if (state case LogsLoaded loaded) {
       final isNowWeekly = !loaded.isWeeklyView;
       emit(LogsLoaded(
-        entries:      loaded.entries,
-        hoursWorked:  _hoursWorkedFor(loaded.entries, isNowWeekly),
-        hoursTarget:  isNowWeekly ? _weeklyTarget : _monthlyTarget,
+        entries: loaded.entries,
+        hoursWorked: _hoursWorkedFor(loaded.entries, isNowWeekly),
+        hoursTarget: isNowWeekly ? _weeklyTarget : _monthlyTarget,
         isWeeklyView: isNowWeekly,
       ));
     }

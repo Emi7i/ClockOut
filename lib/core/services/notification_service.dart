@@ -23,14 +23,14 @@ abstract interface class NotificationService {
 
   Future<void> scheduleShiftEndNotification({
     required DateTime scheduledDate,
-    required int      delayMinutes,
-    required bool     alarmEnabled,
+    required int delayMinutes,
+    required bool alarmEnabled,
   });
   Future<void> scheduleRepeatNotification({
     required DateTime scheduledDate,
-    required int      delayMinutes,
-    required bool     alarmEnabled,
-    required int      notificationId,
+    required int delayMinutes,
+    required bool alarmEnabled,
+    required int notificationId,
   });
   Future<void> cancelAllShiftNotifications();
   Future<void> cancelNotification(int id);

@@ -50,15 +50,15 @@ class SceneBackdrop extends StatelessWidget {
       children: [
         // Night reveal · nebula (top pink glow + bottom glow)
         l.place(0, 0, 388, 468,
-            child: _fade(SceneTimeline.nebulaOpacity(p), _img('nebula_top.png'))),
+            child:
+                _fade(SceneTimeline.nebulaOpacity(p), _img('nebula_top.png'))),
         l.place(0, 146, 361, 503,
             child: _fade(
                 SceneTimeline.nebulaOpacity(p), _img('nebula_bottom.png'))),
         // Night reveal · horizon glow
         l.place(0, 503, 388, 261,
             bottomAnchored: true,
-            child: _fade(
-                SceneTimeline.horizonOpacity(p), _img('horizon.png'))),
+            child: _fade(SceneTimeline.horizonOpacity(p), _img('horizon.png'))),
         // Day atmosphere
         l.place(0, 324, 388, 440,
             bottomAnchored: true,
@@ -70,8 +70,7 @@ class SceneBackdrop extends StatelessWidget {
         // Aurora appears with the night reveal
         l.place(0, 543, 388, 159,
             bottomAnchored: true,
-            child: _fade(
-                SceneTimeline.nebulaOpacity(p), _img('aurora.png'))),
+            child: _fade(SceneTimeline.nebulaOpacity(p), _img('aurora.png'))),
         // Earth: fixed globe (ellipse) + drifting surface texture
         l.place(-2, 593, 393, 352,
             bottomAnchored: true,

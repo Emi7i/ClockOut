@@ -8,16 +8,19 @@ import '../../../common_widgets/common_widgets.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../settings/bloc/settings_bloc.dart';
+import '../bloc/clock_bloc.dart';
 import '../widgets/scene/scene_backdrop.dart';
 import '../widgets/scene/scene_swipe.dart';
-import '../widgets/scene/ufo_and_card.dart';
+import '../widgets/scene/shift_layer.dart';
 
 /// ─────────────────────────────────────────────────────────────
 ///  HOME SCENE
-///  The Figma Day↔Night scene. ONE value, [_progress] (0 = Day,
-///  1 = Night), drives every layer through `SceneTimeline`.
-///  Playing forward, in reverse and (phase 3) following the
-///  finger all move this same value.
+///  The Figma Day↔Night scene, for BOTH clock states (idle and clocked in).
+///  Three independent values drive it:
+///   * [_progress]  0 = Day, 1 = Night (every backdrop layer, via
+///                  SceneTimeline; the swipe and the debug controls move it)
+///   * [_intro]     the 3 s "Start Shift" UFO timeline, played once forward
+///   * [_ring]      endless, decorative turning of the dashed ring
 /// ─────────────────────────────────────────────────────────────
 class HomeScreen extends StatefulWidget {
   final VoidCallback onSettingsTap;
@@ -33,8 +36,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   /// 0 = Day (timeline at t=0), 1 = Night. Linear: the Figma easing lives in
   /// the per-layer tracks, not here.
   late final AnimationController _progress = AnimationController(
@@ -42,14 +44,43 @@ class _HomeScreenState extends State<HomeScreen>
     duration: AppConstants.sceneDuration,
   );
 
+  /// 0 = idle (card showing), 1 = UFO parked on the ring with beam and ring.
+  late final AnimationController _intro = AnimationController(
+    vsync: this,
+    duration: AppConstants.shiftIntroDuration,
+  );
+
+  /// One full turn per 1 / ringTurnsPerSecond seconds; wraps seamlessly.
+  late final AnimationController _ring = AnimationController(
+    vsync: this,
+    duration:
+        Duration(microseconds: (1e6 / AppConstants.ringTurnsPerSecond).round()),
+  )..repeat();
+
   final ValueNotifier<String> _debugLog =
       ValueNotifier<String>('swipe up / down');
 
   @override
+  void initState() {
+    super.initState();
+    // Coming back with a shift already running (app restart, tab switch):
+    // no intro, go straight to the "shift running" state.
+    if (context.read<ClockBloc>().state is ClockActive) _intro.value = 1;
+  }
+
+  @override
   void dispose() {
     _debugLog.dispose();
+    _ring.dispose();
+    _intro.dispose();
     _progress.dispose();
     super.dispose();
+  }
+
+  void _startShift() {
+    if (_intro.value != 0 || _intro.isAnimating) return;
+    _intro.forward();
+    context.read<ClockBloc>().add(const ClockInRequested());
   }
 
   /// Debug: play to the other state.
@@ -69,31 +100,48 @@ class _HomeScreenState extends State<HomeScreen>
     final is12Hour =
         settings is SettingsLoaded ? settings.is12HourFormat : true;
 
-    return Scaffold(
-      backgroundColor: AppColors.skyTop,
-      body: SceneSwipe(
-        controller: _progress,
-        debugLog: _debugLog,
-        child: Stack(
-          children: [
-            Positioned.fill(child: SceneBackdrop(progress: _progress)),
-            Positioned.fill(child: UfoAndCard(progress: _progress)),
-            SafeArea(
-              child: Column(
-                children: [
-                  LiveClockTopBar(
-                    is12Hour: is12Hour,
-                    onSettingsTap: widget.onSettingsTap,
-                    onCalendarTap: widget.onCalendarTap,
-                  ),
-                  const Spacer(),
-                  if (kDebugMode)
-                    _DebugScrubber(
-                        progress: _progress, onPlay: _toggle, log: _debugLog),
-                ],
+    return BlocListener<ClockBloc, ClockState>(
+      listener: (context, state) {
+        // Shift ended (phase 6 turns this into the full clock-out sequence).
+        if (state is ClockIdle && _intro.value != 0) _intro.reverse();
+        // Shift started from somewhere else than the card.
+        if (state is ClockActive && _intro.value == 0 && !_intro.isAnimating) {
+          _intro.forward();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.skyTop,
+        body: SceneSwipe(
+          controller: _progress,
+          debugLog: _debugLog,
+          child: Stack(
+            children: [
+              Positioned.fill(child: SceneBackdrop(progress: _progress)),
+              Positioned.fill(
+                child: ShiftLayer(
+                  scene: _progress,
+                  intro: _intro,
+                  ringTurns: _ring,
+                  onStartShift: _startShift,
+                ),
               ),
-            ),
-          ],
+              SafeArea(
+                child: Column(
+                  children: [
+                    LiveClockTopBar(
+                      is12Hour: is12Hour,
+                      onSettingsTap: widget.onSettingsTap,
+                      onCalendarTap: widget.onCalendarTap,
+                    ),
+                    const Spacer(),
+                    if (kDebugMode)
+                      _DebugScrubber(
+                          progress: _progress, onPlay: _toggle, log: _debugLog),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -125,6 +173,13 @@ class _DebugScrubber extends StatelessWidget {
             ),
             Row(
               children: [
+                if (context.watch<ClockBloc>().state is ClockActive)
+                  TextButton(
+                    onPressed: () => context
+                        .read<ClockBloc>()
+                        .add(const ClockOutRequested()),
+                    child: const Text('Clock out (debug)'),
+                  ),
                 TextButton(
                   onPressed: onPlay,
                   child: Text(progress.value >= 0.5 ? '◀ Day' : 'Night ▶'),

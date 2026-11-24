@@ -97,3 +97,92 @@ abstract final class SceneTimeline {
   /// UFO, beam, dashed ring and Start Shift card fade out first.
   static double ufoAndCardOpacity(double p) => sampleTrack(_ufoAndCard, p);
 }
+
+/// The "Start Shift" UFO timeline of the Figma UFO frame (3 s, played once,
+/// forward). Every layer reads its state from ONE intro progress value
+/// (0..1) through these tracks.
+abstract final class ShiftTimeline {
+  static const _symmetric = Cubic(0.5, 0, 0.5, 1);
+  static const _overshoot = Cubic(0, 0.284, 0, 1.284);
+
+  /// Final intro translation, in design pixels (also the divisor for the
+  /// "how far has it travelled" blend used on taller screens).
+  static const double endTranslateY = 391.509857;
+  static const double endRotation = -0.872665;
+  static const double endScale = 0.42;
+
+  static const _tx = [
+    Keyframe(0, 0),
+    Keyframe(0.23183, 0),
+    Keyframe(0.45297, 246.214447),
+    Keyframe(0.50630, 247.287048),
+    Keyframe(0.59237, -123.712982),
+    Keyframe(0.87432, -152.155746),
+    Keyframe(1, -152.155746),
+  ];
+  static const _ty = [
+    Keyframe(0, 0),
+    Keyframe(0.23183, 0),
+    Keyframe(0.45297, 68.665894),
+    Keyframe(0.50630, 101.583008),
+    Keyframe(0.59237, 314.583008),
+    Keyframe(0.87432, endTranslateY),
+    Keyframe(1, endTranslateY),
+  ];
+  static const _rot = [
+    Keyframe(0, 0),
+    Keyframe(0.23011, 0, _symmetric),
+    Keyframe(0.43093, 0.106429, _symmetric),
+    Keyframe(0.595, -0.471808, _symmetric),
+    Keyframe(0.76802, -0.14802, _symmetric),
+    Keyframe(0.87432, endRotation),
+    Keyframe(1, endRotation),
+  ];
+  static const _scale = [
+    Keyframe(0, 1),
+    Keyframe(0.23183, 1, _overshoot),
+    Keyframe(0.87432, endScale),
+    Keyframe(1, endScale),
+  ];
+  static const _beam = [
+    Keyframe(0, 0),
+    Keyframe(0.76792, 0, _symmetric),
+    Keyframe(0.83892, 1),
+    Keyframe(1, 1),
+  ];
+  static const _ring = [
+    Keyframe(0, 0),
+    Keyframe(0.76712, 0, _symmetric),
+    Keyframe(0.87453, 1),
+    Keyframe(1, 1),
+  ];
+  static const _signScaleY = [
+    Keyframe(0, 1),
+    Keyframe(0.00022, 1, _symmetric),
+    Keyframe(0.13934, 0),
+    Keyframe(1, 0),
+  ];
+  static const _signLift = [
+    Keyframe(0, 0),
+    Keyframe(0.00022, 0),
+    Keyframe(0.13934, -90.979), // -88.08 minus the frame's 2.899 base offset
+    Keyframe(1, -90.979),
+  ];
+  static const _signText = [
+    Keyframe(0, 1, _symmetric),
+    Keyframe(0.00469, 0),
+    Keyframe(1, 0),
+  ];
+
+  static double translateX(double t) => sampleTrack(_tx, t);
+  static double translateY(double t) => sampleTrack(_ty, t);
+  static double rotation(double t) => sampleTrack(_rot, t);
+  static double scale(double t) => sampleTrack(_scale, t);
+  static double beamOpacity(double t) => sampleTrack(_beam, t);
+  /// Fade-in of the dashed ring, 0..1 (its final opacity is
+  /// [AppConstants.ringOpacity]; apply it where the ring is drawn).
+  static double ringFade(double t) => sampleTrack(_ring, t);
+  static double signScaleY(double t) => sampleTrack(_signScaleY, t);
+  static double signLift(double t) => sampleTrack(_signLift, t);
+  static double signTextOpacity(double t) => sampleTrack(_signText, t);
+}

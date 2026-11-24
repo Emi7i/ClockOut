@@ -18,19 +18,19 @@ part 'clock_state.dart';
 ///  countdown and time display stay live.
 /// ─────────────────────────────────────────────────────────────
 class ClockBloc extends Bloc<ClockEvent, ClockState> {
-  final ClockInUseCase              _clockIn;
-  final ClockOutUseCase             _clockOut;
-  final ActiveSessionRepository     _repository;
-  final UserSettingsRepository      _settingsRepository;
-  final NotificationService         _notificationService;
+  final ClockInUseCase _clockIn;
+  final ClockOutUseCase _clockOut;
+  final ActiveSessionRepository _repository;
+  final UserSettingsRepository _settingsRepository;
+  final NotificationService _notificationService;
 
   static const Duration _shiftDuration = AppConstants.shiftDuration;
 
-  Timer?              _ticker;
+  Timer? _ticker;
   StreamSubscription? _alertFiredSubscription;
-  DateTime?           _nextAlarmAt;
-  bool                _isRinging = false;
-  int                 _currentNotificationId = NotificationService.shiftAlarmId;
+  DateTime? _nextAlarmAt;
+  bool _isRinging = false;
+  int _currentNotificationId = NotificationService.shiftAlarmId;
 
   ClockBloc({
     required ClockInUseCase clockIn,
@@ -38,26 +38,27 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     required ActiveSessionRepository repository,
     required UserSettingsRepository settingsRepository,
     required NotificationService notificationService,
-  })  : _clockIn             = clockIn,
-        _clockOut            = clockOut,
-        _repository          = repository,
-        _settingsRepository  = settingsRepository,
+  })  : _clockIn = clockIn,
+        _clockOut = clockOut,
+        _repository = repository,
+        _settingsRepository = settingsRepository,
         _notificationService = notificationService,
         super(const ClockLoading()) {
-    on<ClockStarted>      (_onStarted);
-    on<ClockInRequested>  (_onClockIn);
-    on<ClockInTimeEdited> (_onClockInTimeEdited);
-    on<ClockOutRequested> (_onClockOut);
-    on<AlarmToggled>      (_onAlarmToggled);
+    on<ClockStarted>(_onStarted);
+    on<ClockInRequested>(_onClockIn);
+    on<ClockInTimeEdited>(_onClockInTimeEdited);
+    on<ClockOutRequested>(_onClockOut);
+    on<AlarmToggled>(_onAlarmToggled);
     on<AlarmStopRequested>(_onAlarmStop);
-    on<AlertFired>        (_onAlertFired);
-    on<ClockTicked>       (_onTicked);
+    on<AlertFired>(_onAlertFired);
+    on<ClockTicked>(_onTicked);
 
     _listenToAlertFired();
   }
 
   void _listenToAlertFired() {
-    _alertFiredSubscription = _notificationService.alertFiredStream.listen((id) {
+    _alertFiredSubscription =
+        _notificationService.alertFiredStream.listen((id) {
       if (NotificationService.allIds.contains(id)) {
         add(AlertFired(id));
       }
@@ -67,9 +68,9 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   // ── Handlers ──────────────────────────────────────────────
 
   Future<void> _onStarted(
-      ClockStarted event,
-      Emitter<ClockState> emit,
-      ) async {
+    ClockStarted event,
+    Emitter<ClockState> emit,
+  ) async {
     try {
       final active = await _repository.getActiveSession();
       if (active == null) {
@@ -93,11 +94,12 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   }
 
   Future<void> _onClockIn(
-      ClockInRequested event,
-      Emitter<ClockState> emit,
-      ) async {
+    ClockInRequested event,
+    Emitter<ClockState> emit,
+  ) async {
     try {
-      final bool initialAlarmEnabled = state is ClockIdle ? (state as ClockIdle).alarmEnabled : false;
+      final bool initialAlarmEnabled =
+          state is ClockIdle ? (state as ClockIdle).alarmEnabled : false;
       final session = await _clockIn(alarmEnabled: initialAlarmEnabled);
       _startTicker();
 
@@ -110,9 +112,9 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   }
 
   Future<void> _onClockInTimeEdited(
-      ClockInTimeEdited event,
-      Emitter<ClockState> emit,
-      ) async {
+    ClockInTimeEdited event,
+    Emitter<ClockState> emit,
+  ) async {
     if (state is! ClockActive) return;
     try {
       final activeState = state as ClockActive;
@@ -128,15 +130,15 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   }
 
   Future<void> _onClockOut(
-      ClockOutRequested event,
-      Emitter<ClockState> emit,
-      ) async {
+    ClockOutRequested event,
+    Emitter<ClockState> emit,
+  ) async {
     try {
       _ticker?.cancel();
       await _notificationService.cancelAllShiftNotifications();
 
-      _nextAlarmAt             = null;
-      _isRinging               = false;
+      _nextAlarmAt = null;
+      _isRinging = false;
       await _clockOut();
 
       emit(ClockIdle(currentTime: DateTime.now()));
@@ -145,7 +147,8 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     }
   }
 
-  Future<void> _onAlarmStop(AlarmStopRequested event, Emitter<ClockState> emit) async {
+  Future<void> _onAlarmStop(
+      AlarmStopRequested event, Emitter<ClockState> emit) async {
     stopActiveAlarm();
     _isRinging = false;
     if (state case ClockActive active) {
@@ -154,9 +157,9 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   }
 
   Future<void> _onAlarmToggled(
-      AlarmToggled event,
-      Emitter<ClockState> emit,
-      ) async {
+    AlarmToggled event,
+    Emitter<ClockState> emit,
+  ) async {
     await _repository.setAlarmSound(enabled: event.enabled);
     // cancel the current notif gracefully
     stopActiveAlarm();
@@ -166,7 +169,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
       emit(_buildActiveState(active.clockedInAt, event.enabled));
     } else if (state case ClockIdle idle) {
       emit(ClockIdle(
-        currentTime:  idle.currentTime,
+        currentTime: idle.currentTime,
         alarmEnabled: event.enabled,
       ));
     }
@@ -207,7 +210,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   // ── Helpers ───────────────────────────────────────────────
 
   /// This function schedules the next alarm automatically
-  void scheduleNextAlarm({bool override = false}) async{
+  void scheduleNextAlarm({bool override = false}) async {
     try {
       final active = await _repository.getActiveSession();
       final settings = await _settingsRepository.getSettings();
@@ -230,7 +233,8 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
         }
 
         _nextAlarmAt = nextRepeat;
-        var notifToSchedule = override ? _currentNotificationId : _getNextRepeatId();
+        var notifToSchedule =
+            override ? _currentNotificationId : _getNextRepeatId();
 
         await _notificationService.scheduleRepeatNotification(
           scheduledDate: nextRepeat,
@@ -240,12 +244,12 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
           notificationId: notifToSchedule,
         );
       }
-    }catch (e) {
+    } catch (e) {
       developer.log(e.toString());
     }
   }
 
-  void stopActiveAlarm() async{
+  void stopActiveAlarm() async {
     await _notificationService.cancelNotification(_currentNotificationId);
   }
 
@@ -253,7 +257,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   /// It doesn't change the _currentNotificationId
   int _getNextRepeatId() {
     // If _currentNotificationId == 4 return 2
-    if (_currentNotificationId >= NotificationService.repeatPoolId.last){
+    if (_currentNotificationId >= NotificationService.repeatPoolId.last) {
       return NotificationService.repeatPoolId[0];
     } else {
       return _currentNotificationId + 1;
@@ -261,8 +265,8 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
   }
 
   ClockActive _buildActiveState(DateTime clockedInAt, bool alarmEnabled) {
-    final now       = DateTime.now();
-    final elapsed   = now.difference(clockedInAt);
+    final now = DateTime.now();
+    final elapsed = now.difference(clockedInAt);
     final remaining = _shiftDuration - elapsed;
 
     Duration? nextAlarmIn;
@@ -272,12 +276,12 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     }
 
     return ClockActive(
-      currentTime:  now,
-      clockedInAt:  clockedInAt,
-      remaining:    remaining.isNegative ? Duration.zero : remaining,
+      currentTime: now,
+      clockedInAt: clockedInAt,
+      remaining: remaining.isNegative ? Duration.zero : remaining,
       alarmEnabled: alarmEnabled,
-      nextAlarmIn:  nextAlarmIn,
-      isRinging:    _isRinging,
+      nextAlarmIn: nextAlarmIn,
+      isRinging: _isRinging,
     );
   }
 
@@ -285,7 +289,7 @@ class ClockBloc extends Bloc<ClockEvent, ClockState> {
     _ticker?.cancel();
     _ticker = Timer.periodic(
       const Duration(seconds: 1),
-          (_) => add(const ClockTicked()),
+      (_) => add(const ClockTicked()),
     );
   }
 

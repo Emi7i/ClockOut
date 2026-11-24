@@ -79,9 +79,10 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     final added = <LogEntry>[];
     for (final entry in entries) {
       final day = MonthGrid.dateOnly(entry.date);
-      final taken = state.logOn(day) != null || added.any(
-        (a) => MonthGrid.isSameDay(a.date, day),
-      );
+      final taken = state.logOn(day) != null ||
+          added.any(
+            (a) => MonthGrid.isSameDay(a.date, day),
+          );
       if (taken) continue;
       await _repository.addLog(entry);
       added.add(entry);

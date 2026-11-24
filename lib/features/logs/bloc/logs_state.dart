@@ -27,8 +27,7 @@ final class LogsLoaded extends LogsState {
     this.isWeeklyView = true,
   });
 
-  double get progress =>
-      (hoursWorked / hoursTarget).clamp(0.0, 1.0);
+  double get progress => (hoursWorked / hoursTarget).clamp(0.0, 1.0);
 }
 
 final class LogsError extends LogsState {

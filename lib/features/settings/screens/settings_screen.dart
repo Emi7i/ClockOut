@@ -15,8 +15,8 @@ import '../widgets/delete_logs_button.dart';
 ///  Back arrow + title, three setting rows, delete button.
 /// ─────────────────────────────────────────────────────────────
 class SettingsScreen extends StatelessWidget {
-  final VoidCallback      onBack;
-  final int               navIndex;
+  final VoidCallback onBack;
+  final int navIndex;
   final ValueChanged<int> onNavTap;
 
   const SettingsScreen({
@@ -54,20 +54,20 @@ class SettingsScreen extends StatelessWidget {
                     children: [
                       // ── Pick accent colour ─────────────
                       SettingsRow(
-                        icon:    Icons.palette_outlined,
-                        label:   'Pick accent Color',
+                        icon: Icons.palette_outlined,
+                        label: 'Pick accent Color',
                         accentColor: accentColor,
-                        onTap:   () => _showColorPicker(context, state),
+                        onTap: () => _showColorPicker(context, state),
                       ),
 
                       const SizedBox(height: AppDimensions.spaceLg),
 
                       // ── Pick clock format ──────────────
                       SettingsRow(
-                        icon:    Icons.access_time_rounded,
-                        label:   'Pick clock format',
+                        icon: Icons.access_time_rounded,
+                        label: 'Pick clock format',
                         accentColor: accentColor,
-                        onTap:   () => context
+                        onTap: () => context
                             .read<SettingsBloc>()
                             .add(const ClockFormatToggled()),
                         trailing: state is SettingsLoaded
@@ -82,10 +82,10 @@ class SettingsScreen extends StatelessWidget {
 
                       // ── Pick time delay ────────────────
                       SettingsRow(
-                        icon:    Icons.more_time_rounded,
-                        label:   'Pick time delay',
+                        icon: Icons.more_time_rounded,
+                        label: 'Pick time delay',
                         accentColor: accentColor,
-                        onTap:   () => _showDelayPicker(context, state),
+                        onTap: () => _showDelayPicker(context, state),
                         trailing: state is SettingsLoaded
                             ? Text(
                                 '+ ${state.alarmDelayMinutes}m',
@@ -100,10 +100,10 @@ class SettingsScreen extends StatelessWidget {
 
                       // ── Fix Notifications ────────────────
                       SettingsRow(
-                        icon:    Icons.notification_important_outlined,
-                        label:   'Fix delayed alerts',
+                        icon: Icons.notification_important_outlined,
+                        label: 'Fix delayed alerts',
                         accentColor: accentColor,
-                        onTap:   () => _requestAdvancedPermissions(context),
+                        onTap: () => _requestAdvancedPermissions(context),
                         trailing: Icon(
                           Icons.chevron_right_rounded,
                           color: accentColor.withValues(alpha: 0.5),
@@ -132,7 +132,7 @@ class SettingsScreen extends StatelessWidget {
                 // ── Bottom nav ─────────────────────────────
                 AppNavBar(
                   selectedIndex: navIndex,
-                  onItemTapped:  onNavTap,
+                  onItemTapped: onNavTap,
                 ),
               ],
             ),
@@ -167,7 +167,8 @@ class SettingsScreen extends StatelessWidget {
     // it's fallen out of (or never entered) the recently-picked history.
     final swatches = [
       ...state.recentColors,
-      if (!state.recentColors.any((c) => c.toARGB32() == AppColors.accent.toARGB32()))
+      if (!state.recentColors
+          .any((c) => c.toARGB32() == AppColors.accent.toARGB32()))
         AppColors.accent,
     ];
 
@@ -184,12 +185,12 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   ColorPicker(
                     pickerColor: tempColor,
-                    onColorChanged: (color) => setState(() => tempColor = color),
+                    onColorChanged: (color) =>
+                        setState(() => tempColor = color),
                     enableAlpha: false,
                     labelTypes: const [ColorLabelType.hex],
                     pickerAreaHeightPercent: 0.7,
                   ),
-
                   const SizedBox(height: AppDimensions.spaceMd),
                   Align(
                     alignment: Alignment.centerLeft,
@@ -203,7 +204,7 @@ class SettingsScreen extends StatelessWidget {
                         GestureDetector(
                           onTap: () => setState(() => tempColor = recent),
                           child: Container(
-                            width:  32,
+                            width: 32,
                             height: 32,
                             decoration: BoxDecoration(
                               color: recent,
@@ -212,7 +213,9 @@ class SettingsScreen extends StatelessWidget {
                                 color: recent.toARGB32() == tempColor.toARGB32()
                                     ? Colors.white
                                     : Colors.black26,
-                                width: recent.toARGB32() == tempColor.toARGB32() ? 3 : 1,
+                                width: recent.toARGB32() == tempColor.toARGB32()
+                                    ? 3
+                                    : 1,
                               ),
                             ),
                           ),
@@ -246,58 +249,58 @@ class SettingsScreen extends StatelessWidget {
 
   void _showDelayPicker(BuildContext context, SettingsState state) {
     if (state is! SettingsLoaded) return;
-    
+
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
         int tempDelay = state.alarmDelayMinutes;
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: AppColors.surface,
-              title: Text('Alarm delay', style: AppTextStyles.bodyLarge),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    tempDelay >= 60 
-                      ? "${(tempDelay / 60).floor()}h ${tempDelay % 60}m" 
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: Text('Alarm delay', style: AppTextStyles.bodyLarge),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  tempDelay >= 60
+                      ? "${(tempDelay / 60).floor()}h ${tempDelay % 60}m"
                       : "$tempDelay minutes",
-                    style: AppTextStyles.bodyMedium.copyWith(color: state.accentColor),
-                  ),
-                  const SizedBox(height: 16),
-                  Slider(
-                    value: tempDelay.toDouble(),
-                    min: 1,
-                    max: 180,
-                    divisions: 179,
-                    activeColor: state.accentColor,
-                    inactiveColor: state.accentColor.withValues(alpha: 0.2),
-                    onChanged: (val) {
-                      setState(() => tempDelay = val.toInt());
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: Text('Cancel', style: AppTextStyles.bodySmall),
+                  style: AppTextStyles.bodyMedium
+                      .copyWith(color: state.accentColor),
                 ),
-                TextButton(
-                  onPressed: () {
-                    context.read<SettingsBloc>().add(TimeDelayChanged(tempDelay));
-                    Navigator.of(dialogContext).pop();
+                const SizedBox(height: 16),
+                Slider(
+                  value: tempDelay.toDouble(),
+                  min: 1,
+                  max: 180,
+                  divisions: 179,
+                  activeColor: state.accentColor,
+                  inactiveColor: state.accentColor.withValues(alpha: 0.2),
+                  onChanged: (val) {
+                    setState(() => tempDelay = val.toInt());
                   },
-                  child: Text(
-                    'Set', 
-                    style: AppTextStyles.bodySmall.copyWith(color: state.accentColor),
-                  ),
                 ),
               ],
-            );
-          }
-        );
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text('Cancel', style: AppTextStyles.bodySmall),
+              ),
+              TextButton(
+                onPressed: () {
+                  context.read<SettingsBloc>().add(TimeDelayChanged(tempDelay));
+                  Navigator.of(dialogContext).pop();
+                },
+                child: Text(
+                  'Set',
+                  style: AppTextStyles.bodySmall
+                      .copyWith(color: state.accentColor),
+                ),
+              ),
+            ],
+          );
+        });
       },
     );
   }
@@ -306,7 +309,7 @@ class SettingsScreen extends StatelessWidget {
 // ── Settings header ───────────────────────────────────────────
 class _SettingsHeader extends StatelessWidget {
   final VoidCallback onBack;
-  final Color        accentColor;
+  final Color accentColor;
 
   const _SettingsHeader({required this.onBack, required this.accentColor});
 
@@ -315,7 +318,7 @@ class _SettingsHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.screenPaddingH,
-        vertical:   AppDimensions.screenPaddingV,
+        vertical: AppDimensions.screenPaddingV,
       ),
       child: Row(
         children: [
@@ -324,9 +327,9 @@ class _SettingsHeader extends StatelessWidget {
             onTap: onBack,
             child: Icon(
               Icons.arrow_back_ios_new_rounded,
-              color:           accentColor,
-              size:            22,
-              semanticLabel:   'Back',
+              color: accentColor,
+              size: 22,
+              semanticLabel: 'Back',
             ),
           ),
           const SizedBox(width: AppDimensions.spaceMd),

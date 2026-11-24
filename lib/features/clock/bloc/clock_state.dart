@@ -27,16 +27,16 @@ final class ClockIdle extends ClockState {
 final class ClockActive extends ClockState {
   final DateTime currentTime;
   final DateTime clockedInAt;
-  final Duration remaining;     // time until end-of-shift
+  final Duration remaining; // time until end-of-shift
   final bool alarmEnabled;
-  final Duration? nextAlarmIn;  // null when alarm is off
-  final bool isRinging;         // true when an alarm is currently firing
+  final Duration? nextAlarmIn; // null when alarm is off
+  final bool isRinging; // true when an alarm is currently firing
 
   const ClockActive({
     required this.currentTime,
     required this.clockedInAt,
     required this.remaining,
-    this.alarmEnabled  = false,
+    this.alarmEnabled = false,
     this.nextAlarmIn,
     this.isRinging = false,
   });

@@ -27,9 +27,9 @@ class WavePainter extends CustomPainter {
     // hills read as continuing off the sides rather than dropping into a
     // full valley. Every peak/valley below is a true turning point with a
     // flat tangent, so the curve reads as one continuous wave.
-    const double peakY   = 0;
+    const double peakY = 0;
     final double valleyY = AppDimensions.waveHeight;
-    final double edgeY   = AppDimensions.waveHeight * 0.35;
+    final double edgeY = AppDimensions.waveHeight * 0.35;
 
     final double x0 = 0;
     final double x1 = size.width * 0.25;
@@ -38,10 +38,13 @@ class WavePainter extends CustomPainter {
     final double x4 = size.width;
 
     path.moveTo(x0, edgeY);
-    _waveSegment(path, x0, edgeY,   x1, peakY);   // left edge (shallow) → hill 1 peak
-    _waveSegment(path, x1, peakY,   x2, valleyY); // hill 1 peak → middle valley (full dip)
-    _waveSegment(path, x2, valleyY, x3, peakY);   // middle valley → hill 2 peak
-    _waveSegment(path, x3, peakY,   x4, edgeY);   // hill 2 peak → right edge (shallow)
+    _waveSegment(
+        path, x0, edgeY, x1, peakY); // left edge (shallow) → hill 1 peak
+    _waveSegment(
+        path, x1, peakY, x2, valleyY); // hill 1 peak → middle valley (full dip)
+    _waveSegment(path, x2, valleyY, x3, peakY); // middle valley → hill 2 peak
+    _waveSegment(
+        path, x3, peakY, x4, edgeY); // hill 2 peak → right edge (shallow)
 
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);

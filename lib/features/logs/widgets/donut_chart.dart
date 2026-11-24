@@ -28,7 +28,7 @@ class DonutChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width:  size,
+      width: size,
       height: size,
       child: CustomPaint(
         painter: _DonutPainter(
@@ -56,7 +56,7 @@ class DonutChart extends StatelessWidget {
 // ── Painter ───────────────────────────────────────────────────
 class _DonutPainter extends CustomPainter {
   final double progress;
-  final Color  accentColor;
+  final Color accentColor;
 
   const _DonutPainter({required this.progress, required this.accentColor});
 
@@ -64,7 +64,7 @@ class _DonutPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width / 2) - AppDimensions.donutStrokeWidth / 2;
-    final rect   = Rect.fromCircle(center: center, radius: radius);
+    final rect = Rect.fromCircle(center: center, radius: radius);
 
     // ── Track (full dashed ring) ─────────────────────────
     _drawDashedArc(
@@ -72,7 +72,7 @@ class _DonutPainter extends CustomPainter {
       rect,
       startAngle: -pi / 2,
       sweepAngle: 2 * pi,
-      color:      AppColors.textMuted,
+      color: AppColors.textMuted,
     );
 
     // ── Progress arc ─────────────────────────────────────
@@ -82,7 +82,7 @@ class _DonutPainter extends CustomPainter {
         rect,
         startAngle: -pi / 2,
         sweepAngle: 2 * pi * progress,
-        color:      accentColor,
+        color: accentColor,
       );
     }
   }
@@ -95,21 +95,21 @@ class _DonutPainter extends CustomPainter {
     required Color color,
   }) {
     final paint = Paint()
-      ..color       = color
-      ..style       = PaintingStyle.stroke
+      ..color = color
+      ..style = PaintingStyle.stroke
       ..strokeWidth = AppDimensions.donutStrokeWidth
-      ..strokeCap   = StrokeCap.round;
+      ..strokeCap = StrokeCap.round;
 
     // ── Dash config ───────────────────────────────────────
     // Exactly 8 evenly-spaced blobs around the full circle, with a
     // wide gap between them for clear separation.
     const segmentCount = 8;
     const dashFraction = 0.4; // portion of each segment that's a visible blob
-    const step         = (2 * pi) / segmentCount;
-    const dashAngle    = step * dashFraction;
+    const step = (2 * pi) / segmentCount;
+    const dashAngle = step * dashFraction;
 
     double angle = startAngle;
-    final end    = startAngle + sweepAngle;
+    final end = startAngle + sweepAngle;
 
     while (angle < end) {
       final dashEnd = (angle + dashAngle).clamp(angle, end);

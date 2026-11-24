@@ -32,9 +32,9 @@ abstract final class AppColors {
   static const Color accent = Color(0xFFC8F000);
 
   // ── Text ──────────────────────────────────────────────────
-  static const Color textPrimary   = Color(0xFFFFFFFF);
+  static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFFCCCCCC);
-  static const Color textMuted     = Color(0xFF888888);
+  static const Color textMuted = Color(0xFF888888);
 
   // ── Semantic ──────────────────────────────────────────────
   /// Positive log entries (early / overtime)

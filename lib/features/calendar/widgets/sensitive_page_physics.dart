@@ -50,7 +50,9 @@ class SensitivePagePhysics extends ScrollPhysics {
     }
 
     final targetPixels = target * position.viewportDimension;
-    if ((targetPixels - position.pixels).abs() < tolerance.distance) return null;
+    if ((targetPixels - position.pixels).abs() < tolerance.distance) {
+      return null;
+    }
 
     return ScrollSpringSimulation(
       spring,

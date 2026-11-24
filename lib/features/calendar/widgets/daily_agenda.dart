@@ -29,7 +29,8 @@ class _DailyAgendaState extends State<DailyAgenda> {
     _shownMonth = context.read<CalendarBloc>().state.visibleMonth;
   }
 
-  GlobalKey _keyFor(DateTime day) => _sectionKeys.putIfAbsent(day, GlobalKey.new);
+  GlobalKey _keyFor(DateTime day) =>
+      _sectionKeys.putIfAbsent(day, GlobalKey.new);
 
   /// Every day of [month]. Days without logs show "No event".
   List<DateTime> _daysFor(DateTime month) {
@@ -47,8 +48,8 @@ class _DailyAgendaState extends State<DailyAgenda> {
 
     // New month: start at today if it's in this month, otherwise the 1st.
     final today = state.today;
-    final todayInMonth =
-        today.year == state.visibleMonth.year && today.month == state.visibleMonth.month;
+    final todayInMonth = today.year == state.visibleMonth.year &&
+        today.month == state.visibleMonth.month;
     _jumpTo(todayInMonth ? today : state.visibleMonth, animate: false);
   }
 

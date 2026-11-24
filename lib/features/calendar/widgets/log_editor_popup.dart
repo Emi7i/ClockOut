@@ -90,7 +90,10 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
   List<DateTime> get _days {
     if (!_isVacation) return [_day];
     return [
-      for (var d = _from; !d.isAfter(_to); d = DateTime(d.year, d.month, d.day + 1)) d,
+      for (var d = _from;
+          !d.isAfter(_to);
+          d = DateTime(d.year, d.month, d.day + 1))
+        d,
     ];
   }
 
@@ -160,12 +163,14 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
     });
   }
 
-  Future<void> _pickTime(TimeOfDay? initial, ValueChanged<TimeOfDay> onPicked) async {
+  Future<void> _pickTime(
+      TimeOfDay? initial, ValueChanged<TimeOfDay> onPicked) async {
     final picked = await showTimePicker(
       context: context,
       initialTime: initial ?? TimeOfDay.now(),
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: !_is12Hour),
+        data:
+            MediaQuery.of(context).copyWith(alwaysUse24HourFormat: !_is12Hour),
         child: child!,
       ),
     );
@@ -211,8 +216,9 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
     widget.onClose();
   }
 
-  String _timeText(TimeOfDay? t) =>
-      t == null ? '' : DateFormatter.clockTime(_at(_day, t), is12Hour: _is12Hour);
+  String _timeText(TimeOfDay? t) => t == null
+      ? ''
+      : DateFormatter.clockTime(_at(_day, t), is12Hour: _is12Hour);
 
   // ── Build ─────────────────────────────────────────────────────
 
@@ -305,7 +311,8 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
                         color: AppColors.popupCancel,
                         onTap: widget.onClose,
                         child: const Center(
-                          child: Text('Cancel', style: AppTextStyles.popupButton),
+                          child:
+                              Text('Cancel', style: AppTextStyles.popupButton),
                         ),
                       ),
                       const SizedBox(width: 9),

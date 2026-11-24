@@ -128,7 +128,8 @@ class DatabaseHelper {
   /// Handles database schema updates (Migrations).
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      await db.execute('ALTER TABLE $tableSettings ADD COLUMN $colRecentColors TEXT');
+      await db.execute(
+          'ALTER TABLE $tableSettings ADD COLUMN $colRecentColors TEXT');
     }
     if (oldVersion < 3) {
       await db.execute(

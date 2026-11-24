@@ -19,12 +19,13 @@ class LogListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = switch (entry.status) {
       LogStatus.onTime => AppTextStyles.logNeutral,
-      LogStatus.early  => AppTextStyles.logPositive,
-      LogStatus.late   => AppTextStyles.logNegative,
+      LogStatus.early => AppTextStyles.logPositive,
+      LogStatus.late => AppTextStyles.logNegative,
     };
 
     final settingsState = context.watch<SettingsBloc>().state;
-    final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
+    final is12Hour =
+        settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
 
     final dateTimeLabel = entry.clockedOutTime != null
         ? '${DateFormatter.logDate(entry.date)}  ${DateFormatter.clockTime(entry.clockedOutTime!, is12Hour: is12Hour)}'
@@ -32,7 +33,7 @@ class LogListTile extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        vertical:   AppDimensions.spaceXs,
+        vertical: AppDimensions.spaceXs,
         horizontal: AppDimensions.spaceSm,
       ),
       child: Row(

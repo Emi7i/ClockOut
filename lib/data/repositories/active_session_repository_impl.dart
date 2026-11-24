@@ -52,7 +52,8 @@ class ActiveSessionRepositoryImpl implements ActiveSessionRepository {
 
     final db = await _dbManager.database;
     await db.transaction((txn) async {
-      await txn.insert(DatabaseHelper.tableLogs, LogMapper.toDto(logEntry).toMap());
+      await txn.insert(
+          DatabaseHelper.tableLogs, LogMapper.toDto(logEntry).toMap());
       await txn.delete(DatabaseHelper.tableActiveSession);
     });
 
@@ -66,7 +67,6 @@ class ActiveSessionRepositoryImpl implements ActiveSessionRepository {
 
   @override
   Future<void> setAlarmSound({required bool enabled}) async {
-
     final activeSession = await getActiveSession();
     if (activeSession != null) {
       final updated = activeSession.copyWith(alarmEnabled: enabled);

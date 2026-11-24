@@ -15,31 +15,32 @@ import '../core/constants/constants.dart';
 ///    [hatchOpacity] – opacity of the crosshatch fill (0.0–1.0)
 /// ─────────────────────────────────────────────────────────────
 class OvalActionButton extends StatelessWidget {
-  final String    label;
+  final String label;
   final VoidCallback onPressed;
-  final double    width;
-  final double    height;
-  final Color?    strokeColor;
-  final double    hatchOpacity;
+  final double width;
+  final double height;
+  final Color? strokeColor;
+  final double hatchOpacity;
 
   const OvalActionButton({
     super.key,
     required this.label,
     required this.onPressed,
-    this.width        = AppDimensions.ovalWidth,
-    this.height       = AppDimensions.ovalHeight,
+    this.width = AppDimensions.ovalWidth,
+    this.height = AppDimensions.ovalHeight,
     this.strokeColor,
     this.hatchOpacity = 0.30,
   });
 
   @override
   Widget build(BuildContext context) {
-    final resolvedStrokeColor = strokeColor ?? Theme.of(context).colorScheme.primary;
+    final resolvedStrokeColor =
+        strokeColor ?? Theme.of(context).colorScheme.primary;
 
     return GestureDetector(
       onTap: onPressed,
       child: SizedBox(
-        width:  width,
+        width: width,
         height: height,
         child: Stack(
           alignment: Alignment.center,
@@ -49,10 +50,10 @@ class OvalActionButton extends StatelessWidget {
             // just a transparent-background stroke.
             Image.asset(
               'assets/ui/timer_border.png',
-              width:  width,
+              width: width,
               height: height,
-              fit:    BoxFit.contain,
-              color:  resolvedStrokeColor,
+              fit: BoxFit.contain,
+              color: resolvedStrokeColor,
               colorBlendMode: BlendMode.srcIn,
             ),
 
@@ -63,7 +64,7 @@ class OvalActionButton extends StatelessWidget {
               child: CustomPaint(
                 size: Size(width, height),
                 painter: _OvalButtonPainter(
-                  strokeColor:  resolvedStrokeColor,
+                  strokeColor: resolvedStrokeColor,
                   hatchOpacity: hatchOpacity,
                 ),
               ),
@@ -79,7 +80,7 @@ class OvalActionButton extends StatelessWidget {
 
 // ── Internal painter ──────────────────────────────────────────
 class _OvalButtonPainter extends CustomPainter {
-  final Color  strokeColor;
+  final Color strokeColor;
   final double hatchOpacity;
 
   const _OvalButtonPainter({
@@ -99,12 +100,12 @@ class _OvalButtonPainter extends CustomPainter {
 
     // ── Diagonal hatch lines ──────────────────────────────
     final hatchPaint = Paint()
-      ..color       = strokeColor.withValues(alpha: hatchOpacity)
+      ..color = strokeColor.withValues(alpha: hatchOpacity)
       ..strokeWidth = 1.5;
 
     const spacing = 8.0;
     final diagonal = sqrt(size.width * size.width + size.height * size.height);
-    final count    = (diagonal / spacing).ceil() + 4;
+    final count = (diagonal / spacing).ceil() + 4;
 
     for (int i = -count; i < count; i++) {
       final offset = i * spacing.toDouble();

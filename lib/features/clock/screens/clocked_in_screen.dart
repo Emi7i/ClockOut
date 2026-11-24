@@ -14,9 +14,9 @@ import '../widgets/clock_out_button.dart';
 ///  State: [ClockActive]
 /// ─────────────────────────────────────────────────────────────
 class ClockedInScreen extends StatelessWidget {
-  final VoidCallback      onSettingsTap;
+  final VoidCallback onSettingsTap;
   final VoidCallback onCalendarTap;
-  final int               navIndex;
+  final int navIndex;
   final ValueChanged<int> onNavTap;
 
   const ClockedInScreen({
@@ -34,23 +34,26 @@ class ClockedInScreen extends StatelessWidget {
       builder: (context, state) {
         final active = state as ClockActive;
         final settingsState = context.watch<SettingsBloc>().state;
-        final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
+        final is12Hour = settingsState is SettingsLoaded
+            ? settingsState.is12HourFormat
+            : true;
 
         return Scaffold(
           backgroundColor: AppColors.background,
           body: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            if (active.isRinging) {
-              context.read<ClockBloc>().add(const AlarmStopRequested());
-            }
-          },
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              if (active.isRinging) {
+                context.read<ClockBloc>().add(const AlarmStopRequested());
+              }
+            },
             child: SafeArea(
               child: Column(
                 children: [
                   // ── Top bar ────────────────────────────────
                   AppTopBar(
-                    timeLabel:     DateFormatter.clockTime(active.currentTime, is12Hour: is12Hour),
+                    timeLabel: DateFormatter.clockTime(active.currentTime,
+                        is12Hour: is12Hour),
                     onSettingsTap: onSettingsTap,
                     onCalendarTap: onCalendarTap,
                   ),
@@ -66,10 +69,11 @@ class ClockedInScreen extends StatelessWidget {
                             onTap: () async {
                               final TimeOfDay? newTime = await showTimePicker(
                                 context: context,
-                                initialTime: TimeOfDay.fromDateTime(active.clockedInAt),
+                                initialTime:
+                                    TimeOfDay.fromDateTime(active.clockedInAt),
                                 builder: (context, child) => MediaQuery(
-                                  data: MediaQuery.of(context)
-                                      .copyWith(alwaysUse24HourFormat: !is12Hour),
+                                  data: MediaQuery.of(context).copyWith(
+                                      alwaysUse24HourFormat: !is12Hour),
                                   child: child!,
                                 ),
                               );
@@ -87,10 +91,13 @@ class ClockedInScreen extends StatelessWidget {
 
                                 // If the selected time is in the future, assume it was yesterday
                                 if (newDateTime.isAfter(now)) {
-                                  newDateTime = newDateTime.subtract(const Duration(days: 1));
+                                  newDateTime = newDateTime
+                                      .subtract(const Duration(days: 1));
                                 }
 
-                                context.read<ClockBloc>().add(ClockInTimeEdited(newDateTime));
+                                context
+                                    .read<ClockBloc>()
+                                    .add(ClockInTimeEdited(newDateTime));
                               }
                             },
                             child: Text(
@@ -106,7 +113,7 @@ class ClockedInScreen extends StatelessWidget {
                           const SizedBox(height: AppDimensions.spaceLg),
 
                           AlarmToggle(
-                            isOn:      active.alarmEnabled,
+                            isOn: active.alarmEnabled,
                             onChanged: (v) => context
                                 .read<ClockBloc>()
                                 .add(AlarmToggled(enabled: v)),
@@ -120,16 +127,20 @@ class ClockedInScreen extends StatelessWidget {
                         ] else ...[
                           // ── After shift: Big button + Alarm countdown ──
                           OvalActionButton(
-                            label:     active.isRinging ? 'Stop the Alarm' : 'Clock out',
+                            label: active.isRinging
+                                ? 'Stop the Alarm'
+                                : 'Clock out',
                             onPressed: () => active.isRinging
-                                ? context.read<ClockBloc>().add(const AlarmStopRequested())
+                                ? context
+                                    .read<ClockBloc>()
+                                    .add(const AlarmStopRequested())
                                 : _confirmClockOut(context),
                           ),
 
                           const SizedBox(height: AppDimensions.spaceLg),
 
                           AlarmToggle(
-                            isOn:      active.alarmEnabled,
+                            isOn: active.alarmEnabled,
                             onChanged: (v) => context
                                 .read<ClockBloc>()
                                 .add(AlarmToggled(enabled: v)),
@@ -145,7 +156,7 @@ class ClockedInScreen extends StatelessWidget {
                   // ── Bottom nav ─────────────────────────────
                   AppNavBar(
                     selectedIndex: navIndex,
-                    onItemTapped:  onNavTap,
+                    onItemTapped: onNavTap,
                   ),
                 ],
               ),
@@ -179,7 +190,8 @@ class ClockedInScreen extends StatelessWidget {
               Navigator.pop(context);
               context.read<ClockBloc>().add(const ClockOutRequested());
             },
-            child: const Text('Clock out', style: AppTextStyles.destructiveButton),
+            child:
+                const Text('Clock out', style: AppTextStyles.destructiveButton),
           ),
         ],
       ),

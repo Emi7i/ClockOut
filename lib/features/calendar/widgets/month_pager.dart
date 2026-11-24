@@ -95,7 +95,8 @@ class _MonthPage extends StatelessWidget {
 
     // The week kept in view when condensed: the selected one, if shown here.
     final focusedWeek = weeks
-        .indexWhere((w) => w.any((d) => MonthGrid.isSameDay(d, state.selectedDay)))
+        .indexWhere(
+            (w) => w.any((d) => MonthGrid.isSameDay(d, state.selectedDay)))
         .clamp(0, weeks.length - 1);
 
     return Padding(
@@ -114,7 +115,9 @@ class _MonthPage extends StatelessWidget {
                   builder: (_, child) => Transform.translate(
                     offset: Offset(
                       0,
-                      -focusedWeek * MonthPager.rowHeight * (1 - expansion.value),
+                      -focusedWeek *
+                          MonthPager.rowHeight *
+                          (1 - expansion.value),
                     ),
                     child: child,
                   ),

@@ -14,8 +14,8 @@ import '../widgets/log_list_tile.dart';
 ///  State: [LogsLoaded]
 /// ─────────────────────────────────────────────────────────────
 class LogsScreen extends StatelessWidget {
-  final VoidCallback      onSettingsTap;
-  final int               navIndex;
+  final VoidCallback onSettingsTap;
+  final int navIndex;
   final ValueChanged<int> onNavTap;
 
   const LogsScreen({
@@ -30,7 +30,9 @@ class LogsScreen extends StatelessWidget {
     return BlocBuilder<LogsBloc, LogsState>(
       builder: (context, state) {
         final settingsState = context.watch<SettingsBloc>().state;
-        final is12Hour = settingsState is SettingsLoaded ? settingsState.is12HourFormat : true;
+        final is12Hour = settingsState is SettingsLoaded
+            ? settingsState.is12HourFormat
+            : true;
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -39,7 +41,8 @@ class LogsScreen extends StatelessWidget {
               children: [
                 // ── Top bar ─────────────────────────────────
                 AppTopBar(
-                  timeLabel:     DateFormatter.clockTime(DateTime.now(), is12Hour: is12Hour),
+                  timeLabel: DateFormatter.clockTime(DateTime.now(),
+                      is12Hour: is12Hour),
                   onSettingsTap: onSettingsTap,
                 ),
 
@@ -61,7 +64,7 @@ class LogsScreen extends StatelessWidget {
                 // ── Bottom nav ─────────────────────────────
                 AppNavBar(
                   selectedIndex: navIndex,
-                  onItemTapped:  onNavTap,
+                  onItemTapped: onNavTap,
                 ),
               ],
             ),
@@ -87,12 +90,14 @@ class _LoadedBody extends StatelessWidget {
         GestureDetector(
           onTap: () => context.read<LogsBloc>().add(const LogsPeriodToggled()),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppDimensions.spaceMd),
+            padding:
+                const EdgeInsets.symmetric(vertical: AppDimensions.spaceMd),
             child: DonutChart(
               hoursWorked: state.hoursWorked,
               hoursTarget: state.hoursTarget,
-              progress:    state.progress,
-              periodLabel: state.isWeeklyView ? 'hours this week' : 'hours this month',
+              progress: state.progress,
+              periodLabel:
+                  state.isWeeklyView ? 'hours this week' : 'hours this month',
             ),
           ),
         ),
@@ -104,7 +109,7 @@ class _LoadedBody extends StatelessWidget {
               horizontal: AppDimensions.screenPaddingH,
             ),
             decoration: BoxDecoration(
-              color:        AppColors.surface,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
             ),
             child: state.entries.isEmpty
@@ -117,7 +122,7 @@ class _LoadedBody extends StatelessWidget {
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppDimensions.spaceMd,
-                      vertical:   AppDimensions.spaceSm,
+                      vertical: AppDimensions.spaceSm,
                     ),
                     itemCount: state.entries.length,
                     itemBuilder: (context, i) =>
@@ -131,4 +136,3 @@ class _LoadedBody extends StatelessWidget {
     );
   }
 }
-

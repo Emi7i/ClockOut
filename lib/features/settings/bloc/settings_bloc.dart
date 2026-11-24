@@ -20,20 +20,21 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     required UserSettingsRepository settingsRepo,
   })  : _settingsRepo = settingsRepo,
         super(const SettingsLoading()) {
-    on<SettingsStarted>   (_onStarted);
+    on<SettingsStarted>(_onStarted);
     on<AccentColorChanged>(_onAccentColorChanged);
     on<ClockFormatToggled>(_onClockFormatToggled);
-    on<TimeDelayChanged>  (_onTimeDelayChanged);
+    on<TimeDelayChanged>(_onTimeDelayChanged);
   }
 
-  Future<void> _onStarted(SettingsStarted _, Emitter<SettingsState> emit) async {
+  Future<void> _onStarted(
+      SettingsStarted _, Emitter<SettingsState> emit) async {
     try {
       final settings = await _settingsRepo.getSettings();
       emit(SettingsLoaded(
-        accentColor:       Color(settings.accentColorHex),
-        is12HourFormat:    settings.is12HourFormat,
+        accentColor: Color(settings.accentColorHex),
+        is12HourFormat: settings.is12HourFormat,
         alarmDelayMinutes: settings.alarmDelayMinutes,
-        recentColors:      settings.recentAccentColors.map(Color.new).toList(),
+        recentColors: settings.recentAccentColors.map(Color.new).toList(),
       ));
     } catch (e) {
       emit(SettingsError(e.toString()));
@@ -50,15 +51,15 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         event.color.toARGB32(),
       );
       final updated = loaded.copyWith(
-        accentColor:  event.color,
+        accentColor: event.color,
         recentColors: updatedRecentHex.map(Color.new).toList(),
       );
       emit(updated);
       await _settingsRepo.updateSettings(UserSettings(
-        accentColorHex:      updated.accentColor.toARGB32(),
-        is12HourFormat:      updated.is12HourFormat,
-        alarmDelayMinutes:   updated.alarmDelayMinutes,
-        recentAccentColors:  updatedRecentHex,
+        accentColorHex: updated.accentColor.toARGB32(),
+        is12HourFormat: updated.is12HourFormat,
+        alarmDelayMinutes: updated.alarmDelayMinutes,
+        recentAccentColors: updatedRecentHex,
       ));
     }
   }
@@ -71,10 +72,11 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       final updated = loaded.copyWith(is12HourFormat: !loaded.is12HourFormat);
       emit(updated);
       await _settingsRepo.updateSettings(UserSettings(
-        accentColorHex:     updated.accentColor.toARGB32(),
-        is12HourFormat:     updated.is12HourFormat,
-        alarmDelayMinutes:  updated.alarmDelayMinutes,
-        recentAccentColors: updated.recentColors.map((c) => c.toARGB32()).toList(),
+        accentColorHex: updated.accentColor.toARGB32(),
+        is12HourFormat: updated.is12HourFormat,
+        alarmDelayMinutes: updated.alarmDelayMinutes,
+        recentAccentColors:
+            updated.recentColors.map((c) => c.toARGB32()).toList(),
       ));
     }
   }
@@ -87,10 +89,11 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       final updated = loaded.copyWith(alarmDelayMinutes: event.minutes);
       emit(updated);
       await _settingsRepo.updateSettings(UserSettings(
-        accentColorHex:     updated.accentColor.toARGB32(),
-        is12HourFormat:     updated.is12HourFormat,
-        alarmDelayMinutes:  updated.alarmDelayMinutes,
-        recentAccentColors: updated.recentColors.map((c) => c.toARGB32()).toList(),
+        accentColorHex: updated.accentColor.toARGB32(),
+        is12HourFormat: updated.is12HourFormat,
+        alarmDelayMinutes: updated.alarmDelayMinutes,
+        recentAccentColors:
+            updated.recentColors.map((c) => c.toARGB32()).toList(),
       ));
     }
   }

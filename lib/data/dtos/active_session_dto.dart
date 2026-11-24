@@ -17,19 +17,19 @@ class ActiveSessionDto {
 
   factory ActiveSessionDto.fromMap(Map<String, dynamic> map) {
     return ActiveSessionDto(
-      clockedInTime:          map['clocked_in_time'] as String,
-      nextAlarmIn:            map['next_alarm_in'] as int?,
-      accumulatedBonusTime:   map['accumulated_bonus_time'] as int,
-      alarmOn:                map['alarm_on'] as int,
+      clockedInTime: map['clocked_in_time'] as String,
+      nextAlarmIn: map['next_alarm_in'] as int?,
+      accumulatedBonusTime: map['accumulated_bonus_time'] as int,
+      alarmOn: map['alarm_on'] as int,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'clocked_in_time':          clockedInTime,
-      'next_alarm_in':            nextAlarmIn,
-      'accumulated_bonus_time':   accumulatedBonusTime,
-      'alarm_on':                alarmOn,
+      'clocked_in_time': clockedInTime,
+      'next_alarm_in': nextAlarmIn,
+      'accumulated_bonus_time': accumulatedBonusTime,
+      'alarm_on': alarmOn,
     };
   }
 }

@@ -19,10 +19,10 @@ class UserSettingsDto {
 
   factory UserSettingsDto.fromMap(Map<String, dynamic> map) {
     return UserSettingsDto(
-      id:          map['settings_id'] as int?,
+      id: map['settings_id'] as int?,
       accentColor: map['accent_color'] as String?,
       clockFormat: map['clock_format'] as String?,
-      timeDelay:   map['time_delay'] as int,
+      timeDelay: map['time_delay'] as int,
       recentColors: map['recent_colors'] as String?,
     );
   }
@@ -30,9 +30,9 @@ class UserSettingsDto {
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'settings_id': id,
-      'accent_color':  accentColor,
-      'clock_format':  clockFormat,
-      'time_delay':    timeDelay,
+      'accent_color': accentColor,
+      'clock_format': clockFormat,
+      'time_delay': timeDelay,
       'recent_colors': recentColors,
     };
   }

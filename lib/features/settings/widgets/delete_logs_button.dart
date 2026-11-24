@@ -11,8 +11,9 @@ class DeleteLogsButton extends StatelessWidget {
   final VoidCallback onConfirmed;
 
   /// ← Change button copy here
-  final String label          = 'Delete all Logs';
-  final String confirmMessage = 'This will permanently delete all clock logs. Continue?';
+  final String label = 'Delete all Logs';
+  final String confirmMessage =
+      'This will permanently delete all clock logs. Continue?';
 
   const DeleteLogsButton({super.key, required this.onConfirmed});
 
@@ -24,7 +25,7 @@ class DeleteLogsButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color:        AppColors.negative.withValues(alpha: 0.08),
+          color: AppColors.negative.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           border: Border.all(
             color: AppColors.negative,
@@ -36,7 +37,7 @@ class DeleteLogsButton extends StatelessWidget {
         child: Text(
           label,
           textAlign: TextAlign.center,
-          style:     AppTextStyles.destructiveButton,
+          style: AppTextStyles.destructiveButton,
         ),
       ),
     );
@@ -47,8 +48,8 @@ class DeleteLogsButton extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title:   Text('Delete all logs?', style: AppTextStyles.bodyLarge),
-        content: Text(confirmMessage,      style: AppTextStyles.bodyMedium),
+        title: Text('Delete all logs?', style: AppTextStyles.bodyLarge),
+        content: Text(confirmMessage, style: AppTextStyles.bodyMedium),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),

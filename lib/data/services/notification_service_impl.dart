@@ -17,18 +17,21 @@ class NotificationServiceImpl implements NotificationService {
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
-  NotificationServiceImpl({required AlarmService alarmService}) : _alarmService = alarmService;
+  NotificationServiceImpl({required AlarmService alarmService})
+      : _alarmService = alarmService;
 
   @override
   Future<void> initialize() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
     await _localNotifications.initialize(
-      settings: const InitializationSettings(android: androidSettings, iOS: iosSettings),
+      settings: const InitializationSettings(
+          android: androidSettings, iOS: iosSettings),
     );
   }
 
@@ -64,8 +67,8 @@ class NotificationServiceImpl implements NotificationService {
   @override
   Future<void> scheduleShiftEndNotification({
     required DateTime scheduledDate,
-    required int      delayMinutes,
-    required bool     alarmEnabled,
+    required int delayMinutes,
+    required bool alarmEnabled,
   }) async {
     await cancelAllShiftNotifications();
 
@@ -81,9 +84,9 @@ class NotificationServiceImpl implements NotificationService {
   @override
   Future<void> scheduleRepeatNotification({
     required DateTime scheduledDate,
-    required int      delayMinutes,
-    required bool     alarmEnabled,
-    required int      notificationId,
+    required int delayMinutes,
+    required bool alarmEnabled,
+    required int notificationId,
   }) async {
     await _alarmService.setAlarm(
       id: notificationId,

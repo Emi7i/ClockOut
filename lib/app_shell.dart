@@ -7,7 +7,6 @@ import '../features/calendar/screens/calendar_screen.dart';
 import '../features/clock/bloc/clock_bloc.dart';
 import '../features/clock/screens/alarm_ringing_screen.dart';
 import '../features/clock/screens/home_screen.dart';
-import '../features/clock/screens/clocked_in_screen.dart';
 import '../features/logs/bloc/logs_bloc.dart';
 import '../features/logs/screens/logs_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
@@ -31,8 +30,8 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
-  int  _navIndex      = 0;
-  bool _showSettings  = false;
+  int _navIndex = 0;
+  bool _showSettings = false;
   bool _ringingScreenOpen = false;
 
   @override
@@ -64,7 +63,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       context.read<LogsBloc>().add(const LogsStarted());
     }
     setState(() {
-      _navIndex     = index;
+      _navIndex = index;
       _showSettings = false;
     });
   }
@@ -75,14 +74,13 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         create: (_) => CalendarBloc(
           getLogs: context.read<GetLogsUseCase>(),
           repository: context.read<LogRepository>(),
-        )
-          ..add(const CalendarStarted()),
+        )..add(const CalendarStarted()),
         child: const CalendarScreen(),
       ),
     ));
   }
 
-  void _openSettings()  => setState(() => _showSettings = true);
+  void _openSettings() => setState(() => _showSettings = true);
   void _closeSettings() => setState(() => _showSettings = false);
 
   bool _isRinging(ClockState state) => state is ClockActive && state.isRinging;
@@ -90,7 +88,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return BlocListener<ClockBloc, ClockState>(
-      listenWhen: (previous, current) => _isRinging(previous) != _isRinging(current),
+      listenWhen: (previous, current) =>
+          _isRinging(previous) != _isRinging(current),
       listener: (context, state) {
         final navigator = Navigator.of(context, rootNavigator: true);
         if (_isRinging(state) && !_ringingScreenOpen) {
@@ -114,41 +113,41 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     // ── Settings overlay ──────────────────────────────────
     if (_showSettings) {
       return SettingsScreen(
-        onBack:    _closeSettings,
-        navIndex:  _navIndex,
-        onNavTap:  _onNavTap,
+        onBack: _closeSettings,
+        navIndex: _navIndex,
+        onNavTap: _onNavTap,
       );
     }
 
     // ── Tab content ───────────────────────────────────────
     return switch (_navIndex) {
       0 => _ClockTabSwitcher(
-           onSettingsTap: _openSettings,
-           onCalendarTap: _openCalendar,
-           navIndex:      _navIndex,
-           onNavTap:      _onNavTap,
-         ),
+          onSettingsTap: _openSettings,
+          onCalendarTap: _openCalendar,
+          navIndex: _navIndex,
+          onNavTap: _onNavTap,
+        ),
       1 => LogsScreen(
-           onSettingsTap: _openSettings,
-           navIndex:      _navIndex,
-           onNavTap:      _onNavTap,
-         ),
+          onSettingsTap: _openSettings,
+          navIndex: _navIndex,
+          onNavTap: _onNavTap,
+        ),
       _ => _ClockTabSwitcher(
-           onSettingsTap: _openSettings,
-           onCalendarTap: _openCalendar,
-           navIndex:      _navIndex,
-           onNavTap:      _onNavTap,
-         ),
+          onSettingsTap: _openSettings,
+          onCalendarTap: _openCalendar,
+          navIndex: _navIndex,
+          onNavTap: _onNavTap,
+        ),
     };
   }
 }
 
-/// Switches between [HomeScreen] and [ClockedInScreen]
-/// based on [ClockBloc] state.
+/// Shows the [HomeScreen] scene for both clock states (it reads the
+/// [ClockBloc] itself), and a spinner / error while loading.
 class _ClockTabSwitcher extends StatelessWidget {
-  final VoidCallback      onSettingsTap;
-  final VoidCallback      onCalendarTap;
-  final int               navIndex;
+  final VoidCallback onSettingsTap;
+  final VoidCallback onCalendarTap;
+  final int navIndex;
   final ValueChanged<int> onNavTap;
 
   const _ClockTabSwitcher({
@@ -162,13 +161,7 @@ class _ClockTabSwitcher extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ClockBloc, ClockState>(
       builder: (context, state) => switch (state) {
-        ClockActive() => ClockedInScreen(
-            onSettingsTap: onSettingsTap,
-            onCalendarTap: onCalendarTap,
-            navIndex:      navIndex,
-            onNavTap:      onNavTap,
-          ),
-        ClockIdle() => HomeScreen(
+        ClockActive() || ClockIdle() => HomeScreen(
             onSettingsTap: onSettingsTap,
             onCalendarTap: onCalendarTap,
           ),

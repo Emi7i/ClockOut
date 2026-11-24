@@ -8,13 +8,13 @@ import '../../../core/constants/constants.dart';
 ///  SettingsScreen — no other changes needed.
 /// ─────────────────────────────────────────────────────────────
 class SettingsRow extends StatelessWidget {
-  final IconData  icon;
-  final String    label;
+  final IconData icon;
+  final String label;
   final VoidCallback onTap;
-  final Color?    accentColor;
+  final Color? accentColor;
 
   /// Optional widget on the far right (e.g. "12h" / "+15" label).
-  final Widget?   trailing;
+  final Widget? trailing;
 
   const SettingsRow({
     super.key,
@@ -37,10 +37,10 @@ class SettingsRow extends StatelessWidget {
         children: [
           // ── Icon box ────────────────────────────────────
           Container(
-            width:  AppDimensions.settingIconBoxSize,
+            width: AppDimensions.settingIconBoxSize,
             height: AppDimensions.settingIconBoxSize,
             decoration: BoxDecoration(
-              color:        colorDim,
+              color: colorDim,
               borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
               border: Border.all(
                 color: AppColors.borderDashed,

@@ -24,14 +24,14 @@ class UserSettings {
   });
 
   UserSettings copyWith({
-    int?  accentColorHex,
+    int? accentColorHex,
     bool? is12HourFormat,
-    int?  alarmDelayMinutes,
+    int? alarmDelayMinutes,
     List<int>? recentAccentColors,
   }) {
     return UserSettings(
-      accentColorHex:    accentColorHex    ?? this.accentColorHex,
-      is12HourFormat:    is12HourFormat    ?? this.is12HourFormat,
+      accentColorHex: accentColorHex ?? this.accentColorHex,
+      is12HourFormat: is12HourFormat ?? this.is12HourFormat,
       alarmDelayMinutes: alarmDelayMinutes ?? this.alarmDelayMinutes,
       recentAccentColors: recentAccentColors ?? this.recentAccentColors,
     );
