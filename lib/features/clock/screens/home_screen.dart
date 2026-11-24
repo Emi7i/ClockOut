@@ -11,16 +11,21 @@ import '../../settings/bloc/settings_bloc.dart';
 import '../bloc/clock_bloc.dart';
 import '../widgets/scene/scene_backdrop.dart';
 import '../widgets/scene/scene_swipe.dart';
+import '../widgets/scene/scene_timeline.dart';
 import '../widgets/scene/shift_clock.dart';
 import '../widgets/scene/shift_layer.dart';
+import '../widgets/scene/ufo_pose.dart';
 
 /// ─────────────────────────────────────────────────────────────
 ///  HOME SCENE
 ///  The Figma Day↔Night scene, for BOTH clock states (idle and clocked in).
-///  Three independent values drive it:
+///  Independent values drive it:
 ///   * [_progress]  0 = Day, 1 = Night (every backdrop layer, via
-///                  SceneTimeline; the swipe and the debug controls move it)
-///   * [_intro]     the 3 s "Start Shift" UFO timeline, played once forward
+///                  SceneTimeline; the swipe moves it)
+///   * [_intro]     the 3 s "Start Shift" UFO timeline: forward when a shift
+///                  starts, in reverse at the end of the clock-out sequence
+///   * [_loop]      the clock-out lap: the UFO circles out of sight and comes
+///                  back in over the left edge
 ///   * [_ring]      endless, decorative turning of the dashed ring
 /// ─────────────────────────────────────────────────────────────
 class HomeScreen extends StatefulWidget {
@@ -51,6 +56,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     duration: AppConstants.shiftIntroDuration,
   );
 
+  /// 0..1 along the clock-out lap (its duration is set per lap).
+  late final AnimationController _loop = AnimationController(vsync: this);
+
   /// One full turn per 1 / ringTurnsPerSecond seconds; wraps seamlessly.
   late final AnimationController _ring = AnimationController(
     vsync: this,
@@ -58,11 +66,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         Duration(microseconds: (1e6 / AppConstants.ringTurnsPerSecond).round()),
   )..repeat();
 
+  /// Ring angle where the current clock-out lap started (null = no lap).
+  double? _loopFromAngle;
+
+  /// The last orbit position shown, so a clock-out can continue from it.
+  double _lastOrbitFraction = 0;
+
   /// Debug only: fast-forward the orbit (see AppConstants.debugTimeScale).
   final ValueNotifier<bool> _fast = ValueNotifier<bool>(false);
-
-  final ValueNotifier<String> _debugLog =
-      ValueNotifier<String>('swipe up / down');
 
   @override
   void initState() {
@@ -75,8 +86,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _fast.dispose();
-    _debugLog.dispose();
     _ring.dispose();
+    _loop.dispose();
     _intro.dispose();
     _progress.dispose();
     super.dispose();
@@ -88,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final state = context.read<ClockBloc>().state;
     if (state is! ClockActive) return null;
     final fast = kDebugMode && _fast.value;
-    return shiftOrbitFraction(
+    return _lastOrbitFraction = shiftOrbitFraction(
       clockedInAt: state.clockedInAt,
       now: DateTime.now(),
       timeScale: fast ? AppConstants.debugTimeScale : 1,
@@ -96,21 +107,45 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+  /// The UFO's pose for this frame, or null to follow the intro timeline.
+  UfoPose? _ufoPose() {
+    final from = _loopFromAngle;
+    if (from != null) return UfoOrbit.loopPose(from, _loop.value);
+    if (_intro.value < 1) return null; // intro (forward or in reverse)
+    final f = _orbitFraction();
+    return f == null ? null : UfoOrbit.poseAt(f);
+  }
+
   void _startShift() {
-    if (_intro.value != 0 || _intro.isAnimating) return;
+    if (_intro.value != 0 || _intro.isAnimating || _loopFromAngle != null) {
+      return;
+    }
     _intro.forward();
     context.read<ClockBloc>().add(const ClockInRequested());
   }
 
-  /// Debug: play to the other state.
-  void _toggle() {
-    if (_progress.isAnimating) {
-      _progress.isForwardOrCompleted
-          ? _progress.forward()
-          : _progress.reverse();
+  /// Clock-out: the UFO loops around the Earth out of sight, re-enters from
+  /// the left edge at the intro's end point, then the intro plays in reverse
+  /// (UFO back up, beam and ring fade, card returns).
+  Future<void> _playClockOut() async {
+    if (_loopFromAngle != null) return; // already running
+    // Ended while the intro was still playing: just run it back.
+    if (_intro.value < 1) {
+      _intro.reverse();
       return;
     }
-    _progress.value >= 0.5 ? _progress.reverse() : _progress.forward();
+    final from = UfoOrbit.angleAt(_lastOrbitFraction);
+    // Same speed on every lap: shorter laps take proportionally less time.
+    final share = UfoOrbit.loopSweep(from) / UfoOrbit.fullLoopSweep;
+    _loop.duration = AppConstants.clockOutLoopDuration * share;
+    setState(() => _loopFromAngle = from);
+    await _loop.forward(from: 0);
+    if (!mounted) return;
+    setState(() => _loopFromAngle = null);
+    // The loop ends exactly on the intro's end pose, so hand over to it. Start
+    // the reverse where the timeline has settled (the last part of the
+    // timeline is a hold), so the UFO moves on at once.
+    await _intro.reverse(from: ShiftTimeline.settledAt);
   }
 
   @override
@@ -121,8 +156,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     return BlocListener<ClockBloc, ClockState>(
       listener: (context, state) {
-        // Shift ended (phase 6 turns this into the full clock-out sequence).
-        if (state is ClockIdle && _intro.value != 0) _intro.reverse();
+        // Shift ended: play the clock-out sequence.
+        if (state is ClockIdle && _intro.value != 0) _playClockOut();
         // Shift started from somewhere else than the card.
         if (state is ClockActive && _intro.value == 0 && !_intro.isAnimating) {
           _intro.forward();
@@ -132,7 +167,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         backgroundColor: AppColors.skyTop,
         body: SceneSwipe(
           controller: _progress,
-          debugLog: _debugLog,
           child: Stack(
             children: [
               Positioned.fill(child: SceneBackdrop(progress: _progress)),
@@ -141,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   scene: _progress,
                   intro: _intro,
                   ringTurns: _ring,
-                  orbitFraction: _orbitFraction,
+                  ufoPose: _ufoPose,
                   onStartShift: _startShift,
                 ),
               ),
@@ -154,12 +188,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       onCalendarTap: widget.onCalendarTap,
                     ),
                     const Spacer(),
-                    if (kDebugMode)
-                      _DebugScrubber(
-                          progress: _progress,
-                          onPlay: _toggle,
-                          log: _debugLog,
-                          fast: _fast),
+                    if (kDebugMode) _DebugControls(fast: _fast),
                   ],
                 ),
               ),
@@ -171,71 +200,36 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 }
 
-/// Temporary phase-2 controls: a play/reverse button and a scrubber bound to
-/// the same progress value.
-class _DebugScrubber extends StatelessWidget {
-  final AnimationController progress;
-  final VoidCallback onPlay;
-  final ValueListenable<String> log;
+/// Temporary, debug builds only: the End Shift button does not exist yet, and
+/// the time scale lets an 8 h shift be watched in about 30 s.
+class _DebugControls extends StatelessWidget {
   final ValueNotifier<bool> fast;
-  const _DebugScrubber({
-    required this.progress,
-    required this.onPlay,
-    required this.log,
-    required this.fast,
-  });
+  const _DebugControls({required this.fast});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: progress,
-      builder: (context, _) => Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ValueListenableBuilder<String>(
-              valueListenable: log,
-              builder: (_, v, __) =>
-                  Text(v, style: const TextStyle(fontSize: 12)),
+    if (context.watch<ClockBloc>().state is! ClockActive) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ValueListenableBuilder<bool>(
+            valueListenable: fast,
+            builder: (_, on, __) => TextButton(
+              onPressed: () => fast.value = !on,
+              child:
+                  Text(on ? '×${AppConstants.debugTimeScale.round()}' : '×1'),
             ),
-            Row(
-              children: [
-                if (context.watch<ClockBloc>().state is ClockActive) ...[
-                  ValueListenableBuilder<bool>(
-                    valueListenable: fast,
-                    builder: (_, on, __) => TextButton(
-                      onPressed: () => fast.value = !on,
-                      child: Text(on ? '×${AppConstants.debugTimeScale.round()}' : '×1'),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => context
-                        .read<ClockBloc>()
-                        .add(const ClockOutRequested()),
-                    child: const Text('Clock out (debug)'),
-                  ),
-                ],
-                TextButton(
-                  onPressed: onPlay,
-                  child: Text(progress.value >= 0.5 ? '◀ Day' : 'Night ▶'),
-                ),
-                Expanded(
-                  child: Slider(
-                    value: progress.value,
-                    onChangeStart: (_) => progress.stop(),
-                    onChanged: (v) => progress.value = v,
-                  ),
-                ),
-                SizedBox(
-                  width: 38,
-                  child: Text(progress.value.toStringAsFixed(2),
-                      style: const TextStyle(fontSize: 12)),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+          TextButton(
+            onPressed: () =>
+                context.read<ClockBloc>().add(const ClockOutRequested()),
+            child: const Text('Clock out (debug)'),
+          ),
+        ],
       ),
     );
   }

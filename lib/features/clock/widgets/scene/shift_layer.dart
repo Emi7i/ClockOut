@@ -14,14 +14,14 @@ import 'ufo_pose.dart';
 ///  * [intro]  (0 … 1): the Figma 3 s "Start Shift" timeline.
 ///  * [ringTurns]: endless turning of the dashed ring (decorative).
 ///
-/// Once the intro has finished the UFO rides the ring. [orbitFraction]
-/// (0 = left end, 1 = right end, null = no shift running) is asked on every
-/// frame; it is computed from the persisted clock-in time, never animated.
+/// [ufoPose] is asked on every frame. It returns the UFO's pose while it rides
+/// the ring (computed from the persisted clock-in time, never animated) or
+/// loops out at clock-out, and null to follow the [intro] timeline instead.
 class ShiftLayer extends StatelessWidget {
   final Animation<double> scene;
   final Animation<double> intro;
   final Animation<double> ringTurns;
-  final double? Function()? orbitFraction;
+  final UfoPose? Function()? ufoPose;
   final VoidCallback? onStartShift;
 
   const ShiftLayer({
@@ -29,7 +29,7 @@ class ShiftLayer extends StatelessWidget {
     required this.scene,
     required this.intro,
     required this.ringTurns,
-    this.orbitFraction,
+    this.ufoPose,
     this.onStartShift,
   });
 
@@ -52,7 +52,7 @@ class ShiftLayer extends StatelessWidget {
                   clipBehavior: Clip.hardEdge,
                   children: [
                     _ring(l, t),
-                    _ufo(l, t, t >= 1 ? orbitFraction?.call() : null),
+                    _ufo(l, t, ufoPose?.call()),
                     _card(l, t),
                   ],
                 ),
@@ -83,8 +83,8 @@ class ShiftLayer extends StatelessWidget {
     );
   }
 
-  Widget _ufo(SceneLayout l, double t, double? orbit) {
-    final pose = orbit != null ? UfoOrbit.poseAt(orbit) : UfoPose.intro(t);
+  Widget _ufo(SceneLayout l, double t, UfoPose? override) {
+    final pose = override ?? UfoPose.intro(t);
     final box = UfoGeometry.box;
     final matrix = Matrix4.identity()
       ..translateByDouble(

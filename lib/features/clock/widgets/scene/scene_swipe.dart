@@ -29,14 +29,10 @@ class SceneSwipe extends StatefulWidget {
   final AnimationController controller;
   final Widget child;
 
-  /// Debug only: receives a one-line description of the last swipe.
-  final ValueNotifier<String>? debugLog;
-
   const SceneSwipe({
     super.key,
     required this.controller,
     required this.child,
-    this.debugLog,
   });
 
   @override
@@ -66,8 +62,6 @@ class _SceneSwipeState extends State<SceneSwipe> {
   void _play(SceneTarget target) {
     final to = target == SceneTarget.night ? 1.0 : 0.0;
     final remaining = (to - _c.value).abs();
-    widget.debugLog?.value =
-        'swipe ${target == SceneTarget.night ? '↑' : '↓'} → ${target.name}';
     if (remaining == 0) return;
     // Constant speed: a full run takes sceneDuration, a partial one less.
     _c.animateTo(

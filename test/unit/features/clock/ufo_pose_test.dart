@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:clock_app/features/clock/widgets/scene/scene_timeline.dart';
 import 'package:clock_app/features/clock/widgets/scene/ufo_pose.dart';
 
 void main() {
@@ -9,6 +10,19 @@ void main() {
     expect((end.translation - start.translation).distance, lessThan(0.01));
     expect(end.rotation, closeTo(start.rotation, 1e-6));
     expect(end.bottomBlend, 1);
+  });
+
+  test('the intro has fully settled at settledAt (reverse can start there)',
+      () {
+    final settled = UfoPose.intro(ShiftTimeline.settledAt);
+    final end = UfoPose.intro(1);
+    expect((settled.translation - end.translation).distance, lessThan(0.05));
+    expect(settled.rotation, closeTo(end.rotation, 1e-3));
+    expect(settled.scale, closeTo(end.scale, 1e-6));
+    expect(ShiftTimeline.beamOpacity(ShiftTimeline.settledAt), 1);
+    expect(ShiftTimeline.ringFade(ShiftTimeline.settledAt), closeTo(1, 1e-3));
+    // And nothing moves between there and the end.
+    expect(UfoPose.intro(0.95).translation, end.translation);
   });
 
   test('the intro starts above the card, untouched', () {
@@ -46,6 +60,47 @@ void main() {
     expect(UfoOrbit.poseAt(0.5).rotation, closeTo(0, 1e-6));
     expect(UfoOrbit.poseAt(0).rotation, lessThan(0));
     expect(UfoOrbit.poseAt(1).rotation, greaterThan(0));
+  });
+
+  group('clock-out loop', () {
+    final rightEnd = UfoGeometry.orbitEndAngle;
+
+    test('starts where the UFO was and ends exactly on the intro end pose',
+        () {
+      for (final f in [0.0, 0.3, 1.0]) {
+        final from = UfoOrbit.angleAt(f);
+        final first = UfoOrbit.loopPose(from, 0);
+        final last = UfoOrbit.loopPose(from, 1);
+        expect((first.saucerCenter - UfoOrbit.saucerAt(f)).distance,
+            lessThan(0.01));
+        expect((last.translation - UfoPose.intro(1).translation).distance,
+            lessThan(0.01));
+        expect(last.rotation, closeTo(UfoPose.intro(1).rotation, 1e-6));
+      }
+    });
+
+    test('keeps going clockwise: off the right edge, under, back in on the left',
+        () {
+      final xs = [
+        for (var i = 0; i <= 200; i++)
+          UfoOrbit.loopPose(rightEnd, i / 200).saucerCenter,
+      ];
+      // Leaves the screen on the right, passes below it, comes back from the
+      // left.
+      expect(xs.any((p) => p.dx > 388 + 20), isTrue);
+      expect(xs.any((p) => p.dy > 764 + 20), isTrue);
+      expect(xs.any((p) => p.dx < -20), isTrue);
+      // The very last stretch arrives from the left edge.
+      expect(xs[xs.length - 2].dx, lessThan(xs.last.dx));
+      expect(xs.last.dx, closeTo(UfoGeometry.orbitLeftX, 0.5));
+    });
+
+    test('a shorter lap covers proportionally less ring', () {
+      final left = UfoOrbit.angleAt(0);
+      expect(UfoOrbit.loopSweep(left), greaterThan(UfoOrbit.loopSweep(rightEnd)));
+      expect(UfoOrbit.loopSweep(rightEnd), UfoOrbit.fullLoopSweep);
+      expect(UfoOrbit.fullLoopSweep, lessThan(2 * 3.141592653589793));
+    });
   });
 
   test('the whole arc stays clear of the Earth', () {

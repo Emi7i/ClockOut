@@ -108,6 +108,12 @@ abstract final class ShiftTimeline {
   /// Final intro translation, in design pixels (also the divisor for the
   /// "how far has it travelled" blend used on taller screens).
   static const double endTranslateY = 391.509857;
+
+  /// Intro progress at which everything has settled: the UFO has landed and
+  /// the beam and ring are fully in. The last 12.6% of the timeline is a
+  /// hold, so playing the intro in reverse starts from here, not from 1,
+  /// to avoid a dead pause before the UFO starts to move.
+  static const double settledAt = 0.87453;
   static const double endRotation = -0.872665;
   static const double endScale = 0.42;
 

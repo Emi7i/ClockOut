@@ -21,6 +21,10 @@ class AppConstants {
   /// only; it is not tied to the shift timer.
   static const double ringTurnsPerSecond = 0.02;
 
+  /// Clock-out: how long the UFO's lap around the Earth takes when the shift
+  /// ran the full 8 h (the UFO starts at the right end). Shorter laps, from
+  /// further left, take proportionally less, so the speed stays the same.
+  static const Duration clockOutLoopDuration = Duration(milliseconds: 1300);
   /// Debug builds only: fast-forward for the UFO's orbit. 960 makes an 8 h
   /// shift take 30 s. Toggled from the debug strip on the home screen.
   static const double debugTimeScale = 960;

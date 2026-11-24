@@ -137,13 +137,32 @@ abstract final class UfoOrbit {
   /// The saucer's position for [f], in the design frame.
   static Offset saucerAt(double f) => UfoGeometry.ringPoint(angleAt(f));
 
-  static UfoPose poseAt(double f) {
-    final a = angleAt(f);
-    return UfoPose.atSaucer(
-      UfoGeometry.ringPoint(a),
-      UfoGeometry.ringTangent(a),
-      ShiftTimeline.endScale,
-      1,
-    );
-  }
+  static UfoPose poseAt(double f) => _poseAtAngle(angleAt(f));
+
+  static UfoPose _poseAtAngle(double a) => UfoPose.atSaucer(
+        UfoGeometry.ringPoint(a),
+        UfoGeometry.ringTangent(a),
+        ShiftTimeline.endScale,
+        1,
+      );
+
+  // ── Clock-out loop ──────────────────────────────────────────────────
+  // The UFO keeps going the way it was travelling (clockwise), around the
+  // back of the Earth and out of sight, and comes back in over the left
+  // edge of the screen onto the orbit's left end (the intro's landing
+  // point). The ring is wider than the screen, so most of that lap is
+  // off-screen.
+
+  /// Angle the loop ends at: the left end of the orbit, one lap on.
+  static double get _loopEndAngle => UfoGeometry.orbitStartAngle + 2 * math.pi;
+
+  /// How far (radians of ring angle) the loop travels from [fromAngle].
+  static double loopSweep(double fromAngle) => _loopEndAngle - fromAngle;
+
+  /// The longest loop: from the right end, where a full 8 h shift ends.
+  static double get fullLoopSweep => loopSweep(UfoGeometry.orbitEndAngle);
+
+  /// The pose at [u] (0..1) of a loop that started at [fromAngle].
+  static UfoPose loopPose(double fromAngle, double u) =>
+      _poseAtAngle(fromAngle + loopSweep(fromAngle) * u.clamp(0.0, 1.0));
 }
