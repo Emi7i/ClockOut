@@ -16,4 +16,11 @@ class AppConstants {
   /// Progress past which releasing a swipe always finishes the transition
   /// (about where the Earth is almost gone). Tuned on device in phase 3.
   static const double sceneCommitPoint = 0.58;
+
+  /// A full Day↔Night swipe needs this fraction of the screen height.
+  static const double sceneTravelFraction = 0.5;
+
+  /// Per-event vertical movement (px) below which it is jitter and does not
+  /// count as a change of direction.
+  static const double sceneMinDirectionDelta = 1.0;
 }

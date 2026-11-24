@@ -9,6 +9,7 @@ import '../../../core/constants/constants.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../settings/bloc/settings_bloc.dart';
 import '../widgets/scene/scene_backdrop.dart';
+import '../widgets/scene/scene_swipe.dart';
 import '../widgets/scene/ufo_and_card.dart';
 
 /// ─────────────────────────────────────────────────────────────
@@ -41,8 +42,12 @@ class _HomeScreenState extends State<HomeScreen>
     duration: AppConstants.sceneDuration,
   );
 
+  final ValueNotifier<String> _debugLog =
+      ValueNotifier<String>('swipe up / down');
+
   @override
   void dispose() {
+    _debugLog.dispose();
     _progress.dispose();
     super.dispose();
   }
@@ -50,7 +55,9 @@ class _HomeScreenState extends State<HomeScreen>
   /// Debug: play to the other state.
   void _toggle() {
     if (_progress.isAnimating) {
-      _progress.isForwardOrCompleted ? _progress.forward() : _progress.reverse();
+      _progress.isForwardOrCompleted
+          ? _progress.forward()
+          : _progress.reverse();
       return;
     }
     _progress.value >= 0.5 ? _progress.reverse() : _progress.forward();
@@ -59,28 +66,35 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsBloc>().state;
-    final is12Hour = settings is SettingsLoaded ? settings.is12HourFormat : true;
+    final is12Hour =
+        settings is SettingsLoaded ? settings.is12HourFormat : true;
 
     return Scaffold(
       backgroundColor: AppColors.skyTop,
-      body: Stack(
-        children: [
-          Positioned.fill(child: SceneBackdrop(progress: _progress)),
-          Positioned.fill(child: UfoAndCard(progress: _progress)),
-          SafeArea(
-            child: Column(
-              children: [
-                LiveClockTopBar(
-                  is12Hour: is12Hour,
-                  onSettingsTap: widget.onSettingsTap,
-                  onCalendarTap: widget.onCalendarTap,
-                ),
-                const Spacer(),
-                if (kDebugMode) _DebugScrubber(progress: _progress, onPlay: _toggle),
-              ],
+      body: SceneSwipe(
+        controller: _progress,
+        debugLog: _debugLog,
+        child: Stack(
+          children: [
+            Positioned.fill(child: SceneBackdrop(progress: _progress)),
+            Positioned.fill(child: UfoAndCard(progress: _progress)),
+            SafeArea(
+              child: Column(
+                children: [
+                  LiveClockTopBar(
+                    is12Hour: is12Hour,
+                    onSettingsTap: widget.onSettingsTap,
+                    onCalendarTap: widget.onCalendarTap,
+                  ),
+                  const Spacer(),
+                  if (kDebugMode)
+                    _DebugScrubber(
+                        progress: _progress, onPlay: _toggle, log: _debugLog),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -91,7 +105,9 @@ class _HomeScreenState extends State<HomeScreen>
 class _DebugScrubber extends StatelessWidget {
   final AnimationController progress;
   final VoidCallback onPlay;
-  const _DebugScrubber({required this.progress, required this.onPlay});
+  final ValueListenable<String> log;
+  const _DebugScrubber(
+      {required this.progress, required this.onPlay, required this.log});
 
   @override
   Widget build(BuildContext context) {
@@ -99,23 +115,33 @@ class _DebugScrubber extends StatelessWidget {
       animation: progress,
       builder: (context, _) => Padding(
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            TextButton(
-              onPressed: onPlay,
-              child: Text(progress.value >= 0.5 ? '◀ Day' : 'Night ▶'),
+            ValueListenableBuilder<String>(
+              valueListenable: log,
+              builder: (_, v, __) =>
+                  Text(v, style: const TextStyle(fontSize: 12)),
             ),
-            Expanded(
-              child: Slider(
-                value: progress.value,
-                onChangeStart: (_) => progress.stop(),
-                onChanged: (v) => progress.value = v,
-              ),
-            ),
-            SizedBox(
-              width: 38,
-              child: Text(progress.value.toStringAsFixed(2),
-                  style: const TextStyle(fontSize: 12)),
+            Row(
+              children: [
+                TextButton(
+                  onPressed: onPlay,
+                  child: Text(progress.value >= 0.5 ? '◀ Day' : 'Night ▶'),
+                ),
+                Expanded(
+                  child: Slider(
+                    value: progress.value,
+                    onChangeStart: (_) => progress.stop(),
+                    onChanged: (v) => progress.value = v,
+                  ),
+                ),
+                SizedBox(
+                  width: 38,
+                  child: Text(progress.value.toStringAsFixed(2),
+                      style: const TextStyle(fontSize: 12)),
+                ),
+              ],
             ),
           ],
         ),
