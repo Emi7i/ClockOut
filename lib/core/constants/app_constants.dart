@@ -8,4 +8,12 @@ class AppConstants {
   // Debug
   //static const Duration shiftDuration = Duration(seconds: 30);
   static const Duration shiftDuration = Duration(hours: 8);
+
+  /// Length of the Figma Day→Night timeline (1.39559 s). The scene
+  /// controller's 0..1 value maps linearly onto it.
+  static const Duration sceneDuration = Duration(milliseconds: 1396);
+
+  /// Progress past which releasing a swipe always finishes the transition
+  /// (about where the Earth is almost gone). Tuned on device in phase 3.
+  static const double sceneCommitPoint = 0.58;
 }

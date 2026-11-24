@@ -13,6 +13,16 @@ abstract final class AppTextStyles {
   /// Display font for titles and big text (e.g. the calendar's month/year).
   static const String _titleFont = 'Iceland';
 
+  // ── Home scene (redesign) ─────────────────────────────────
+  /// "Start Shift" on the Day card.
+  static const TextStyle startShift = TextStyle(
+    fontFamily: _titleFont,
+    fontSize: 48,
+    height: 1.2,
+    letterSpacing: 0.48,
+    color: Color(0xFFFFFFFF),
+  );
+
   // ── Calendar (redesign) ───────────────────────────────────
   /// Month and year. Iceland only ships a regular weight.
   static const TextStyle calendarTitle = TextStyle(

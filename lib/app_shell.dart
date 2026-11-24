@@ -6,7 +6,7 @@ import '../features/calendar/bloc/calendar_bloc.dart';
 import '../features/calendar/screens/calendar_screen.dart';
 import '../features/clock/bloc/clock_bloc.dart';
 import '../features/clock/screens/alarm_ringing_screen.dart';
-import '../features/clock/screens/clock_in_screen.dart';
+import '../features/clock/screens/home_screen.dart';
 import '../features/clock/screens/clocked_in_screen.dart';
 import '../features/logs/bloc/logs_bloc.dart';
 import '../features/logs/screens/logs_screen.dart';
@@ -143,7 +143,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   }
 }
 
-/// Switches between [ClockInScreen] and [ClockedInScreen]
+/// Switches between [HomeScreen] and [ClockedInScreen]
 /// based on [ClockBloc] state.
 class _ClockTabSwitcher extends StatelessWidget {
   final VoidCallback      onSettingsTap;
@@ -168,11 +168,9 @@ class _ClockTabSwitcher extends StatelessWidget {
             navIndex:      navIndex,
             onNavTap:      onNavTap,
           ),
-        ClockIdle() => ClockInScreen(
+        ClockIdle() => HomeScreen(
             onSettingsTap: onSettingsTap,
             onCalendarTap: onCalendarTap,
-            navIndex:      navIndex,
-            onNavTap:      onNavTap,
           ),
         ClockLoading() => const Scaffold(
             body: Center(child: CircularProgressIndicator()),

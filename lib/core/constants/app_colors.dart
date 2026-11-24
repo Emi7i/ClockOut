@@ -10,6 +10,15 @@ abstract final class AppColors {
   /// Main screen background (near-black)
   static const Color background = Color(0xFF1E1E1E);
 
+  // ── Home scene (Day / Night) ──────────────────────────────
+  /// Top and bottom of the full-bleed sky gradient.
+  static const Color skyTop = Color(0xFF000000);
+  static const Color skyBottom = Color(0xFF05071C);
+
+  /// Fill of the "Start Shift" card (glass over the sky).
+  static const Color startCardFill = Color(0x14FFFFFF);
+  static const Color startCardBorder = Color(0xFF404040);
+
   /// Bottom navigation bar background
   static const Color navBar = Color(0xFF343A40);
 
