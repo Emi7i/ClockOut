@@ -24,9 +24,8 @@ abstract final class UfoGeometry {
   static const double earthRadiusX = 196.5;
   static const double earthRadiusY = 176;
 
-  /// How far the ring floats above the Earth's outline, in design px. It has
-  /// to clear the UFO's beam (about 50 px at its small orbit scale).
-  static const double ringClearance = 44;
+  /// How far the ring floats above the Earth's outline
+  static const double ringClearance = 30;
 
   /// The dashed ring: an ellipse concentric with the Earth, [ringClearance]
   /// larger on every side, so it never touches the globe.

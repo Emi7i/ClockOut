@@ -21,6 +21,10 @@ class AppConstants {
   /// only; it is not tied to the shift timer.
   static const double ringTurnsPerSecond = 0.02;
 
+  /// Debug builds only: fast-forward for the UFO's orbit. 960 makes an 8 h
+  /// shift take 30 s. Toggled from the debug strip on the home screen.
+  static const double debugTimeScale = 960;
+
   /// Opacity of the dashed ring once it has faded in: 0 = invisible,
   /// 1 = solid white. Change it here.
   static const double ringOpacity = 0.34;

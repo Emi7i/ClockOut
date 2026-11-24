@@ -13,10 +13,15 @@ import 'ufo_pose.dart';
 ///  * [scene]  (0 Day … 1 Night): the whole group fades out first.
 ///  * [intro]  (0 … 1): the Figma 3 s "Start Shift" timeline.
 ///  * [ringTurns]: endless turning of the dashed ring (decorative).
+///
+/// Once the intro has finished the UFO rides the ring. [orbitFraction]
+/// (0 = left end, 1 = right end, null = no shift running) is asked on every
+/// frame; it is computed from the persisted clock-in time, never animated.
 class ShiftLayer extends StatelessWidget {
   final Animation<double> scene;
   final Animation<double> intro;
   final Animation<double> ringTurns;
+  final double? Function()? orbitFraction;
   final VoidCallback? onStartShift;
 
   const ShiftLayer({
@@ -24,6 +29,7 @@ class ShiftLayer extends StatelessWidget {
     required this.scene,
     required this.intro,
     required this.ringTurns,
+    this.orbitFraction,
     this.onStartShift,
   });
 
@@ -46,7 +52,7 @@ class ShiftLayer extends StatelessWidget {
                   clipBehavior: Clip.hardEdge,
                   children: [
                     _ring(l, t),
-                    _ufo(l, t),
+                    _ufo(l, t, t >= 1 ? orbitFraction?.call() : null),
                     _card(l, t),
                   ],
                 ),
@@ -77,8 +83,8 @@ class ShiftLayer extends StatelessWidget {
     );
   }
 
-  Widget _ufo(SceneLayout l, double t) {
-    final pose = UfoPose.intro(t);
+  Widget _ufo(SceneLayout l, double t, double? orbit) {
+    final pose = orbit != null ? UfoOrbit.poseAt(orbit) : UfoPose.intro(t);
     final box = UfoGeometry.box;
     final matrix = Matrix4.identity()
       ..translateByDouble(

@@ -11,6 +11,7 @@ import '../../settings/bloc/settings_bloc.dart';
 import '../bloc/clock_bloc.dart';
 import '../widgets/scene/scene_backdrop.dart';
 import '../widgets/scene/scene_swipe.dart';
+import '../widgets/scene/shift_clock.dart';
 import '../widgets/scene/shift_layer.dart';
 
 /// ─────────────────────────────────────────────────────────────
@@ -57,6 +58,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         Duration(microseconds: (1e6 / AppConstants.ringTurnsPerSecond).round()),
   )..repeat();
 
+  /// Debug only: fast-forward the orbit (see AppConstants.debugTimeScale).
+  final ValueNotifier<bool> _fast = ValueNotifier<bool>(false);
+
   final ValueNotifier<String> _debugLog =
       ValueNotifier<String>('swipe up / down');
 
@@ -70,11 +74,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _fast.dispose();
     _debugLog.dispose();
     _ring.dispose();
     _intro.dispose();
     _progress.dispose();
     super.dispose();
+  }
+
+  /// Where the UFO is on its orbit right now, from the persisted clock-in
+  /// time (null when no shift is running). Called on every frame.
+  double? _orbitFraction() {
+    final state = context.read<ClockBloc>().state;
+    if (state is! ClockActive) return null;
+    final fast = kDebugMode && _fast.value;
+    return shiftOrbitFraction(
+      clockedInAt: state.clockedInAt,
+      now: DateTime.now(),
+      timeScale: fast ? AppConstants.debugTimeScale : 1,
+      startOffset: fast ? AppConstants.shiftIntroDuration : Duration.zero,
+    );
   }
 
   void _startShift() {
@@ -122,6 +141,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   scene: _progress,
                   intro: _intro,
                   ringTurns: _ring,
+                  orbitFraction: _orbitFraction,
                   onStartShift: _startShift,
                 ),
               ),
@@ -136,7 +156,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     const Spacer(),
                     if (kDebugMode)
                       _DebugScrubber(
-                          progress: _progress, onPlay: _toggle, log: _debugLog),
+                          progress: _progress,
+                          onPlay: _toggle,
+                          log: _debugLog,
+                          fast: _fast),
                   ],
                 ),
               ),
@@ -154,8 +177,13 @@ class _DebugScrubber extends StatelessWidget {
   final AnimationController progress;
   final VoidCallback onPlay;
   final ValueListenable<String> log;
-  const _DebugScrubber(
-      {required this.progress, required this.onPlay, required this.log});
+  final ValueNotifier<bool> fast;
+  const _DebugScrubber({
+    required this.progress,
+    required this.onPlay,
+    required this.log,
+    required this.fast,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -173,13 +201,21 @@ class _DebugScrubber extends StatelessWidget {
             ),
             Row(
               children: [
-                if (context.watch<ClockBloc>().state is ClockActive)
+                if (context.watch<ClockBloc>().state is ClockActive) ...[
+                  ValueListenableBuilder<bool>(
+                    valueListenable: fast,
+                    builder: (_, on, __) => TextButton(
+                      onPressed: () => fast.value = !on,
+                      child: Text(on ? '×${AppConstants.debugTimeScale.round()}' : '×1'),
+                    ),
+                  ),
                   TextButton(
                     onPressed: () => context
                         .read<ClockBloc>()
                         .add(const ClockOutRequested()),
                     child: const Text('Clock out (debug)'),
                   ),
+                ],
                 TextButton(
                   onPressed: onPlay,
                   child: Text(progress.value >= 0.5 ? '◀ Day' : 'Night ▶'),
