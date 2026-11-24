@@ -1,7 +1,8 @@
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/constants/constants.dart';
+import 'night_track_values.dart';
+import 'night_tracks.dart';
 import 'scene_layout.dart';
 import 'scene_timeline.dart';
 
@@ -12,7 +13,11 @@ import 'scene_timeline.dart';
 /// shift UI and are layered on top by the screens.
 class SceneBackdrop extends StatelessWidget {
   final Animation<double> progress;
-  const SceneBackdrop({super.key, required this.progress});
+
+  /// Where the Night bodies sit on their orbits.
+  final NightTrackValues tracks;
+
+  const SceneBackdrop({super.key, required this.progress, required this.tracks});
 
   static const _dir = 'assets/home/';
 
@@ -78,18 +83,8 @@ class SceneBackdrop extends StatelessWidget {
               SceneTimeline.earthOpacity(p),
               EarthGlobe(layout: l, driftY: SceneTimeline.earthDriftY(p)),
             )),
-        // Orbit paths, comets, moon
-        l.place(0, 144.125, 388, 330,
-            child: _fade(
-              SceneTimeline.orbitsOpacity(p),
-              SvgPicture.asset('${_dir}paths.svg', fit: BoxFit.fill),
-            )),
-        l.place(31, 119, 203.75, 63.75,
-            child: _fade(SceneTimeline.orbitsOpacity(p), _img('comet_a.png'))),
-        l.place(112, 250, 201.25, 61,
-            child: _fade(SceneTimeline.orbitsOpacity(p), _img('comet_b.png'))),
-        l.place(78.6, 373.6, 84.8, 84.8,
-            child: _fade(SceneTimeline.orbitsOpacity(p), _img('moon.png'))),
+        // Orbit paths, comets and moon, placed by the stats
+        Positioned.fill(child: NightTracks(scene: progress, values: tracks)),
       ],
     );
   }

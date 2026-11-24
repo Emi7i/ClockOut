@@ -9,6 +9,12 @@ class AppConstants {
   //static const Duration shiftDuration = Duration(seconds: 30);
   static const Duration shiftDuration = Duration(hours: 8);
 
+  /// Vacation days a year, before any bonus hours are converted into days.
+  static const int annualVacationDays = 22;
+
+  /// Bonus hours that can be converted into one vacation day.
+  static const Duration bonusPerVacationDay = Duration(hours: 8);
+
   /// Length of the Figma Day→Night timeline (1.39559 s). The scene
   /// controller's 0..1 value maps linearly onto it.
   static const Duration sceneDuration = Duration(milliseconds: 1396);

@@ -9,6 +9,7 @@ import '../../../core/constants/constants.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../settings/bloc/settings_bloc.dart';
 import '../bloc/clock_bloc.dart';
+import '../fake_track_stats.dart';
 import '../widgets/scene/scene_backdrop.dart';
 import '../widgets/scene/scene_swipe.dart';
 import '../widgets/scene/scene_timeline.dart';
@@ -169,7 +170,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           controller: _progress,
           child: Stack(
             children: [
-              Positioned.fill(child: SceneBackdrop(progress: _progress)),
+              Positioned.fill(
+                child: SceneBackdrop(
+                  progress: _progress,
+                  tracks: fakeNightTrackValues(DateTime.now()),
+                ),
+              ),
               Positioned.fill(
                 child: ShiftLayer(
                   scene: _progress,
