@@ -64,4 +64,39 @@ void main() {
     expect(heading, closeTo(0.7853981634, 1e-6)); // 45° towards the bottom
     expect(pathHeadingAt(diagonal, 0.5), closeTo(0.7853981634, 1e-6));
   });
+
+  testWidgets('the line never swallows touches meant for what is underneath',
+      (t) async {
+    var taps = 0;
+    await t.pumpWidget(MaterialApp(
+      home: SizedBox(
+        width: 300,
+        height: 200,
+        child: Stack(children: [
+          // A button at the bottom of the stack...
+          Positioned(
+            left: 10,
+            top: 10,
+            width: 50,
+            height: 50,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => taps++,
+              child: const SizedBox.expand(),
+            ),
+          ),
+          // ...under a track that covers the whole area.
+          Positioned.fill(
+            child: OrbitTrack(
+              path: line,
+              progress: 0.5,
+              bodyBuilder: (_, __) => const SizedBox(),
+            ),
+          ),
+        ]),
+      ),
+    ));
+    await t.tapAt(const Offset(30, 30));
+    expect(taps, 1);
+  });
 }

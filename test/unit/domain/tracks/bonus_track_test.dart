@@ -67,4 +67,37 @@ void main() {
     final s = bonusStatus(const Duration(hours: 5), perDay: const Duration(hours: 10));
     expect(s.progress, 0.5);
   });
+
+  group('convertBonusDay', () {
+    test('8 h become 1 vacation day', () {
+      final c = convertBonusDay(
+          balance: const Duration(hours: 11), convertedDays: 2)!;
+      expect(c.balance, const Duration(hours: 3));
+      expect(c.convertedDays, 3);
+    });
+
+    test('exactly 8 h can be converted, leaving nothing', () {
+      final c = convertBonusDay(
+          balance: const Duration(hours: 8), convertedDays: 0)!;
+      expect(c.balance, Duration.zero);
+      expect(c.convertedDays, 1);
+    });
+
+    test('below 8 h nothing can be converted', () {
+      expect(
+          convertBonusDay(
+              balance: const Duration(hours: 7, minutes: 59), convertedDays: 0),
+          isNull);
+      expect(convertBonusDay(balance: Duration.zero, convertedDays: 0), isNull);
+      expect(convertBonusDay(balance: const Duration(hours: -2), convertedDays: 0),
+          isNull);
+    });
+
+    test('converting only moves one day at a time', () {
+      final c = convertBonusDay(
+          balance: const Duration(hours: 20), convertedDays: 0)!;
+      expect(c.balance, const Duration(hours: 12));
+      expect(c.convertedDays, 1);
+    });
+  });
 }

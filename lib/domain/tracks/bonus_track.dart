@@ -54,3 +54,28 @@ BonusStatus bonusStatus(
     progress: progress,
   );
 }
+
+/// What the bank and the vacation days look like after a conversion.
+class BonusConversion {
+  /// The time bank after the hours were taken out.
+  final Duration balance;
+
+  /// Total vacation days converted from bonus hours so far, this one included.
+  final int convertedDays;
+
+  const BonusConversion({required this.balance, required this.convertedDays});
+}
+
+/// Converts [perDay] (8 h) of bonus into one extra vacation day. Returns null
+/// when the bank holds less than that, so nothing can be converted.
+BonusConversion? convertBonusDay({
+  required Duration balance,
+  required int convertedDays,
+  Duration perDay = AppConstants.bonusPerVacationDay,
+}) {
+  if (balance < perDay) return null;
+  return BonusConversion(
+    balance: balance - perDay,
+    convertedDays: convertedDays + 1,
+  );
+}

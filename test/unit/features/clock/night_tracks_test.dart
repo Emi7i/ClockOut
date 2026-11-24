@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:clock_app/features/clock/fake_track_stats.dart';
+import 'package:clock_app/features/clock/widgets/scene/night_track_values.dart';
 import 'package:clock_app/features/clock/widgets/scene/orbit_paths.dart';
 
 Offset pointAt(OrbitCurve c, double fraction) {
@@ -80,8 +81,8 @@ void main() {
 
     test('always give valid positions, whatever values are in the file', () {
       final v = fakeNightTrackValues(now);
-      for (final x in [v.vacation, v.remote, v.bonus]) {
-        expect(x, inInclusiveRange(0, 1));
+      for (final body in NightBody.values) {
+        expect(v.progressOf(body), inInclusiveRange(0, 1));
       }
     });
 
@@ -95,17 +96,46 @@ void main() {
 
       FakeTrackStats.remoteDays.clear();
       final before = fakeNightTrackValues(now);
-      expect(before.remote, 0); // still available: start of the orbit
+      expect(before.progressOf(NightBody.remote), 0); // still available: start
 
       FakeTrackStats.remoteDays.add(DateTime(2026, 11, 23));
       final after = fakeNightTrackValues(now);
-      expect(after.remote, 1); // used: end of the orbit
+      expect(after.progressOf(NightBody.remote), 1); // used: end of the orbit
       // The other two are untouched.
-      expect(after.vacation, before.vacation);
-      expect(after.bonus, before.bonus);
+      expect(after.progressOf(NightBody.vacation),
+          before.progressOf(NightBody.vacation));
+      expect(after.progressOf(NightBody.bonus),
+          before.progressOf(NightBody.bonus));
 
       // Next week it is available again, back at the start.
-      expect(fakeNightTrackValues(DateTime(2026, 11, 29)).remote, 0);
+      expect(
+          fakeNightTrackValues(DateTime(2026, 11, 29))
+              .progressOf(NightBody.remote),
+          0);
+    });
+    test('converting takes 8 h from the bank and adds a vacation day', () {
+      final bank = FakeTrackStats.bonusBalance;
+      final converted = FakeTrackStats.vacationConvertedDays;
+      addTearDown(() {
+        FakeTrackStats.bonusBalance = bank;
+        FakeTrackStats.vacationConvertedDays = converted;
+      });
+
+      FakeTrackStats.bonusBalance = const Duration(hours: 11);
+      FakeTrackStats.vacationConvertedDays = 0;
+      var notified = 0;
+      void listener() => notified++;
+      FakeTrackStats.changes.addListener(listener);
+      addTearDown(() => FakeTrackStats.changes.removeListener(listener));
+
+      expect(FakeTrackStats.convertBonusDayNow(), isTrue);
+      expect(FakeTrackStats.bonusBalance, const Duration(hours: 3));
+      expect(FakeTrackStats.vacationConvertedDays, 1);
+      expect(notified, 1);
+      // 3 h is not enough for another one.
+      expect(FakeTrackStats.convertBonusDayNow(), isFalse);
+      expect(FakeTrackStats.bonusBalance, const Duration(hours: 3));
+      expect(notified, 1);
     });
   });
 }

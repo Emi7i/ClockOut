@@ -10,6 +10,9 @@ import '../../../core/utils/date_formatter.dart';
 import '../../settings/bloc/settings_bloc.dart';
 import '../bloc/clock_bloc.dart';
 import '../fake_track_stats.dart';
+import '../widgets/scene/night_readout.dart';
+import '../widgets/scene/night_readout_text.dart';
+import '../widgets/scene/night_track_values.dart';
 import '../widgets/scene/scene_backdrop.dart';
 import '../widgets/scene/scene_swipe.dart';
 import '../widgets/scene/scene_timeline.dart';
@@ -73,6 +76,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   /// The last orbit position shown, so a clock-out can continue from it.
   double _lastOrbitFraction = 0;
 
+  /// The selected Night body (shown in the readout, with a ring on it).
+  final ValueNotifier<NightBody> _selected =
+      ValueNotifier<NightBody>(NightBody.bonus);
+
   /// Debug only: fast-forward the orbit (see AppConstants.debugTimeScale).
   final ValueNotifier<bool> _fast = ValueNotifier<bool>(false);
 
@@ -82,10 +89,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     // Coming back with a shift already running (app restart, tab switch):
     // no intro, go straight to the "shift running" state.
     if (context.read<ClockBloc>().state is ClockActive) _intro.value = 1;
+    FakeTrackStats.changes.addListener(_onStatsChanged);
+  }
+
+  void _onStatsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    FakeTrackStats.changes.removeListener(_onStatsChanged);
+    _selected.dispose();
     _fast.dispose();
     _ring.dispose();
     _loop.dispose();
@@ -115,6 +129,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (_intro.value < 1) return null; // intro (forward or in reverse)
     final f = _orbitFraction();
     return f == null ? null : UfoOrbit.poseAt(f);
+  }
+
+  /// Convert 8 h of bonus into one vacation day, after asking.
+  Future<void> _confirmConvert(NightTrackValues values) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Convert 8 h into 1 vacation day?'),
+        content: Text(convertSummary(values)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Convert'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) FakeTrackStats.convertBonusDayNow();
   }
 
   void _startShift() {
@@ -154,6 +190,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final settings = context.watch<SettingsBloc>().state;
     final is12Hour =
         settings is SettingsLoaded ? settings.is12HourFormat : true;
+    final stats = fakeNightTrackValues(DateTime.now());
 
     return BlocListener<ClockBloc, ClockState>(
       listener: (context, state) {
@@ -173,7 +210,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               Positioned.fill(
                 child: SceneBackdrop(
                   progress: _progress,
-                  tracks: fakeNightTrackValues(DateTime.now()),
+                  tracks: stats,
+                  selected: _selected,
+                  onSelect: (body) => _selected.value = body,
                 ),
               ),
               Positioned.fill(
@@ -183,6 +222,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ringTurns: _ring,
                   ufoPose: _ufoPose,
                   onStartShift: _startShift,
+                ),
+              ),
+              Positioned.fill(
+                child: NightReadout(
+                  scene: _progress,
+                  values: stats,
+                  selected: _selected,
+                  onConvert: () => _confirmConvert(stats),
                 ),
               ),
               SafeArea(

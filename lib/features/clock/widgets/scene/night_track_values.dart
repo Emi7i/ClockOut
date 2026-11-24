@@ -1,22 +1,36 @@
-/// How far along its orbit each Night body sits, 0 (start) … 1 (end).
+import '../../../../domain/tracks/bonus_track.dart';
+import '../../../../domain/tracks/remote_track.dart';
+import '../../../../domain/tracks/vacation_track.dart';
+
+/// The three bodies of the Night scene.
+enum NightBody { vacation, remote, bonus }
+
+/// The stats behind the Night bodies.
 ///
 /// The comets travel as allowances are USED UP (start = all still there,
-/// end = all used); the moon travels as bonus hours are EARNED. These are the
-/// outputs of the stat conversions in `lib/domain/tracks/`; the widgets only
-/// ever see these three numbers.
+/// end = all used); the moon travels as bonus hours are EARNED. Each status
+/// comes from a conversion in `lib/domain/tracks/`; its `progress` (0..1) is
+/// where the body sits on its orbit, and the rest feeds the readout.
 class NightTrackValues {
-  /// Top comet: the share of the year's vacation days already used.
-  final double vacation;
+  /// Top comet: the year's vacation days.
+  final VacationStatus vacation;
 
-  /// Lower comet: the weekly remote day (0 = still available, 1 = used).
-  final double remote;
+  /// Lower comet: the weekly remote day.
+  final RemoteStatus remote;
 
   /// Moon: bonus hours' progress to the next vacation day.
-  final double bonus;
+  final BonusStatus bonus;
 
   const NightTrackValues({
     required this.vacation,
     required this.remote,
     required this.bonus,
   });
+
+  /// Where [body] sits on its orbit, 0 (start) … 1 (end).
+  double progressOf(NightBody body) => switch (body) {
+        NightBody.vacation => vacation.progress,
+        NightBody.remote => remote.progress,
+        NightBody.bonus => bonus.progress,
+      };
 }

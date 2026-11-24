@@ -23,6 +23,46 @@ abstract final class AppTextStyles {
     color: Color(0xFFFFFFFF),
   );
 
+  /// Short label under a Night body (Vacation / Remote / Bonus).
+  static const TextStyle trackLabel = TextStyle(
+    decoration: TextDecoration.none,
+    fontFamily: _font,
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.4,
+    color: Color(0xCCFFFFFF),
+  );
+
+  /// Small caps title of the Night readout (the selected body's name).
+  static const TextStyle readoutTitle = TextStyle(
+    decoration: TextDecoration.none,
+    fontFamily: _font,
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 1.4,
+    color: Color(0xB3FFFFFF),
+  );
+
+  /// The Night readout's value, e.g. "14 of 22 left" (same face as Start Shift).
+  static const TextStyle readoutValue = TextStyle(
+    decoration: TextDecoration.none,
+    fontFamily: _titleFont,
+    fontSize: 26,
+    height: 1.2,
+    letterSpacing: 0.3,
+    color: Color(0xFFFFFFFF),
+  );
+
+  /// The Convert button's label (same face as Start Shift).
+  static const TextStyle convertButton = TextStyle(
+    decoration: TextDecoration.none,
+    fontFamily: _titleFont,
+    fontSize: 22,
+    height: 1.2,
+    letterSpacing: 0.3,
+    color: Color(0xFFFFFFFF),
+  );
+
   // ── Calendar (redesign) ───────────────────────────────────
   /// Month and year. Iceland only ships a regular weight.
   static const TextStyle calendarTitle = TextStyle(

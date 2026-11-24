@@ -19,6 +19,9 @@ abstract final class AppColors {
   static const Color startCardFill = Color(0x14FFFFFF);
   static const Color startCardBorder = Color(0xFF404040);
 
+  /// Subtle ring around the selected Night body.
+  static const Color selectionRing = Color(0x80FFFFFF);
+
   /// Bottom navigation bar background
   static const Color navBar = Color(0xFF343A40);
 

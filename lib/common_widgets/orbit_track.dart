@@ -67,14 +67,18 @@ class _OrbitTrackState extends State<OrbitTrack> {
       fit: StackFit.expand,
       clipBehavior: Clip.none,
       children: [
-        CustomPaint(
-          painter: _TrackPainter(
-            metric: _metric,
-            progress: p,
-            color: widget.color,
-            strokeWidth: widget.strokeWidth,
-            dashLength: widget.dashLength,
-            gapLength: widget.gapLength,
+        // The line is only drawn: it must not catch touches meant for what is
+        // underneath (other orbits' bodies).
+        IgnorePointer(
+          child: CustomPaint(
+            painter: _TrackPainter(
+              metric: _metric,
+              progress: p,
+              color: widget.color,
+              strokeWidth: widget.strokeWidth,
+              dashLength: widget.dashLength,
+              gapLength: widget.gapLength,
+            ),
           ),
         ),
         Positioned(

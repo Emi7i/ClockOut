@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/constants/constants.dart';
@@ -14,10 +15,20 @@ import 'scene_timeline.dart';
 class SceneBackdrop extends StatelessWidget {
   final Animation<double> progress;
 
-  /// Where the Night bodies sit on their orbits.
+  /// The stats behind the Night bodies, which sit on their orbits accordingly.
   final NightTrackValues tracks;
 
-  const SceneBackdrop({super.key, required this.progress, required this.tracks});
+  /// Which Night body is selected, and what to do when one is tapped.
+  final ValueListenable<NightBody> selected;
+  final ValueChanged<NightBody> onSelect;
+
+  const SceneBackdrop({
+    super.key,
+    required this.progress,
+    required this.tracks,
+    required this.selected,
+    required this.onSelect,
+  });
 
   static const _dir = 'assets/home/';
 
@@ -84,7 +95,14 @@ class SceneBackdrop extends StatelessWidget {
               EarthGlobe(layout: l, driftY: SceneTimeline.earthDriftY(p)),
             )),
         // Orbit paths, comets and moon, placed by the stats
-        Positioned.fill(child: NightTracks(scene: progress, values: tracks)),
+        Positioned.fill(
+          child: NightTracks(
+            scene: progress,
+            values: tracks,
+            selected: selected,
+            onSelect: onSelect,
+          ),
+        ),
       ],
     );
   }
